@@ -100,10 +100,11 @@ version = {attr = "minisweagent.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["minisweagent*"]
+include = ["minisweagent*", "coderagent*"]
 
 [tool.setuptools.package-data]
 minisweagent = ["config/**/*"]
+coderagent = ["config/*.yaml"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
