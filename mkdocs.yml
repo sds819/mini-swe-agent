@@ -117,6 +117,14 @@ nav:
       - "SWE-bench (batch)": "reference/run/swebench.md"
       - "SWE-bench (single)": "reference/run/swebench_single.md"
       - "ProgramBench": "reference/run/programbench.md"
+  - Design (WIP):
+    - "Overview": design/README.md
+    - "Architecture": design/coding-agent-architecture.md
+    - "M0 — Skeleton & config": design/milestones/M0-skeleton.md
+    - "M1 — Tools & permissions": design/milestones/M1-tools-permissions.md
+    - "M2 — Context & sessions": design/milestones/M2-context-session.md
+    - "M3 — UI & extensions": design/milestones/M3-ui-extensions.md
+    - "M4 — Advanced": design/milestones/M4-advanced.md
   - Blog: https://www.swebench.com/blog.html
   - Leaderboard: https://swebench.com
 plugins:
