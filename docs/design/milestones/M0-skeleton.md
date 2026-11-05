@@ -352,7 +352,7 @@ config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.codera
 
 ## 6. Definition of Done
 
-- [ ] `coder --print -t "..."` 能与模型完成多轮对话（代码路径已用 `ScriptedModel` 覆盖，待用真实 API key 验证一次）
+- [x] `coder --print -t "..."` 能与模型完成多轮对话（已用 DeepSeek 实跑：读文件 → 改代码 → 跑验证 → 汇报，stdout 为纯 JSON）
 - [x] 会话落盘 JSONL，`coder --continue`（M2 实现）之外可手工验证重放
 - [x] 单元测试覆盖事件、会话、配置、循环、CLI 五条主线
 - [x] ruff / pre-commit 通过
