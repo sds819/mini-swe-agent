@@ -96,7 +96,9 @@ def test_model_error_is_reported(tmp_path):
     loop, store, session, bus = _loop(tmp_path, [])
     result = loop.run_turn("trigger an error")
     assert result.stop_reason == "error"
+    assert "AssertionError" in result.error
     assert any(event.type == EventType.ERROR for event in store.events(session.id))
+    assert store.rebuild(session.id).state == SessionState.ERROR
 
 
 def test_conversation_is_restored_from_the_event_log(tmp_path):

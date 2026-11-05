@@ -1,5 +1,6 @@
 """Configuration loading: built-in defaults, project file, user file, CLI overrides."""
 
+import os
 from pathlib import Path
 
 import yaml
@@ -11,6 +12,7 @@ from minisweagent.utils.serialize import recursive_merge
 
 DEFAULTS_PATH = Path(__file__).parent / "defaults.yaml"
 PROJECT_CONFIG = Path(".coderagent") / "config.yaml"
+DEFAULT_MODEL_NAME = "anthropic/claude-sonnet-4-5"
 
 
 def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Config:
@@ -20,7 +22,10 @@ def load_config(specs: list[str] | None = None, cwd: Path | None = None) -> Conf
         if path.exists():
             layers.append(yaml.safe_load(path.read_text(encoding="utf-8")))
     layers.extend(get_config_from_spec(spec) for spec in specs or [])
-    return Config(**recursive_merge(*layers))
+    merged = recursive_merge(*layers)
+    model = merged.setdefault("model", {})
+    model["model_name"] = model.get("model_name") or os.getenv("MSWEA_MODEL_NAME") or DEFAULT_MODEL_NAME
+    return Config(**merged)
 
 
 def _project_config_path(cwd: Path | None) -> Path:

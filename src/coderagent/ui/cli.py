@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import litellm
 import typer
 
 from coderagent.config.loader import load_config
@@ -9,6 +10,9 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
 from coderagent.run import run_turn
 from coderagent.ui.render import render
+
+# litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
+litellm.suppress_debug_info = True
 
 app = typer.Typer(rich_markup_mode="rich")
 

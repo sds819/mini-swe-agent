@@ -22,7 +22,16 @@ def test_json_output_contains_session_and_messages(tmp_path, monkeypatch):
     assert payload["messages"][1]["content"] == "hello"
     assert payload["cost"] == 0.1
     assert payload["stop_reason"] == "end_turn"
+    assert payload["error"] == ""
     assert payload["session_id"]
+
+
+def test_error_is_visible_in_the_output(tmp_path, monkeypatch):
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel([])
+    output = main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path))
+    assert "[error]" in output
+    assert "ran out of responses" in output
 
 
 def test_text_output_shows_the_assistant_message(tmp_path, monkeypatch):

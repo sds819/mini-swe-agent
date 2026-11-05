@@ -21,6 +21,7 @@ class LiteLLMBackend:
         litellm.exceptions.PermissionDeniedError,
         litellm.exceptions.ContextWindowExceededError,
         litellm.exceptions.AuthenticationError,
+        litellm.exceptions.BadRequestError,
         KeyboardInterrupt,
     ]
 

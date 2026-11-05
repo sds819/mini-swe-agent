@@ -1,5 +1,4 @@
 model:
-  model_name: anthropic/claude-sonnet-4-5
   model_kwargs: {}
   max_retries: 3
   routing: {}

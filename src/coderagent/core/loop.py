@@ -19,6 +19,8 @@ class TurnResult:
     """One of `end_turn`, `max_turns`, `cost_exceeded`, `error`."""
     messages: list[dict] = field(default_factory=list)
     """Messages added during this turn."""
+    error: str = ""
+    """Why the turn stopped, if it stopped because of an error."""
 
 
 class AgentLoop:
@@ -59,6 +61,7 @@ class AgentLoop:
         self._set_state(SessionState.THINKING)
 
         stop_reason = "end_turn"
+        error = ""
         cost = 0.0
         n_calls = 0
         while True:
@@ -71,7 +74,8 @@ class AgentLoop:
             try:
                 response = self.model.query(self._context(), tools=self.tools)
             except Exception as e:
-                self._publish(EventType.ERROR, {"error": str(e)})
+                error = f"{type(e).__name__}: {e}"
+                self._publish(EventType.ERROR, {"error": error})
                 stop_reason = "error"
                 break
             n_calls += 1
@@ -93,13 +97,14 @@ class AgentLoop:
             self._set_state(SessionState.THINKING)
 
         self.session.total_cost = self.model.total_cost
-        self._set_state(SessionState.DONE)
+        self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE)
         return TurnResult(
             session_id=self.session.id,
             turn_count=self.session.turn_count,
             cost=cost,
             stop_reason=stop_reason,
             messages=self.messages[start:],
+            error=error,
         )
 
     def _context(self) -> list[dict]:

@@ -7,11 +7,27 @@ from coderagent.config.schema import Config
 
 def test_defaults_are_loaded(tmp_path, monkeypatch):
     monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
     config = load_config([], cwd=tmp_path)
     assert config.model.model_name == "anthropic/claude-sonnet-4-5"
     assert config.agent.max_turns == 50
     assert config.tools.enabled == ["bash"]
     assert config.sandbox.type == "local"
+
+
+def test_model_name_falls_back_to_env_var(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("MSWEA_MODEL_NAME", "deepseek/deepseek-flash")
+    assert load_config([], cwd=tmp_path).model.model_name == "deepseek/deepseek-flash"
+
+
+def test_config_file_wins_over_env_var(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("MSWEA_MODEL_NAME", "deepseek/deepseek-flash")
+    project = tmp_path / ".coderagent" / "config.yaml"
+    project.parent.mkdir(parents=True)
+    project.write_text("model:\n  model_name: openai/gpt-5\n", encoding="utf-8")
+    assert load_config([], cwd=tmp_path).model.model_name == "openai/gpt-5"
 
 
 def test_project_config_overrides_defaults(tmp_path, monkeypatch):

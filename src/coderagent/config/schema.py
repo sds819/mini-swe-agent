@@ -11,7 +11,8 @@ DEFAULT_SYSTEM_PROMPT = (
 
 
 class ModelConfig(BaseModel):
-    model_name: str = "anthropic/claude-sonnet-4-5"
+    model_name: str = ""
+    """Model name. Falls back to $MSWEA_MODEL_NAME and then to a built-in default."""
     model_kwargs: dict = Field(default_factory=dict)
     max_retries: int = 3
     routing: dict[str, str] = Field(default_factory=dict)
