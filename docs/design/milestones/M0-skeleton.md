@@ -248,80 +248,80 @@ config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.codera
 ## 3. 任务分解
 
 ### T0.1 包骨架与打包配置
-- [ ] 创建 `src/coderagent/` 及各级 `__init__.py`
-- [ ] `pyproject.toml`：`packages.find.include` 加 `coderagent*`
-- [ ] `pyproject.toml`：`[project.scripts]` 增加 `coder = "coderagent.ui.cli:app"`
-- [ ] `pyproject.toml`：新增依赖 `tiktoken`（可选 extras，先不装）、`textual` 已在依赖中
-- [ ] 验证 `pip install -e .` 后 `coder --help` 有输出
+- [x] 创建 `src/coderagent/` 及各级 `__init__.py`
+- [x] `pyproject.toml`：`packages.find.include` 加 `coderagent*`
+- [x] `pyproject.toml`：`[project.scripts]` 增加 `coder = "coderagent.ui.cli:app"`
+- [x] `pyproject.toml`：新增依赖 `tiktoken`（可选 extras，先不装）、`textual` 已在依赖中
+- [x] 验证 `pip install -e .` 后 `coder --help` 有输出
 
 **验收**：`python -c "import coderagent"` 成功；`coder --help` 打印帮助。
 
 ### T0.2 协议定义
-- [ ] `core/protocols.py` 定义 `ModelBackend`、`ToolExecutor`
-- [ ] `ModelBackend`：`query`、`query_stream`、`get_template_vars`
-- [ ] `ToolExecutor`：`plan(actions) -> list[dict]`、`execute(actions) -> list[dict]`
-- [ ] 复用 `minisweagent.Environment`（不重复定义）
+- [x] `core/protocols.py` 定义 `ModelBackend`、`ToolExecutor`
+- [x] `ModelBackend`：`query`、`query_stream`、`get_template_vars`
+- [x] `ToolExecutor`：`plan(actions) -> list[dict]`、`execute(actions) -> list[dict]`
+- [x] 复用 `minisweagent.Environment`（不重复定义）
 
 **验收**：mypy/ruff 无未使用导入；协议方法签名与文档一致。
 
 ### T0.3 事件系统
-- [ ] `EventType` 枚举（见 2.1）
-- [ ] `Event` dataclass，`to_dict()` / `from_dict()`
-- [ ] `EventBus.subscribe/publish`
-- [ ] 订阅者异常隔离
+- [x] `EventType` 枚举（见 2.1）
+- [x] `Event` dataclass，`to_dict()` / `from_dict()`
+- [x] `EventBus.subscribe/publish`
+- [x] 订阅者异常隔离
 
 **验收**：`tests/coderagent/test_events.py` — 发布顺序保序；订阅者抛错不影响其他订阅者。
 
 ### T0.4 会话与持久化
-- [ ] `Session` dataclass + `SessionState`
-- [ ] `SessionStore.create/path/append/events/rebuild/list`
-- [ ] `rebuild` 重放规则：最后一条 `STATE_CHANGE` 决定 `state`；累加 `total_cost`/`turn_count`
-- [ ] 会话根目录可用 `MSWEA_CODER_HOME` 环境变量覆盖（便于测试隔离）
+- [x] `Session` dataclass + `SessionState`
+- [x] `SessionStore.create/path/append/events/rebuild/list`
+- [x] `rebuild` 重放规则：最后一条 `STATE_CHANGE` 决定 `state`；累加 `total_cost`/`turn_count`
+- [x] 会话根目录可用 `MSWEA_CODER_HOME` 环境变量覆盖（便于测试隔离）
 
 **验收**：`tests/coderagent/test_session.py` — 追加 5 条事件后 `rebuild` 得到的 Session 与原 Session 一致；`list()` 按创建时间倒序。
 
 ### T0.5 模型网关雏形
-- [ ] `ModelGateway` 包装 `minisweagent.models.litellm_model.LitellmModel`
-- [ ] `query(messages)` → 返回规范化的 assistant message dict
-- [ ] 成本累加进 `Session.total_cost`，并 `bus.publish` 事件
-- [ ] 复用 `minisweagent.models.utils.retry`
+- [x] `ModelGateway` 包装 `minisweagent.models.litellm_model.LitellmModel`
+- [x] `query(messages)` → 返回规范化的 assistant message dict
+- [x] 成本累加进 `Session.total_cost`，并 `bus.publish` 事件
+- [x] 复用 `minisweagent.models.utils.retry`
 
 **验收**：用 `ScriptedModel` 替换后端后，query 返回可预测结构。
 
 ### T0.6 脚本化测试模型
-- [ ] `testing/scripted_model.py`：`ScriptedModel(responses: list[dict])`
-- [ ] 逐次 `query` 弹出下一个响应；耗尽则抛断言错误
-- [ ] 支持通过 `side_effect` 回调做动态响应（如断言收到的 messages）
+- [x] `testing/scripted_model.py`：`ScriptedModel(responses: list[dict])`
+- [x] 逐次 `query` 弹出下一个响应；耗尽则抛断言错误
+- [x] 支持通过 `side_effect` 回调做动态响应（如断言收到的 messages）
 
 **验收**：`tests/coderagent/test_scripted_model.py` — 序列消费正确；耗尽报错清晰。
 
 ### T0.7 主循环
-- [ ] `AgentLoop.run_turn` / `run`
-- [ ] `core/bash_adapter.py`：bash tool_call → `LocalEnvironment.execute`
-- [ ] 限额：`max_turns`、`cost_limit`（超限 → `stop_reason="max_turns"`）
-- [ ] 每轮结束 `store.append` 全部事件
+- [x] `AgentLoop.run_turn` / `run`
+- [x] `core/bash_adapter.py`：bash tool_call → `LocalEnvironment.execute`
+- [x] 限额：`max_turns`、`cost_limit`（超限 → `stop_reason="max_turns"`）
+- [x] 每轮结束 `store.append` 全部事件
 
 **验收**：集成测试用 `ScriptedModel` 走完「用户提问 → 模型请求 bash → 执行 → 模型收尾」两轮。
 
 ### T0.8 配置系统
-- [ ] `config/schema.py`（见 2.4）
-- [ ] `config/defaults.yaml`
-- [ ] `config/loader.py::load_config(specs: list[str], cwd: Path) -> Config`
-- [ ] 四层合并 + `Config` 校验（非法值给出可读错误）
+- [x] `config/schema.py`（见 2.4）
+- [x] `config/defaults.yaml`
+- [x] `config/loader.py::load_config(specs: list[str], cwd: Path) -> Config`
+- [x] 四层合并 + `Config` 校验（非法值给出可读错误）
 
 **验收**：`tests/coderagent/test_config.py` — 四层优先级正确；`model.model_name=x` 覆盖生效。
 
 ### T0.9 CLI 与 headless 输出
-- [ ] `ui/cli.py` typer app，参数见 M3 表格，M0 只实现 `-m/--model -c/--config -t/--task --print --output-format`
-- [ ] `ui/render.py`：`text`（逐行人类可读）、`json`（单行 JSON，字段 `session_id/messages/cost/stop_reason`）
-- [ ] `run.py` 装配：config → model → env → session → loop → renderer
+- [x] `ui/cli.py` typer app，参数见 M3 表格，M0 只实现 `-m/--model -c/--config -t/--task --print --output-format`
+- [x] `ui/render.py`：`text`（逐行人类可读）、`json`（单行 JSON，字段 `session_id/messages/cost/stop_reason`）
+- [x] `run.py` 装配：config → model → env → session → loop → renderer
 
 **验收**：`coder --print --output-format json -t "hi" -m <fake>` 输出合法 JSON，含 `session_id` 与 `messages`。
 
 ### T0.10 文档与收尾
-- [ ] `docs/design/` 链接进 mkdocs nav（可选）
-- [ ] 单元测试跑通 `pytest tests/coderagent -q`
-- [ ] pre-commit（ruff）通过
+- [x] `docs/design/` 链接进 mkdocs nav（可选）
+- [x] 单元测试跑通 `pytest tests/coderagent -q`
+- [x] pre-commit（ruff）通过
 
 ---
 
@@ -352,8 +352,8 @@ config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.codera
 
 ## 6. Definition of Done
 
-- [ ] `coder --print -t "..."` 能与模型完成多轮对话
-- [ ] 会话落盘 JSONL，`coder --continue`（M2 实现）之外可手工验证重放
-- [ ] 单元测试覆盖事件、会话、配置、循环、CLI 五条主线
-- [ ] ruff / pre-commit 通过
-- [ ] 依赖边界：仅使用 `minisweagent` 的公开 API（Protocol、config、environments、models.utils）
+- [ ] `coder --print -t "..."` 能与模型完成多轮对话（代码路径已用 `ScriptedModel` 覆盖，待用真实 API key 验证一次）
+- [x] 会话落盘 JSONL，`coder --continue`（M2 实现）之外可手工验证重放
+- [x] 单元测试覆盖事件、会话、配置、循环、CLI 五条主线
+- [x] ruff / pre-commit 通过
+- [x] 依赖边界：仅使用 `minisweagent` 的公开 API（Protocol、config、environments、models.utils）

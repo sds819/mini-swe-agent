@@ -1,7 +1,6 @@
 """Session state and its persistence. Events are the source of truth, the session is derived."""
 
 import json
-import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -9,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 
 from coderagent.core.events import Event, EventType
+from coderagent.paths import config_home
 
 
 class SessionState(str, Enum):
@@ -36,8 +36,7 @@ class Session:
 
 def default_root() -> Path:
     """Directory holding all session files. Overridable via `MSWEA_CODER_HOME`."""
-    home = os.getenv("MSWEA_CODER_HOME")
-    return (Path(home) if home else Path.home() / ".coderagent") / "sessions"
+    return config_home() / "sessions"
 
 
 class SessionStore:
