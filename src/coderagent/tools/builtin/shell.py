@@ -58,7 +58,9 @@ class BashTool:
             return self._start_background(command, ctx)
 
         env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
-        result = env.execute({"command": command}, cwd=str(ctx.cwd), timeout=timeout)
+        """A remote sandbox has its own working directory, the path of the host means nothing there."""
+        cwd = str(ctx.cwd) if isinstance(env, LocalEnvironment) else ""
+        result = env.execute({"command": command}, cwd=cwd, timeout=timeout)
         output = str(result.get("output", ""))
         content = trim_output(output, ctx.config.max_output_tokens)
         returncode = result.get("returncode", 0)

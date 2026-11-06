@@ -11,9 +11,11 @@ class FakeEnvironment:
 
     def __init__(self) -> None:
         self.commands: list[str] = []
+        self.directories: list[str] = []
 
     def execute(self, action: dict, cwd: str = "", *, timeout: int | None = None) -> dict:
         self.commands.append(action.get("command", ""))
+        self.directories.append(cwd)
         return {"output": "remote output", "returncode": 0, "exception_info": ""}
 
 
@@ -51,6 +53,21 @@ def test_the_bash_tool_runs_in_the_environment_of_the_context(tmp_path):
     assert environment.commands == ["ls -la"]
     assert result.content == "remote output"
     assert not result.is_error
+
+
+def test_the_path_of_the_host_is_not_sent_to_a_remote_sandbox(tmp_path):
+    """The directory of the session does not exist in a container."""
+    environment = FakeEnvironment()
+    context = build_context(tmp_path)
+    context.env = environment
+    BashTool().run({"command": "ls"}, context)
+    assert environment.directories == [""]
+
+
+def test_the_local_commands_run_in_the_working_directory(tmp_path):
+    context = build_context(tmp_path)
+    result = BashTool().run({"command": "pwd"}, context)
+    assert str(tmp_path) in result.content
 
 
 def test_the_bash_tool_falls_back_to_the_local_machine(tmp_path):
