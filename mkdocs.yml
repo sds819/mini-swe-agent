@@ -75,6 +75,7 @@ nav:
       - "Hooks": usage/coderagent_hooks.md
       - "Plugins": usage/coderagent_plugins.md
       - "Sandbox": usage/coderagent_sandbox.md
+      - "Trace export": usage/coderagent_export.md
     - "Language models":
       - "Quick start": models/quickstart.md
       - "Local models": models/local_models.md

@@ -158,13 +158,15 @@ def _init(context: CommandContext, argument: str) -> None:
 
 
 def _cost(context: CommandContext, argument: str) -> None:
+    from coderagent.core.telemetry import collect
+
     loop = context.loop
-    tokens = loop.context.estimated_tokens()
+    metrics = collect(context.store.events(context.session.id))
     context.say(
         f"model: {context.config.model.model_name}\n"
         f"calls: {loop.model.n_calls}\n"
-        f"tokens in the context: {tokens}\n"
-        f"cost so far: ${loop.model.total_cost:.4f}"
+        f"tokens in the context: {loop.context.estimated_tokens()}\n"
+        f"cost so far: ${loop.model.total_cost:.4f}\n" + metrics.report()
     )
 
 

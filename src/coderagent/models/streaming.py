@@ -86,6 +86,8 @@ def message_from_events(events) -> dict:
     reasoning: list[str] = []
     tool_calls: list[dict] = []
     cost = 0.0
+    tokens_in = 0
+    tokens_out = 0
     for event in events:
         if event.type == "text":
             content.append(event.content)
@@ -95,10 +97,26 @@ def message_from_events(events) -> dict:
             tool_calls.append(event.tool_call)
         elif event.type == "usage":
             cost += event.cost
-    message: dict[str, Any] = {"role": "assistant", "content": "".join(content), "extra": {"cost": cost}}
+            prompt, completion = _tokens(event.raw.get("usage"))
+            tokens_in += prompt
+            tokens_out += completion
+    message: dict[str, Any] = {
+        "role": "assistant",
+        "content": "".join(content),
+        "extra": {"cost": cost, "tokens_in": tokens_in, "tokens_out": tokens_out},
+    }
     if reasoning:
         message["extra"]["reasoning"] = "".join(reasoning)
     # An empty tool_calls array is rejected by some providers, so it is left out.
     if tool_calls:
         message["tool_calls"] = tool_calls
     return message
+
+
+def _tokens(usage) -> tuple[int, int]:
+    """The tokens of a usage object, which is a dict or a model."""
+    if usage is None:
+        return 0, 0
+    if isinstance(usage, dict):
+        return int(usage.get("prompt_tokens") or 0), int(usage.get("completion_tokens") or 0)
+    return int(getattr(usage, "prompt_tokens", 0) or 0), int(getattr(usage, "completion_tokens", 0) or 0)

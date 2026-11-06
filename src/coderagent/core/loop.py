@@ -151,6 +151,9 @@ class AgentLoop:
                 break
             n_calls += 1
             cost += response.get("extra", {}).get("cost", 0.0)
+            response.setdefault("extra", {}).update(
+                {"purpose": "main", "model": getattr(self.model.backend, "model_name", "")}
+            )
             self.context.append(response)
             turn_messages.append(response)
             tool_calls = response.get("tool_calls") or []

@@ -78,3 +78,45 @@ def test_an_unknown_command_is_reported(tmp_path, monkeypatch):
     result = CliRunner().invoke(app, ["--task", "/nope", "--cwd", str(tmp_path)])
     assert result.exit_code == 0
     assert "Unknown command" in result.output
+
+
+def test_the_trace_of_a_session_is_exported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(app, ["export", "--session", session.id, "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["trajectory_format"] == "coder-agent-1.0"
+    assert payload["session"]["id"] == session.id
+    assert payload["events"]
+
+
+def test_the_trace_is_written_to_a_file(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    target = tmp_path / "trace.json"
+    result = CliRunner().invoke(
+        app, ["export", "--session", session.id, "--format", "json", "--out", str(target), "--cwd", str(tmp_path)]
+    )
+    assert result.exit_code == 0
+    assert json.loads(target.read_text(encoding="utf-8"))["session"]["id"] == session.id
+
+
+def test_the_trace_is_exported_as_otel(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(app, ["export", "--session", session.id, "--format", "otel", "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "resourceSpans" in json.loads(result.output)
+
+
+def test_an_unknown_format_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(app, ["export", "--session", session.id, "--format", "xml", "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "Unknown format" in result.output

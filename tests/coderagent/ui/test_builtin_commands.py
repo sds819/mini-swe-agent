@@ -276,6 +276,14 @@ def test_the_sandbox_is_shown(tmp_path):
     assert "network: restricted" in answer
 
 
+def test_the_cost_is_attributed(tmp_path):
+    context, output = _context(tmp_path)
+    context.loop.run("hi")
+    answer = _run(context, output, "/cost")
+    assert "by purpose:" in answer
+    assert "main" in answer
+
+
 def test_the_memory_is_shown(tmp_path):
     context, output = _context(tmp_path)
     memory = tmp_path / ".coderagent" / "memory"

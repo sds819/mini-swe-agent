@@ -45,7 +45,9 @@ class TaskTool:
         description = str(params.get("description", ""))
         prompt = str(params.get("prompt", ""))
         result = self.runner.run(spec, description, prompt)
-        return ToolResult(render_result(result), is_error=result["status"] == "error")
+        return ToolResult(
+            render_result({**result, "purpose": spec.model_purpose}), is_error=result["status"] == "error"
+        )
 
 
 __all__ = ["TaskTool"]

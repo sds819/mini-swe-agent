@@ -22,7 +22,16 @@ class _Chunk:
 
 def test_a_message_without_tool_calls_has_no_tool_calls_key():
     message = message_from_events([ModelEvent(type="text", content="hello")])
-    assert message == {"role": "assistant", "content": "hello", "extra": {"cost": 0.0}}
+    assert message == {"role": "assistant", "content": "hello", "extra": {"cost": 0.0, "tokens_in": 0, "tokens_out": 0}}
+
+
+def test_the_tokens_of_the_usage_are_kept():
+    message = message_from_events(
+        [ModelEvent(type="usage", cost=0.5, raw={"usage": {"prompt_tokens": 120, "completion_tokens": 30}})]
+    )
+    assert message["extra"]["tokens_in"] == 120
+    assert message["extra"]["tokens_out"] == 30
+    assert message["extra"]["cost"] == 0.5
 
 
 def test_the_tool_calls_are_kept_when_they_exist():

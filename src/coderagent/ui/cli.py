@@ -15,7 +15,7 @@ from coderagent.ui.render import render
 # litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
 litellm.suppress_debug_info = True
 
-app = typer.Typer(rich_markup_mode="rich")
+app = typer.Typer(rich_markup_mode="rich", invoke_without_command=True, no_args_is_help=False)
 
 
 def main_impl(
@@ -97,8 +97,9 @@ def render_sessions(sessions: list[Session], output_format: str = "text") -> str
 
 
 # fmt: off
-@app.command()
+@app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     task: str = typer.Option("", "-t", "--task", help="Task/problem statement"),
     model_name: str = typer.Option("", "-m", "--model", help="Model to use"),
     config_spec: list[str] = typer.Option([], "-c", "--config", help="Config file or key=value overrides"),
@@ -113,6 +114,8 @@ def main(
     tui: bool = typer.Option(False, "--tui", help="Start the terminal interface"),
 ) -> None:
     # fmt: on
+    if ctx.invoked_subcommand is not None:
+        return
     config = load_config(config_spec, cwd=cwd)
     if model_name:
         config.model.model_name = model_name
@@ -133,3 +136,39 @@ def main(
         run_command(task, config, cwd, store, session)
         return
     typer.echo(main_impl(task, config, cwd, output_format, store=store, session=session, permission_mode=permission_mode or None))
+
+
+@app.command()
+def export(
+    session: str = typer.Option("", "--session", help="The id of the session. The last one when empty."),
+    output_format: str = typer.Option("json", "--format", help="json|otel"),
+    out: str = typer.Option("", "--out", help="The file to write. The standard output when empty."),
+    cwd: Path = typer.Option(Path("."), "--cwd", help="The directory of the session"),
+) -> None:
+    """Write the trace of a session to a file."""
+    import json
+
+    from coderagent.core.telemetry import otel, trace
+
+    store = SessionStore()
+    session_id = session
+    if not session_id:
+        sessions = store.list(cwd)
+        if not sessions:
+            typer.echo("No sessions yet.")
+            return
+        session_id = sessions[0].id
+    events = store.events(session_id)
+    if output_format == "json":
+        data = trace(events, store.rebuild(session_id))
+    elif output_format == "otel":
+        data = otel(events, store.rebuild(session_id))
+    else:
+        typer.echo(f"Unknown format '{output_format}'. Use json or otel.")
+        return
+    text = json.dumps(data, ensure_ascii=False, indent=2)
+    if out:
+        Path(out).write_text(text, encoding="utf-8")
+        typer.echo(f"Wrote {out}")
+        return
+    typer.echo(text)
