@@ -338,82 +338,82 @@ rules:
 ## 5. 任务分解
 
 ### T1.1 工具抽象与上下文
-- [ ] `tools/base.py`：`Tool`、`ToolResult`、`ToolContext`
-- [ ] `ToolContext` 由 `ctx_factory` 延迟构造（避免循环依赖）
+- [x] `tools/base.py`：`Tool`、`ToolResult`、`ToolContext`
+- [x] `ToolContext` 由 `ctx_factory` 延迟构造（避免循环依赖）
 
 **验收**：`tests/coderagent/tools/test_base.py` — `ToolResult` 默认值与 metadata 行为。
 
 ### T1.2 注册表
-- [ ] `register/get/schemas`
-- [ ] 名称冲突：后注册覆盖前注册并告警
-- [ ] `schemas(budget_tokens)` 按优先级裁剪，`bash`/`read` 不可裁剪
+- [x] `register/get/schemas`
+- [x] 名称冲突：后注册覆盖前注册并告警
+- [x] `schemas(budget_tokens)` 按优先级裁剪，`bash`/`read` 不可裁剪
 
 **验收**：注册 3 个工具后 `schemas()` 返回合法 OpenAI 格式；budget=0 时只剩 bash/read。
 
 ### T1.3 文件工具
-- [ ] `read`（行号、offset/limit、二进制检测、长行截断）
-- [ ] `write`（建目录、记录旧内容供 checkpoint）
-- [ ] `edit`（唯一性校验、CRLF、返回 diff）
-- [ ] `multi_edit`（原子性：内存改全量后再落盘）
+- [x] `read`（行号、offset/limit、二进制检测、长行截断）
+- [x] `write`（建目录、记录旧内容供 checkpoint）
+- [x] `edit`（唯一性校验、CRLF、返回 diff）
+- [x] `multi_edit`（原子性：内存改全量后再落盘）
 
 **验收**：`test_fs.py` — edit 在 0 次 / >1 次出现时返回 `is_error`；multi_edit 中途失败时文件内容不变。
 
 ### T1.4 搜索工具
-- [ ] `glob`（`**` 语义、忽略目录、200 条上限）
-- [ ] `grep`（rg 优先 / grep 回退、三种 output_mode、100 条上限）
-- [ ] `ls`
+- [x] `glob`（`**` 语义、忽略目录、200 条上限）
+- [x] `grep`（rg 优先 / grep 回退、三种 output_mode、100 条上限）
+- [x] `ls`
 
 **验收**：`test_search.py` — 用 `tmp_path` 建真实目录树验证 glob/grep 结果。
 
 ### T1.5 Shell 工具
-- [ ] `bash` 包装 `LocalEnvironment`
-- [ ] 输出按 token 裁剪
-- [ ] `run_in_background` + `bash_output` / `bash_kill`
+- [x] `bash` 包装 `LocalEnvironment`
+- [x] 输出按 token 裁剪
+- [x] `run_in_background` + `bash_output` / `bash_kill`
 
 **验收**：`test_shell.py` — 超时命令被进程组 kill，无孤儿进程。
 
 ### T1.6 Todo 工具
-- [ ] `todo_write` 写入 `Session.metadata`
-- [ ] 发布事件供 UI 订阅
+- [x] `todo_write` 写入 `Session.metadata`
+- [x] 发布事件供 UI 订阅
 
 ### T1.7 权限策略
-- [ ] `PermissionMode`、`Rule`、`PermissionPolicy.check`
-- [ ] 五种 mode 的默认规则表
-- [ ] 路径类用 fnmatch glob；bash 用正则
-- [ ] 路径越界检测（`cwd` 外默认 deny）
-- [ ] `check` 返回命中规则（供 UI 解释「为什么被拦」）
+- [x] `PermissionMode`、`Rule`、`PermissionPolicy.check`
+- [x] 五种 mode 的默认规则表
+- [x] 路径类用 fnmatch glob；bash 用正则
+- [x] 路径越界检测（`cwd` 外默认 deny）
+- [x] `check` 返回命中规则（供 UI 解释「为什么被拦」）
 
 **验收**：`test_permissions.py` — 参数化覆盖五种 mode × 六类工具；规则「后写覆盖」语义；`deny` 命中。
 
 ### T1.8 规则文件加载
-- [ ] `rules.py::load_rules(project_dir, user_home) -> list[Rule]`
-- [ ] 校验规则格式，非法规则给出明确报错并指出文件与行号
+- [x] `rules.py::load_rules(project_dir, user_home) -> list[Rule]`
+- [x] 校验规则格式，非法规则给出明确报错并指出文件与行号
 
 ### T1.9 Executor
-- [ ] 解析 tool_call → 规范化 action（含 `tool_call_id`）
-- [ ] 未知工具 → 友好错误 + 可用工具列表
-- [ ] 参数 JSON 解析失败 → 友好错误
-- [ ] 权限决策流程（deny/ask/allow）
-- [ ] 顺序执行 + 并行执行（依赖判定见 2.3），结果按原序重排
+- [x] 解析 tool_call → 规范化 action（含 `tool_call_id`）
+- [x] 未知工具 → 友好错误 + 可用工具列表
+- [x] 参数 JSON 解析失败 → 友好错误
+- [x] 权限决策流程（deny/ask/allow）
+- [x] 顺序执行 + 并行执行（依赖判定见 2.3），结果按原序重排
 
 **验收**：`test_executor.py` — 并行结果的 `tool_call_id` 顺序与输入一致；deny 时不执行工具。
 
 ### T1.10 Approver 与 headless 行为
-- [ ] `HeadlessApprover`：非 TTY → DENY；`bypass` → ALLOW
-- [ ] `AlwaysAllowApprover`：写用户级规则文件
+- [x] `HeadlessApprover`：非 TTY → DENY；`bypass` → ALLOW
+- [x] `AlwaysAllowApprover`：写用户级规则文件
 
 ### T1.11 接入主循环
-- [ ] `AgentLoop` 用 `ToolExecutor` 替换 bash 适配器
-- [ ] `ToolExecutor` 通过 `ctx_factory` 拿当前 Session/Policy
-- [ ] `permissions.mode` 从配置注入
+- [x] `AgentLoop` 用 `ToolExecutor` 替换 bash 适配器
+- [x] `ToolExecutor` 通过 `ctx_factory` 拿当前 Session/Policy
+- [x] `permissions.mode` 从配置注入
 
 ### T1.12 配置扩展
-- [ ] `ToolConfig`：`enabled`、`bash_timeout`、`max_output_tokens`、`include_dirs`
-- [ ] `PermissionConfig`：`mode`、`rules`、`deny_paths`
+- [x] `ToolConfig`：`enabled`、`bash_timeout`、`max_output_tokens`、`include_dirs`
+- [x] `PermissionConfig`：`mode`、`rules`、`deny_paths`
 
 ### T1.13 端到端验证
-- [ ] `ScriptedModel` 驱动一次「read → edit → grep」任务，断言文件内容真实改变
-- [ ] 一次「edit 越界路径」任务，断言被拒绝且文件未变
+- [x] `ScriptedModel` 驱动一次「read → edit → grep」任务，断言文件内容真实改变
+- [x] 一次「edit 越界路径」任务，断言被拒绝且文件未变
 
 ---
 
@@ -447,9 +447,24 @@ rules:
 
 ## 8. Definition of Done
 
-- [ ] 模型可完成「读文件 → 定位 → 编辑 → 验证」的完整任务，文件真实变更
-- [ ] 写操作与 bash 按权限模式正确 allow/ask/deny
-- [ ] headless 模式遇到 ask 不挂起
-- [ ] `edit` 的唯一匹配约束有测试锁定
-- [ ] 并行执行结果顺序与 tool_call 输入一致
-- [ ] ruff / pre-commit 通过
+- [x] 模型可完成「读文件 → 定位 → 编辑 → 验证」的完整任务，文件真实变更
+- [x] 写操作与 bash 按权限模式正确 allow/ask/deny
+- [x] headless 模式遇到 ask 不挂起
+- [x] `edit` 的唯一匹配约束有测试锁定
+- [x] 并行执行结果顺序与 tool_call 输入一致
+- [x] ruff / pre-commit 通过
+
+---
+
+## 9. 实现说明（与原设计的偏差）
+
+| 项 | 设计 | 实现 | 原因 |
+|---|---|---|---|
+| `grep` | 优先 `rg`，回退 `grep -rn` | 纯 Python 实现 | `rg` 在非交互 shell 里常常不在 PATH 上，纯 Python 保证各机器行为一致，也省掉子进程 |
+| `include_dirs` | 属于 `ToolConfig` | 属于 `PermissionConfig` | 它只影响路径越界判定，与权限策略同源 |
+| `todo_write` / `bash_output` / `bash_kill` | 未在默认规则表中 | 归入 `INFO_TOOLS`，任何模式都 allow | 它们只动 agent 自己的记账，不碰仓库，无需审批 |
+| `update_plan` | 与 `todo_write` 二选一 | 只做 `todo_write` | 两者语义重合，M2 再决定是否需要单独的 plan 视图 |
+| 审批 | M3 才有 TUI | M1 就是 `HeadlessApprover`（ask → DENY） | headless 不能阻塞；交互式审批留给 M3 |
+
+**实测**（DeepSeek，`coder --print --permission-mode acceptEdits`）：
+模型连续调用 `read` → `edit` → `grep`，文件真实被改写；默认权限模式下 `edit` 被拒并把原因回传给模型，模型据此改口而不是硬改。
