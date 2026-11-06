@@ -109,6 +109,8 @@ class SessionStore:
                 session.turn_count += 1
             elif event.type == EventType.ASSISTANT_MESSAGE:
                 session.total_cost += payload.get("cost", 0.0)
+            elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
+                session.metadata["todos"] = payload["todos"]
             session.updated_at = event.timestamp
         return session
 

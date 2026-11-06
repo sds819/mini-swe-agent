@@ -93,7 +93,9 @@ class AgentLoop:
             self._publish(EventType.TOOL_CALL, {"actions": actions})
             observations = self.executor.execute(actions)
             self.messages.extend(observations)
-            self._publish(EventType.TOOL_RESULT, {"messages": observations})
+            self._publish(
+                EventType.TOOL_RESULT, {"messages": observations, "todos": self.session.metadata.get("todos", [])}
+            )
             self._set_state(SessionState.THINKING)
 
         self.session.total_cost = self.model.total_cost

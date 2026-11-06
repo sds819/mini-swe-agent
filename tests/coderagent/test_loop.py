@@ -2,13 +2,12 @@ import json
 
 import pytest
 
-from coderagent.core.bash_adapter import BashExecutor
 from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway
+from coderagent.testing.factory import build_executor
 from coderagent.testing.scripted_model import ScriptedModel
-from minisweagent.models.utils.actions_toolcall import BASH_TOOL
 
 
 def _bash_call(command: str, call_id: str = "call_1") -> dict:
@@ -28,13 +27,14 @@ def _loop(tmp_path, responses, **kwargs):
     session = store.create(tmp_path)
     bus = EventBus()
     model = ModelGateway(ScriptedModel(responses))
+    executor = build_executor(tmp_path)
     loop = AgentLoop(
         model,
-        BashExecutor(cwd=str(tmp_path)),
+        executor,
         session,
         store,
         bus,
-        tools=[BASH_TOOL],
+        tools=executor.registry.schemas(),
         **kwargs,
     )
     return loop, store, session, bus
@@ -105,13 +105,14 @@ def test_conversation_is_restored_from_the_event_log(tmp_path):
     loop, store, session, _ = _loop(tmp_path, [_assistant(content="done", cost=0.5)])
     loop.run_turn("first question")
 
+    executor = build_executor(tmp_path)
     resumed = AgentLoop(
         ModelGateway(ScriptedModel([_assistant(content="still here")])),
-        BashExecutor(cwd=str(tmp_path)),
+        executor,
         store.rebuild(session.id),
         store,
         EventBus(),
-        tools=[BASH_TOOL],
+        tools=executor.registry.schemas(),
     )
     assert [message["content"] for message in resumed.messages] == ["first question", "done"]
     result = resumed.run_turn("second question")

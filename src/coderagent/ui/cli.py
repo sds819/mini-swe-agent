@@ -25,9 +25,12 @@ def main_impl(
     *,
     model: ModelBackend | None = None,
     store: SessionStore | None = None,
+    permission_mode: str | None = None,
 ) -> str:
     """Run one turn and render the result."""
-    return render(run_turn(task, config, cwd=cwd, model=model, store=store), output_format)
+    return render(
+        run_turn(task, config, cwd=cwd, model=model, store=store, permission_mode=permission_mode), output_format
+    )
 
 
 # fmt: off
@@ -39,9 +42,10 @@ def main(
     print_mode: bool = typer.Option(False, "--print", help="Non-interactive mode (the only mode in M0)"),
     output_format: str = typer.Option("text", "--output-format", help="text|json"),
     cwd: Path = typer.Option(Path("."), "--cwd", help="Working directory of the session"),
+    permission_mode: str = typer.Option("", "--permission-mode", help="default|acceptEdits|plan|bypass|readonly"),
 ) -> None:
     # fmt: on
     config = load_config(config_spec, cwd=cwd)
     if model_name:
         config.model.model_name = model_name
-    typer.echo(main_impl(task, config, cwd, output_format))
+    typer.echo(main_impl(task, config, cwd, output_format, permission_mode=permission_mode or None))
