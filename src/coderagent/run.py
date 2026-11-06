@@ -14,6 +14,7 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubAgentRunner, load_subagents
+from coderagent.core.telemetry import collect
 from coderagent.extensions.hooks import HookRunner
 from coderagent.extensions.plugins import load as load_plugins
 from coderagent.extensions.reflect import (
@@ -280,4 +281,6 @@ def run_turn(
     if result.stop_reason not in ("error", "cost_exceeded"):
         """A turn that failed or ran out of budget has nothing to remember, and no money to do it."""
         settle(loop, config, cwd)
+    result.session_cost = collect(loop.store.events(loop.session.id)).total_cost
+    """What the whole session cost, read from the event log."""
     return result

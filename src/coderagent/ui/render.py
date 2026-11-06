@@ -21,6 +21,7 @@ def render_json(result: TurnResult) -> str:
             "session_id": result.session_id,
             "messages": result.messages,
             "cost": result.cost,
+            "session_cost": result.session_cost,
             "stop_reason": result.stop_reason,
             "error": result.error,
         },
@@ -34,7 +35,10 @@ def render_text(result: TurnResult) -> str:
         lines.extend(_render_message(message))
     if result.error:
         lines.append(f"[error] {result.error}")
-    lines.append(f"[stop_reason={result.stop_reason} cost={result.cost:.4f} session={result.session_id}]")
+    lines.append(
+        f"[stop_reason={result.stop_reason} cost={result.cost:.4f} "
+        f"session_cost={result.session_cost:.4f} session={result.session_id}]"
+    )
     return "\n".join(lines)
 
 

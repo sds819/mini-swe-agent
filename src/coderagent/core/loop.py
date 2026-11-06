@@ -19,12 +19,15 @@ class TurnResult:
     turn_count: int
     """Number of user-initiated turns in this session so far."""
     cost: float
+    """What this turn cost."""
     stop_reason: str
     """One of `end_turn`, `max_turns`, `cost_exceeded`, `error`."""
     messages: list[dict] = field(default_factory=list)
     """Messages added during this turn."""
     error: str = ""
     """Why the turn stopped, if it stopped because of an error."""
+    session_cost: float = 0.0
+    """What the whole session cost, the turns before this one and the reflection included."""
 
 
 class AgentLoop:

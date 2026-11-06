@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from typer.testing import CliRunner
 
 from coderagent.config.loader import load_config
@@ -24,6 +25,31 @@ def test_json_output_contains_session_and_messages(tmp_path, monkeypatch):
     assert payload["stop_reason"] == "end_turn"
     assert payload["error"] == ""
     assert payload["session_id"]
+
+
+def test_the_session_cost_is_the_whole_session(tmp_path, monkeypatch):
+    """The cost of the session is the cost of the turn and of the reflection."""
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel(
+        [
+            {"role": "assistant", "content": "hello", "tool_calls": [], "extra": {"cost": 0.1}},
+            {
+                "role": "assistant",
+                "content": '{"project_facts": [], "user_preferences": []}',
+                "extra": {"cost": 0.05},
+            },
+        ]
+    )
+    payload = json.loads(main_impl("hi", config, tmp_path, "json", model=model, store=SessionStore(tmp_path)))
+    assert payload["cost"] == 0.1
+    assert payload["session_cost"] == pytest.approx(0.15)
+
+
+def test_the_session_cost_is_in_the_text_output(tmp_path, monkeypatch):
+    config = _config(tmp_path, monkeypatch)
+    model = ScriptedModel([{"role": "assistant", "content": "hello", "tool_calls": [], "extra": {"cost": 0.1}}])
+    output = main_impl("hi", config, tmp_path, "text", model=model, store=SessionStore(tmp_path))
+    assert "session_cost=0.1000" in output
 
 
 def test_error_is_visible_in_the_output(tmp_path, monkeypatch):
