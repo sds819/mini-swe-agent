@@ -19,6 +19,7 @@ class EventType(str, Enum):
     APPROVAL_RESPONSE = "approval_response"
     STATE_CHANGE = "state_change"
     COMPACTION = "compaction"
+    REVERTED = "reverted_to"
     ERROR = "error"
 
 

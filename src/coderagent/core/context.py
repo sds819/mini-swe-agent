@@ -82,6 +82,8 @@ class ContextEngine:
             elif event.type == EventType.COMPACTION:
                 messages = messages[payload.get("compacted_messages", 0) :]
                 summaries = [Summary.from_dict(item) for item in payload.get("summaries", [])]
+            elif event.type == EventType.REVERTED:
+                messages = messages[: payload.get("messages", len(messages))]
         self.history = History(messages)
         self.summaries = summaries
 
@@ -257,6 +259,21 @@ class ContextEngine:
             summary = conservative_summary(payload)
         summary.recent_errors = recent_errors(messages)
         return summary
+
+    def rewind_to(self, messages: int) -> int:
+        """Drop the messages after a checkpoint. Returns how many were dropped."""
+        messages = max(0, min(messages, len(self.history.messages)))
+        dropped = len(self.history.messages) - messages
+        self.history.messages = self.history.messages[:messages]
+        event = Event(
+            type=EventType.REVERTED,
+            session_id=self.session.id,
+            timestamp=time.time(),
+            payload={"messages": messages},
+        )
+        self.bus.publish(event)
+        self.store.append(self.session.id, event)
+        return dropped
 
     def note_path(self, path: str) -> None:
         """Remember the instruction files of a directory the agent just touched."""

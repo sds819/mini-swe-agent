@@ -126,6 +126,44 @@ class SessionStore:
             sessions.append(self.rebuild(meta["id"]))
         return sorted(sessions, key=lambda s: s.created_at, reverse=True)
 
+    def fork(self, session_id: str) -> Session:
+        """Copy a session into a new one. The original stays untouched."""
+        source = self.rebuild(session_id)
+        forked = Session(
+            id=f"{time.strftime('%Y%m%d')}-{uuid.uuid4().hex[:6]}",
+            cwd=source.cwd,
+            created_at=time.time(),
+            updated_at=time.time(),
+            model_name=source.model_name,
+            permission_mode=source.permission_mode,
+        )
+        self.root.mkdir(parents=True, exist_ok=True)
+        self._write_meta(forked)
+        for event in self.events(session_id):
+            self.append(
+                forked.id,
+                Event(
+                    type=event.type,
+                    session_id=forked.id,
+                    timestamp=event.timestamp,
+                    payload=event.payload,
+                ),
+            )
+        self.append(
+            forked.id,
+            Event(
+                type=EventType.STATE_CHANGE,
+                session_id=forked.id,
+                timestamp=forked.created_at,
+                payload={
+                    "state": source.state.value,
+                    "cwd": str(forked.cwd),
+                    "created_at": forked.created_at,
+                },
+            ),
+        )
+        return self.rebuild(forked.id)
+
     def _write_meta(self, session: Session) -> None:
         meta = {
             "id": session.id,

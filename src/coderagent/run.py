@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from coderagent.config.schema import Config
+from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop, TurnResult
@@ -48,10 +49,11 @@ def build_loop(
     *,
     model: ModelBackend | None = None,
     store: SessionStore | None = None,
+    session=None,
     permission_mode: str | None = None,
 ) -> AgentLoop:
     store = store or SessionStore()
-    session = store.create(cwd)
+    session = session or store.create(cwd)
     policy = build_policy(config, cwd, permission_mode)
     session.permission_mode = policy.mode.value
     bus = EventBus()
@@ -71,7 +73,24 @@ def build_loop(
         else None,
     )
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
-    executor = ToolExecutor(registry, policy, lambda: ctx, HeadlessApprover(allow=False), on_path=context.note_path)
+    checkpoints = CheckpointStore(keep=config.checkpoint.keep)
+
+    def before_write(tool: str, params: dict) -> None:
+        """Snapshot the file before a write tool changes it."""
+        path = params.get("path")
+        if path and config.checkpoint.enabled:
+            create_file_checkpoint(
+                checkpoints, session.id, session.turn_count, cwd, str(path), len(context.history.messages)
+            )
+
+    executor = ToolExecutor(
+        registry,
+        policy,
+        lambda: ctx,
+        HeadlessApprover(allow=False),
+        on_path=context.note_path,
+        before_write=before_write,
+    )
     return AgentLoop(
         gateway,
         executor,
@@ -83,6 +102,7 @@ def build_loop(
         system_prompt=config.agent.system_prompt,
         max_turns=config.agent.max_turns,
         cost_limit=config.agent.cost_limit,
+        checkpoints=checkpoints,
     )
 
 
@@ -93,6 +113,9 @@ def run_turn(
     cwd: Path,
     model: ModelBackend | None = None,
     store: SessionStore | None = None,
+    session=None,
     permission_mode: str | None = None,
 ) -> TurnResult:
-    return build_loop(config, cwd, model=model, store=store, permission_mode=permission_mode).run_turn(task)
+    return build_loop(config, cwd, model=model, store=store, session=session, permission_mode=permission_mode).run_turn(
+        task
+    )

@@ -39,6 +39,7 @@ class AgentLoop:
         system_prompt: str = "",
         max_turns: int = 50,
         cost_limit: float = 0.0,
+        checkpoints=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -49,6 +50,7 @@ class AgentLoop:
         self.system_prompt = system_prompt
         self.max_turns = max_turns
         self.cost_limit = cost_limit
+        self.checkpoints = checkpoints
         self.context = context or ContextEngine(
             session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
         )

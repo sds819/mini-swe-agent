@@ -46,3 +46,21 @@ def test_help_is_available():
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "--output-format" in result.output
+
+
+def test_the_sessions_of_the_directory_are_listed(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(app, ["--list", "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert session.id in result.output
+
+
+def test_a_session_can_be_resumed(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    store = SessionStore(tmp_path / "home" / "sessions")
+    session = store.create(tmp_path)
+    result = CliRunner().invoke(app, ["--resume", session.id, "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert session.id in result.output
