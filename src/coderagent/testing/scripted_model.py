@@ -3,6 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
+from coderagent.models.streaming import ModelEvent
+
 
 class ScriptedModel:
     def __init__(
@@ -24,7 +26,12 @@ class ScriptedModel:
         return self.responses.pop(0)
 
     def query_stream(self, messages: list[dict], tools: list[dict] | None = None, **kwargs):
-        yield self.query(messages, tools=tools, **kwargs)
+        message = self.query(messages, tools=tools, **kwargs)
+        if message.get("content"):
+            yield ModelEvent(type="text", content=message["content"])
+        for call in message.get("tool_calls") or []:
+            yield ModelEvent(type="tool_call_done", tool_call=call)
+        yield ModelEvent(type="usage", cost=message.get("extra", {}).get("cost", 0.0))
 
     def get_template_vars(self) -> dict[str, Any]:
         return {"model_name": "scripted"}

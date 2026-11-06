@@ -24,4 +24,14 @@ def test_side_effect_receives_messages():
 
 def test_query_stream_yields_the_scripted_response():
     model = ScriptedModel([{"content": "streamed"}])
-    assert [message["content"] for message in model.query_stream([])] == ["streamed"]
+    events = list(model.query_stream([]))
+    assert [event.type for event in events] == ["text", "usage"]
+    assert events[0].content == "streamed"
+
+
+def test_query_stream_yields_the_tool_calls():
+    call = {"id": "c1", "type": "function", "function": {"name": "read", "arguments": "{}"}}
+    model = ScriptedModel([{"content": "", "tool_calls": [call]}])
+    events = list(model.query_stream([]))
+    assert [event.type for event in events] == ["tool_call_done", "usage"]
+    assert events[0].tool_call == call

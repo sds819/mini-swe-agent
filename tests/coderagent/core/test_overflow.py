@@ -6,10 +6,21 @@ from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
 from coderagent.models.gateway import ModelGateway, is_context_overflow
+from coderagent.models.streaming import ModelEvent
 from coderagent.testing.factory import build_executor
 
 
-class OverflowingModel:
+class StreamableModel:
+    """A model that only implements the non-streaming call."""
+
+    def query_stream(self, messages, tools=None, **kwargs):
+        message = self.query(messages, tools=tools, **kwargs)
+        if message.get("content"):
+            yield ModelEvent(type="text", content=message["content"])
+        yield ModelEvent(type="usage", cost=0.0)
+
+
+class OverflowingModel(StreamableModel):
     """Fails with a context overflow until `fail_times` is reached."""
 
     def __init__(self, fail_times: int = 1, content: str = "done") -> None:
@@ -103,7 +114,7 @@ def test_a_second_overflow_stops_the_turn(tmp_path):
 
 
 def test_an_overflow_with_nothing_to_compact_stops_the_turn(tmp_path):
-    class AlwaysOverflowing:
+    class AlwaysOverflowing(StreamableModel):
         def query(self, messages, tools=None, **kwargs) -> dict:
             raise _overflow()
 
@@ -114,7 +125,7 @@ def test_an_overflow_with_nothing_to_compact_stops_the_turn(tmp_path):
 
 
 def test_a_normal_error_is_not_treated_as_an_overflow(tmp_path):
-    class BrokenModel:
+    class BrokenModel(StreamableModel):
         def query(self, messages, tools=None, **kwargs) -> dict:
             raise RuntimeError("the model is on fire")
 

@@ -1,10 +1,12 @@
 """Model backends and the gateway that fronts them."""
 
+from collections.abc import Iterator
 from typing import Any
 
 import litellm
 
 from coderagent.core.protocols import ModelBackend
+from coderagent.models.streaming import ModelEvent, message_from_events
 
 
 def is_context_overflow(error: Exception) -> bool:
@@ -23,11 +25,17 @@ class ModelGateway:
         self.total_cost = 0.0
         self.n_calls = 0
 
-    def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:
-        message = self.backend.query(messages, tools=tools, **kwargs)
-        self.total_cost += message.get("extra", {}).get("cost", 0.0)
+    def query_stream(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> Iterator[ModelEvent]:
+        """The answer as it arrives. The cost is booked when the provider reports it."""
         self.n_calls += 1
-        return message
+        for event in self.backend.query_stream(messages, tools=tools, **kwargs):
+            if event.type == "usage":
+                self.total_cost += event.cost
+            yield event
+
+    def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:
+        """The whole answer in one piece."""
+        return message_from_events(self.query_stream(messages, tools=tools, **kwargs))
 
     def complete(self, messages: list[dict], **kwargs) -> str:
         """Non-streaming convenience call, e.g. for summarization."""

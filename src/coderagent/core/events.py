@@ -12,6 +12,8 @@ logger = logging.getLogger("coderagent.events")
 class EventType(str, Enum):
     USER_MESSAGE = "user_message"
     ASSISTANT_MESSAGE = "assistant_message"
+    TEXT_DELTA = "text_delta"
+    """A piece of the answer as it arrives. Not written to the event log."""
     REASONING = "reasoning"
     TOOL_CALL = "tool_call"
     TOOL_RESULT = "tool_result"

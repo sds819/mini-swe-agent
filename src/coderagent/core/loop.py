@@ -1,6 +1,7 @@
 """The main loop: user input -> model -> tools -> model, until the model stops."""
 
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 from coderagent.config.schema import ContextConfig
@@ -9,6 +10,7 @@ from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway, is_context_overflow
+from coderagent.models.streaming import ModelEvent, message_from_events
 
 
 @dataclass
@@ -119,16 +121,34 @@ class AgentLoop:
     def _query(self) -> tuple[dict | None, str]:
         """Ask the model. When the provider says the context is too big, compact and try once more."""
         try:
-            return self.model.query(self.context.build_messages(tools=self.tools), tools=self.tools), ""
+            return self._collect(), ""
         except Exception as e:
             if not is_context_overflow(e):
                 return None, f"{type(e).__name__}: {e}"
             if not self.context.force_compact():
                 return None, f"{type(e).__name__}: {e} (nothing left to compact)"
             try:
-                return self.model.query(self.context.build_messages(tools=self.tools), tools=self.tools), ""
+                return self._collect(), ""
             except Exception as retry_error:
                 return None, f"{type(retry_error).__name__}: {retry_error}"
+
+    def _collect(self) -> dict:
+        """Read the answer as it arrives and fold it into one message."""
+        events = self.model.query_stream(self.context.build_messages(tools=self.tools), tools=self.tools)
+        return message_from_events(self._announce(events))
+
+    def _announce(self, events) -> Iterator[ModelEvent]:
+        """Publish the pieces of the answer, so the UI can show them while they arrive."""
+        for event in events:
+            if event.type == "text":
+                self._notify(EventType.TEXT_DELTA, {"content": event.content})
+            elif event.type == "reasoning":
+                self._notify(EventType.REASONING, {"content": event.content})
+            yield event
+
+    def _notify(self, event_type: EventType, payload: dict) -> None:
+        """Publish to the UI only. The event log keeps the whole messages."""
+        self.bus.publish(Event(type=event_type, session_id=self.session.id, timestamp=time.time(), payload=payload))
 
     def _publish(self, event_type: EventType, payload: dict) -> None:
         event = Event(type=event_type, session_id=self.session.id, timestamp=time.time(), payload=payload)
