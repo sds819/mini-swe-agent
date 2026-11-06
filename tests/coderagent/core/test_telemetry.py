@@ -110,6 +110,19 @@ def test_the_cost_of_a_summary_is_part_of_the_total():
     assert metrics.per_purpose_cost == {"main": 0.2, "summarize": 0.05}
 
 
+def test_the_cost_of_a_reflection_is_part_of_the_total():
+    events = [
+        _assistant(0.2),
+        _event(EventType.REFLECTION, {"cost": 0.05, "model": "m2", "tokens_in": 20, "tokens_out": 5}),
+    ]
+    metrics = collect(events)
+    assert metrics.total_cost == pytest.approx(0.25)
+    assert metrics.per_purpose_cost == {"main": 0.2, "reflect": 0.05}
+    assert metrics.per_model_cost == {"m1": 0.2, "m2": 0.05}
+    assert metrics.total_tokens_in == 120
+    assert metrics.total_tokens_out == 30
+
+
 def test_a_tool_result_that_is_not_json_is_ignored():
     events = [
         _event(EventType.TOOL_CALL, {"actions": [{"tool": "task", "tool_call_id": "1"}]}),

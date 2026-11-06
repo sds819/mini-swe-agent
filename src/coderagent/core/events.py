@@ -21,6 +21,8 @@ class EventType(str, Enum):
     APPROVAL_RESPONSE = "approval_response"
     STATE_CHANGE = "state_change"
     COMPACTION = "compaction"
+    REFLECTION = "reflection"
+    """What the model thought was worth remembering at the end of the session."""
     REVERTED = "reverted_to"
     ERROR = "error"
 

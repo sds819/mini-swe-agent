@@ -85,6 +85,15 @@ def collect(events: list[Event]) -> Metrics:
             cost = float(payload.get("cost") or 0.0)
             metrics.total_cost += cost
             metrics.per_purpose_cost["summarize"] = metrics.per_purpose_cost.get("summarize", 0.0) + cost
+        elif event.type == EventType.REFLECTION:
+            cost = float(payload.get("cost") or 0.0)
+            metrics.total_cost += cost
+            metrics.per_purpose_cost["reflect"] = metrics.per_purpose_cost.get("reflect", 0.0) + cost
+            metrics.total_tokens_in += int(payload.get("tokens_in") or 0)
+            metrics.total_tokens_out += int(payload.get("tokens_out") or 0)
+            model = str(payload.get("model") or "")
+            if model:
+                metrics.per_model_cost[model] = metrics.per_model_cost.get(model, 0.0) + cost
         elif event.type == EventType.ERROR:
             metrics.errors += 1
     timestamps = [event.timestamp for event in events if event.timestamp]
