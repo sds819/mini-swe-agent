@@ -16,6 +16,7 @@ from textual.widgets import Input
 
 from coderagent.config.schema import Config
 from coderagent.core.events import Event, EventBus, EventType
+from coderagent.core.sandbox import describe
 from coderagent.core.session import SessionStore
 from coderagent.run import build_loop
 from coderagent.tools.permissions import ApprovalDecision
@@ -234,6 +235,7 @@ class CoderApp(App):
             cwd=str(self.cwd),
             mode=self.loop.executor.policy.mode.value,
             state=state,
+            sandbox=describe(self.loop.sandbox, self.config.sandbox.type),
         )
 
     def _ui(self, callback, *args) -> None:

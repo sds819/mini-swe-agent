@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a coding agent working in a code repository. "
@@ -136,6 +136,9 @@ class UIConfig(BaseModel):
 
 
 class SandboxConfig(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    """The options of the environment, like `image` for a container."""
+
     type: str = "local"
     network: str = "restricted"
     writable_roots: list[str] = Field(default_factory=lambda: ["."])

@@ -312,7 +312,21 @@ def _status(context: CommandContext, argument: str) -> None:
         f"turns: {session.turn_count}\n"
         f"cost: ${session.total_cost:.4f}\n"
         f"cwd: {session.cwd}\n"
-        f"mode: {context.policy.mode.value}"
+        f"mode: {context.policy.mode.value}\n"
+        f"sandbox: {context.config.sandbox.type}"
+    )
+
+
+def _sandbox(context: CommandContext, argument: str) -> None:
+    """Show where the commands of the agent run."""
+    from coderagent.core.sandbox import describe
+
+    sandbox = context.config.sandbox
+    context.say(
+        f"type: {sandbox.type}\n"
+        f"network: {sandbox.network}\n"
+        f"writable roots: {', '.join(sandbox.writable_roots)}\n"
+        f"environment: {describe(context.loop.sandbox, sandbox.type)}"
     )
 
 
@@ -359,5 +373,6 @@ register(Command(name="skills", description="Show the skills that are available"
 register(Command(name="plugins", description="Show the plugins, or trust one of them", handler=_plugins))
 register(Command(name="memory", description="Show the memory of the project and of the user", handler=_memory))
 register(Command(name="status", description="Show the state of the session", handler=_status))
+register(Command(name="sandbox", description="Show where the commands run", handler=_sandbox))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))
 register(Command(name="context", description="Show the size of the context", handler=_context))

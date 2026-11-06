@@ -10,6 +10,7 @@ from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
+from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubAgentRunner, load_subagents
 from coderagent.extensions.hooks import HookRunner
@@ -118,6 +119,7 @@ def build_loop(
         router.main_model = model.get_template_vars().get("model_name", config.model.model_name)
     specs = load_subagents(cwd, user_home)
     skills = load_skills(cwd, user_home)
+    environment = build_environment(config.sandbox, cwd)
     system_prompt = config.agent.system_prompt
     if skill_index(skills):
         system_prompt = f"{system_prompt}\n\n{skill_index(skills)}"
@@ -134,7 +136,7 @@ def build_loop(
         if config.context.summarize_model
         else purpose_gateway(config, gateway, "summarize"),
     )
-    ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
+    ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools, env=environment)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
     runner = SubAgentRunner(
@@ -186,6 +188,7 @@ def build_loop(
         subagents=specs,
         router=router,
         plugins=plugins,
+        sandbox=environment,
     )
 
 

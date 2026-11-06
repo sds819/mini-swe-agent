@@ -47,6 +47,7 @@ class AgentLoop:
         subagents=None,
         router=None,
         plugins=None,
+        sandbox=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -68,6 +69,8 @@ class AgentLoop:
         """The model router, when the session has one."""
         self.plugins = plugins or []
         """The plugins that were loaded, by name."""
+        self.sandbox = sandbox
+        """The environment the commands run in."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(

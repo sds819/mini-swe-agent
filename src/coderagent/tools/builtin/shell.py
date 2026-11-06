@@ -57,7 +57,7 @@ class BashTool:
         if params.get("run_in_background"):
             return self._start_background(command, ctx)
 
-        env = ctx.env if isinstance(ctx.env, CodingEnvironment) else CodingEnvironment(cwd=str(ctx.cwd))
+        env = ctx.env if hasattr(ctx.env, "execute") else CodingEnvironment(cwd=str(ctx.cwd))
         result = env.execute({"command": command}, cwd=str(ctx.cwd), timeout=timeout)
         output = str(result.get("output", ""))
         content = trim_output(output, ctx.config.max_output_tokens)

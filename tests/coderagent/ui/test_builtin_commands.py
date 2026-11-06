@@ -269,6 +269,13 @@ def test_a_plugin_can_be_trusted(tmp_path, monkeypatch):
     assert (tmp_path / "home" / "trusted-plugins.json").exists()
 
 
+def test_the_sandbox_is_shown(tmp_path):
+    context, output = _context(tmp_path)
+    answer = _run(context, output, "/sandbox")
+    assert "type: local" in answer
+    assert "network: restricted" in answer
+
+
 def test_the_memory_is_shown(tmp_path):
     context, output = _context(tmp_path)
     memory = tmp_path / ".coderagent" / "memory"

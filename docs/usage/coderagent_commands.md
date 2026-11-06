@@ -34,6 +34,7 @@ coder --task "/help"  # a command without the interface
 | `/plugins` | The plugins, or trust one of them |
 | `/memory` | The memory of the project and of the user |
 | `/status` | The state of the session |
+| `/sandbox` | Where the commands of the agent run |
 | `/export` | Write the conversation to a file |
 | `/context` | The size of the context |
 

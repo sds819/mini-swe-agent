@@ -97,6 +97,16 @@ def test_the_status_bar_shows_the_session(tmp_path):
     assert bar[0].mode == "default"
 
 
+def test_the_status_bar_shows_the_sandbox_when_it_is_not_local():
+    from coderagent.ui.widgets import StatusBar
+
+    bar = StatusBar()
+    bar.update_status(model="m", sandbox="swerex_docker", mode="default")
+    assert "swerex_docker" in str(bar.render())
+    bar.update_status(sandbox="local")
+    assert "local" not in str(bar.render())
+
+
 def test_a_command_is_answered(tmp_path):
     app = _app(tmp_path)
     blocks = []

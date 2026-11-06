@@ -23,6 +23,7 @@ class StatusBar(Static):
         self.cwd = ""
         self.mode = ""
         self.state = ""
+        self.sandbox = ""
 
     def update_status(self, **kwargs) -> None:
         """Change what the bar shows and redraw it."""
@@ -32,5 +33,8 @@ class StatusBar(Static):
 
     def render_bar(self) -> None:
         tokens = f"{self.tokens / 1000:.1f}k/{self.window / 1000:.0f}k" if self.window else f"{self.tokens}"
-        parts = [part for part in (self.model, tokens, f"${self.cost:.4f}", self.cwd, self.mode, self.state) if part]
+        parts = [part for part in (self.model, tokens, f"${self.cost:.4f}", self.cwd) if part]
+        if self.sandbox and self.sandbox != "local":
+            parts.append(self.sandbox)
+        parts += [part for part in (self.mode, self.state) if part]
         self.update(" | ".join(parts))
