@@ -323,12 +323,9 @@ class CoderApp(App):
 
     def action_quit(self) -> None:
         """Leave, after settling the session in the memory."""
-        from coderagent.run import settle_session
+        from coderagent.run import settle
 
-        try:
-            settle_session(self.loop, self.config, self.cwd)
-        except Exception:
-            logger.debug("The reflection of the session failed", exc_info=True)
+        settle(self.loop, self.config, self.cwd)
         self.exit()
 
 

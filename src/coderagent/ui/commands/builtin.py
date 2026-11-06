@@ -87,9 +87,9 @@ def _compact(context: CommandContext, argument: str) -> None:
 
 
 def _clear(context: CommandContext, argument: str) -> None:
-    from coderagent.run import settle_session
+    from coderagent.run import settle
 
-    settle_session(context.loop, context.config, context.cwd)
+    settle(context.loop, context.config, context.cwd)
     session = context.store.create(context.cwd)
     context.loop.switch_to(session)
     context.session = session
