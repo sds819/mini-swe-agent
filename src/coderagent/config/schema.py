@@ -83,6 +83,45 @@ class CheckpointConfig(BaseModel):
     keep: int = 50
 
 
+class MCPServerConfig(BaseModel):
+    name: str
+    command: str = ""
+    """Command that starts the server, for the stdio transport."""
+    url: str = ""
+    """Address of the server, for the http transport."""
+    env: dict[str, str] = Field(default_factory=dict)
+    headers: dict[str, str] = Field(default_factory=dict)
+    enabled: bool = True
+
+
+class MCPConfig(BaseModel):
+    servers: list[MCPServerConfig] = Field(default_factory=list)
+    timeout: int = 30
+
+
+class HookCommand(BaseModel):
+    type: str = "command"
+    command: str
+    timeout: int = 10
+
+
+class HookMatcher(BaseModel):
+    matcher: str = ""
+    """Regular expression of the tool names this hook applies to. Empty means all."""
+    hooks: list[HookCommand] = Field(default_factory=list)
+
+
+class HookConfig(BaseModel):
+    events: dict[str, list[HookMatcher]] = Field(default_factory=dict)
+
+
+class UIConfig(BaseModel):
+    theme: str = "auto"
+    show_reasoning: bool = True
+    approval_timeout: int = 0
+    """Seconds to wait for an approval. 0 waits forever."""
+
+
 class SandboxConfig(BaseModel):
     type: str = "local"
     network: str = "restricted"
@@ -97,5 +136,8 @@ class Config(BaseModel):
     context: ContextConfig = Field(default_factory=ContextConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     checkpoint: CheckpointConfig = Field(default_factory=CheckpointConfig)
+    mcp: MCPConfig = Field(default_factory=MCPConfig)
+    hooks: HookConfig = Field(default_factory=HookConfig)
+    ui: UIConfig = Field(default_factory=UIConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     cwd: Path = Field(default_factory=Path.cwd)

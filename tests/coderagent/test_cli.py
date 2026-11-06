@@ -64,3 +64,17 @@ def test_a_session_can_be_resumed(tmp_path, monkeypatch):
     result = CliRunner().invoke(app, ["--resume", session.id, "--cwd", str(tmp_path)])
     assert result.exit_code == 0
     assert session.id in result.output
+
+
+def test_a_slash_command_runs_instead_of_a_turn(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(app, ["--task", "/help", "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "/compact" in result.output
+
+
+def test_an_unknown_command_is_reported(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    result = CliRunner().invoke(app, ["--task", "/nope", "--cwd", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "Unknown command" in result.output

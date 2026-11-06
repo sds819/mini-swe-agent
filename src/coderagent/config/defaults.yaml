@@ -39,6 +39,18 @@ checkpoint:
   enabled: true
   keep: 50
 
+mcp:
+  servers: []
+  timeout: 30
+
+hooks:
+  events: {}
+
+ui:
+  theme: auto
+  show_reasoning: true
+  approval_timeout: 0
+
 sandbox:
   type: local
   network: restricted

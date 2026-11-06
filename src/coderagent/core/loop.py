@@ -63,6 +63,22 @@ class AgentLoop:
     def messages(self) -> list[dict]:
         return self.context.history.messages
 
+    def switch_to(self, session: Session) -> None:
+        """Continue in another session, with the history that session already has."""
+        self.session = session
+        self.context = ContextEngine(
+            session,
+            self.store,
+            self.bus,
+            self.context.config,
+            self.model,
+            system_prompt=self.system_prompt,
+            memory_config=self.context.memory_config,
+            summary_model=self.context.summary_model,
+            cwd=session.cwd,
+        )
+        self.context.restore()
+
     def run(self, user_input: str) -> TurnResult:
         """Alias for `run_turn`; the caller drives the conversation."""
         return self.run_turn(user_input)

@@ -8,7 +8,7 @@ import typer
 from coderagent.config.loader import load_config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
-from coderagent.run import run_turn
+from coderagent.run import build_loop, run_turn
 from coderagent.ui.render import render
 
 # litellm prints debug banners to stdout; the CLI owns stdout for machine-readable output.
@@ -47,6 +47,25 @@ def pick_session(
         sessions = store.list(cwd)
         return sessions[0] if sessions else None
     return None
+
+
+def run_command(task: str, config, cwd: Path, store: SessionStore, session: Session | None) -> None:
+    """Run a slash command instead of a turn."""
+    from coderagent.ui.commands import CommandContext, run
+
+    loop = build_loop(config, cwd, store=store, session=session)
+    context = CommandContext(
+        loop=loop,
+        session=loop.session,
+        store=store,
+        bus=loop.bus,
+        cwd=cwd,
+        config=config,
+        policy=loop.executor.policy,
+        checkpoints=loop.checkpoints,
+        output=typer.echo,
+    )
+    run(context, task)
 
 
 def render_sessions(sessions: list[Session], output_format: str = "text") -> str:
@@ -101,5 +120,8 @@ def main(
     session = pick_session(store, cwd, resume, continue_last, fork)
     if not task:
         typer.echo(f"session {session.id}" if session else "no task given")
+        return
+    if task.startswith("/"):
+        run_command(task, config, cwd, store, session)
         return
     typer.echo(main_impl(task, config, cwd, output_format, store=store, session=session, permission_mode=permission_mode or None))
