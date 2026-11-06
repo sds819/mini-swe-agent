@@ -4,8 +4,9 @@ import json
 from pathlib import Path
 
 from coderagent.config.schema import Config, MemoryConfig
-from coderagent.core.events import EventBus
+from coderagent.core.events import EventBus, EventType
 from coderagent.core.session import SessionStore
+from coderagent.core.telemetry import collect
 from coderagent.extensions.reflect import (
     MAX_LINES,
     append_facts,
@@ -20,6 +21,7 @@ from coderagent.extensions.reflect import (
     user_memory_path,
 )
 from coderagent.models.gateway import ModelGateway
+from coderagent.models.streaming import ModelEvent
 from coderagent.run import settle_session
 from coderagent.testing.scripted_model import ScriptedModel
 
@@ -119,7 +121,7 @@ def test_forgetting_something_that_is_not_there_says_so(tmp_path):
     assert forget(project_memory_path(tmp_path, _memory(tmp_path)), "nothing") is False
 
 
-def _loop(tmp_path, answer: str):
+def _loop(tmp_path, answer: str, cost: float = 0.0):
     from coderagent.core.loop import AgentLoop
     from coderagent.testing.factory import build_executor
 
@@ -127,7 +129,7 @@ def _loop(tmp_path, answer: str):
     session = store.create(tmp_path)
     executor = build_executor(tmp_path)
     loop = AgentLoop(
-        ModelGateway(ScriptedModel([{"role": "assistant", "content": answer}])),
+        ModelGateway(ScriptedModel([{"role": "assistant", "content": answer, "extra": {"cost": cost}}])),
         executor,
         session,
         store,
@@ -186,3 +188,57 @@ def test_a_session_without_messages_is_not_settled(tmp_path):
     )
     assert settle_session(loop, config, tmp_path, user_home=_user_home(tmp_path)).project_facts == []
     assert not project_memory_path(tmp_path, config.memory).exists()
+
+
+def test_the_reflection_is_in_the_event_log(tmp_path):
+    """The call of the model is a call like any other: it is in the log."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    loop = _loop(tmp_path, _answer(project_facts=["the tests need pytest -m slow"]), cost=0.25)
+    settle_session(loop, config, tmp_path, user_home=_user_home(tmp_path))
+    reflections = [e for e in loop.store.events(loop.session.id) if e.type == EventType.REFLECTION]
+    assert len(reflections) == 1
+    assert reflections[0].payload["cost"] == 0.25
+    assert reflections[0].payload["purpose"] == "reflect"
+    assert reflections[0].payload["project_facts"] == ["the tests need pytest -m slow"]
+
+
+def test_the_cost_of_the_reflection_is_part_of_the_session(tmp_path):
+    """The money of the reflection is the money of the session."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    loop = _loop(tmp_path, _answer(project_facts=[]), cost=0.25)
+    settle_session(loop, config, tmp_path, user_home=_user_home(tmp_path))
+    assert loop.model.total_cost == 0.25
+    assert loop.session.total_cost == 0.25
+    assert collect(loop.store.events(loop.session.id)).total_cost == 0.25
+
+
+def test_the_reflection_on_its_own_model_is_booked_on_the_main_one(tmp_path):
+    """The reflection ran on another model, but the budget of the session still covers it."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    loop = _loop(tmp_path, _answer(project_facts=[]))
+    other = ModelGateway(ScriptedModel([{"role": "assistant", "content": _answer(), "extra": {"cost": 0.5}}]))
+    settle_session(loop, config, tmp_path, gateway=other, user_home=_user_home(tmp_path))
+    assert loop.model.total_cost == 0.5
+    assert collect(loop.store.events(loop.session.id)).total_cost == 0.5
+    assert other.total_cost == 0.5
+
+
+def test_a_reflection_that_fails_is_still_paid_for(tmp_path):
+    """The provider took the money before it failed: the cost is in the log anyway."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    loop = _loop(tmp_path, _answer(project_facts=[]))
+
+    class BrokenModel(ScriptedModel):
+        def query_stream(self, messages, tools=None, **kwargs):
+            yield ModelEvent(type="usage", cost=0.3)
+            raise RuntimeError("the provider is down")
+
+    settle_session(loop, config, tmp_path, gateway=ModelGateway(BrokenModel()), user_home=_user_home(tmp_path))
+    reflections = [e for e in loop.store.events(loop.session.id) if e.type == EventType.REFLECTION]
+    assert reflections[0].payload["cost"] == 0.3
+    assert loop.model.total_cost == 0.3
+    assert collect(loop.store.events(loop.session.id)).total_cost == 0.3

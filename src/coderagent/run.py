@@ -1,13 +1,14 @@
 """Assembly of the coding agent: config -> model -> environment -> session -> loop."""
 
 import logging
+import time
 from pathlib import Path
 
 from coderagent.config.schema import Config, ContextConfig
 from coderagent.core.budget import context_window_for
 from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
 from coderagent.core.context import ContextEngine
-from coderagent.core.events import EventBus
+from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.sandbox import build_environment
@@ -193,30 +194,63 @@ def build_loop(
 
 
 def settle_session(
-    loop: AgentLoop, config: Config, cwd: Path, confirm=None, user_home: Path | None = None
+    loop: AgentLoop, config: Config, cwd: Path, confirm=None, user_home: Path | None = None, gateway=None
 ) -> Reflection:
     """Ask the model what is worth remembering and write it down.
 
     The facts about the project are written right away. The preferences of the
     user are only written when `confirm` says so, otherwise they wait.
+
+    The call of the model is a call like any other: it lands in the event log and
+    its cost is part of the cost of the session.
     """
     messages = loop.context.history.messages
     if not messages:
         return Reflection()
-    gateway = purpose_gateway(config, loop.model, "reflect")
+    gateway = gateway or purpose_gateway(config, loop.model, "reflect")
+    before = gateway.total_cost
+    message: dict = {}
     try:
-        answer = gateway.complete([{"role": "user", "content": reflect_prompt(messages)}])
+        message = gateway.query([{"role": "user", "content": reflect_prompt(messages)}])
     except Exception:
         logger.warning("The reflection of the session failed", exc_info=True)
-        return Reflection()
-    reflection = parse_reflection(answer)
+    cost = gateway.total_cost - before
+    if gateway is not loop.model:
+        """The reflection ran on its own model, so its cost is booked on the main one."""
+        loop.model.total_cost += cost
+    reflection = parse_reflection(message.get("content", ""))
     append_facts(project_memory_path(cwd, config.memory), reflection.project_facts, "# Project memory")
     if reflection.user_preferences:
         if confirm is not None and confirm(reflection.user_preferences):
             append_user_preferences(user_memory_path(config.memory, user_home), reflection.user_preferences)
         else:
             append_facts(pending_path(cwd), reflection.user_preferences, PENDING_HEADER)
+    _record_reflection(loop, gateway, cost, message, reflection)
     return reflection
+
+
+def _record_reflection(
+    loop: AgentLoop, gateway: ModelGateway, cost: float, message: dict, reflection: Reflection
+) -> None:
+    """Put the reflection in the event log, so that the money it cost is in the trace."""
+    extra = message.get("extra") or {}
+    event = Event(
+        type=EventType.REFLECTION,
+        session_id=loop.session.id,
+        timestamp=time.time(),
+        payload={
+            "cost": cost,
+            "purpose": "reflect",
+            "model": getattr(gateway.backend, "model_name", ""),
+            "tokens_in": int(extra.get("tokens_in") or 0),
+            "tokens_out": int(extra.get("tokens_out") or 0),
+            "project_facts": reflection.project_facts,
+            "user_preferences": reflection.user_preferences,
+        },
+    )
+    loop.bus.publish(event)
+    loop.store.append(loop.session.id, event)
+    loop.session.total_cost = loop.model.total_cost
 
 
 def run_turn(
