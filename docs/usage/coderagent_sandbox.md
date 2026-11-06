@@ -38,6 +38,17 @@ sandbox:
 The credentials of the remote sandboxes (`SWE_REX_SERVER_URL`,
 `SWE_REX_API_KEY`, …) come from the environment or from the `.env` file.
 
+The container works in its own directory, not in the directory of the session:
+the path of the host does not exist in a container. Give the container a
+directory of its own with the `cwd` option:
+
+```yaml
+sandbox:
+  type: swerex_docker
+  image: python:3.11
+  cwd: /workspace
+```
+
 ## What the interface shows
 
 The bar at the top of the interface names the sandbox when it is not the local

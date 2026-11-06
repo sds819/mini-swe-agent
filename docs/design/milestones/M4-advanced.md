@@ -444,6 +444,8 @@ coder export --session <id> --format otel --out trace.otlp
 
 - 只有 `bash` 工具的命令进沙箱。mini-swe-agent 的 `Environment` 协议只有 `execute`，
   没有文件操作，所以 `read`/`write`/`edit` 仍然作用于本机文件系统。
+- 容器有自己的工作目录。本机会话的路径在容器里不存在，所以不传；要在容器里换目录，
+  用 `sandbox.cwd`。
 - 远程沙箱里的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 魔法被关掉了：一轮对话由模型说
   结束，而不是由一个哨兵字符串结束。
 - 容器 checkpoint 没有实现。它需要沙箱支持快照，而 mini 的环境没有这个接口。
