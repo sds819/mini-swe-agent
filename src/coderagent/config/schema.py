@@ -5,9 +5,25 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 DEFAULT_SYSTEM_PROMPT = (
-    "You are a coding agent. Use the bash tool to inspect and change the codebase. "
+    "You are a coding agent working in a code repository. "
+    "Prefer the dedicated tools over shell commands: `read` to look at a file, `glob`/`grep`/`ls` to find code, "
+    "`edit`/`multi_edit` to change files, and `bash` for builds, tests and pipelines. "
     "Complete the task the user describes and summarize what you changed."
 )
+
+BUILTIN_TOOL_NAMES = [
+    "read",
+    "write",
+    "edit",
+    "multi_edit",
+    "glob",
+    "grep",
+    "ls",
+    "bash",
+    "bash_output",
+    "bash_kill",
+    "todo_write",
+]
 
 
 class ModelConfig(BaseModel):
@@ -28,14 +44,20 @@ class AgentConfig(BaseModel):
 
 
 class ToolConfig(BaseModel):
-    enabled: list[str] = Field(default_factory=lambda: ["bash"])
+    enabled: list[str] = Field(default_factory=lambda: list(BUILTIN_TOOL_NAMES))
+    """Names of the tools the model may call."""
+    disabled: list[str] = Field(default_factory=list)
     bash_timeout: int = 120
     max_output_tokens: int = 8000
 
 
 class PermissionConfig(BaseModel):
     mode: str = "default"
+    """One of default, acceptEdits, plan, bypass, readonly."""
     rules: list[dict] = Field(default_factory=list)
+    deny_paths: list[str] = Field(default_factory=list)
+    include_dirs: list[str] = Field(default_factory=list)
+    """Directories outside the working directory that the agent may still touch."""
 
 
 class SandboxConfig(BaseModel):

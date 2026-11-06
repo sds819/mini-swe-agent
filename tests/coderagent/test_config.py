@@ -2,7 +2,12 @@ import pytest
 from pydantic import ValidationError
 
 from coderagent.config.loader import load_config
-from coderagent.config.schema import Config
+from coderagent.config.schema import BUILTIN_TOOL_NAMES, Config
+from coderagent.tools.builtin import TOOL_NAMES
+
+
+def test_builtin_tool_names_match_the_config():
+    assert BUILTIN_TOOL_NAMES == TOOL_NAMES
 
 
 def test_defaults_are_loaded(tmp_path, monkeypatch):
@@ -11,7 +16,7 @@ def test_defaults_are_loaded(tmp_path, monkeypatch):
     config = load_config([], cwd=tmp_path)
     assert config.model.model_name == "anthropic/claude-sonnet-4-5"
     assert config.agent.max_turns == 50
-    assert config.tools.enabled == ["bash"]
+    assert config.tools.enabled == BUILTIN_TOOL_NAMES
     assert config.sandbox.type == "local"
 
 

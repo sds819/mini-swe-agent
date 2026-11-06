@@ -5,18 +5,21 @@ model:
   set_cache_control: null
 
 agent:
-  system_prompt: "You are a coding agent. Use the bash tool to inspect and change the codebase. Complete the task the user describes and summarize what you changed."
+  system_prompt: "You are a coding agent working in a code repository. Prefer the dedicated tools over shell commands: `read` to look at a file, `glob`/`grep`/`ls` to find code, `edit`/`multi_edit` to change files, and `bash` for builds, tests and pipelines. Complete the task the user describes and summarize what you changed."
   max_turns: 50
   cost_limit: 0.0
 
 tools:
-  enabled: [bash]
+  enabled: [read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write]
+  disabled: []
   bash_timeout: 120
   max_output_tokens: 8000
 
 permissions:
   mode: default
   rules: []
+  deny_paths: []
+  include_dirs: []
 
 sandbox:
   type: local
