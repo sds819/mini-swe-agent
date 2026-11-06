@@ -43,6 +43,7 @@ class AgentLoop:
         cost_limit: float = 0.0,
         checkpoints=None,
         hooks=None,
+        mcp=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -56,6 +57,8 @@ class AgentLoop:
         self.checkpoints = checkpoints
         self.hooks = hooks
         """The hook runner, when the session has hooks."""
+        self.mcp = mcp
+        """The MCP manager, when the session has servers."""
         self.context = context or ContextEngine(
             session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
         )

@@ -16,6 +16,7 @@ from coderagent.models.gateway import ModelGateway
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
 from coderagent.tools.executor import ToolExecutor
+from coderagent.tools.mcp import MCPManager
 from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rule
 from coderagent.tools.rules import load_rules
 
@@ -67,6 +68,9 @@ def build_loop(
     session.permission_mode = policy.mode.value
     bus = EventBus()
     registry = build_registry(config.tools.enabled, config.tools.disabled)
+    mcp = MCPManager(config.mcp, bus)
+    for tool in mcp.start():
+        registry.register(tool)
     backend = model if model is not None else build_model(config)
     gateway = ModelGateway(backend)
     context = ContextEngine(
@@ -116,6 +120,7 @@ def build_loop(
         cost_limit=config.agent.cost_limit,
         checkpoints=checkpoints,
         hooks=hooks,
+        mcp=mcp,
     )
 
 

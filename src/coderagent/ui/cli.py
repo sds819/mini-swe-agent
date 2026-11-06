@@ -63,6 +63,7 @@ def run_command(task: str, config, cwd: Path, store: SessionStore, session: Sess
         config=config,
         policy=loop.executor.policy,
         checkpoints=loop.checkpoints,
+        mcp=loop.mcp,
         output=typer.echo,
     )
     run(context, task)
