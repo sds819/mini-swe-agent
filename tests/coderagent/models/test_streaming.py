@@ -46,8 +46,8 @@ def test_broken_arguments_are_reported():
 
 
 def test_the_text_of_the_events_becomes_the_content():
-    events = [ModelEvent(type="text", content="hel"), ModelEvent(type="text", content="lo")]
-    assert message_from_events(events)["content"] == "hello"
+    events = [ModelEvent(type="text", content="wor"), ModelEvent(type="text", content="ld")]
+    assert message_from_events(events)["content"] == "world"
 
 
 def test_the_reasoning_is_not_mixed_into_the_text():
