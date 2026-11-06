@@ -118,6 +118,8 @@ class ToolExecutor:
                 action["tool_call_id"], f"Error: '{action['tool']}' failed: {type(e).__name__}: {e}"
             )
         self._publish(action, result, ctx)
+        if result.metadata.get("truncated"):
+            ctx.session.metadata.setdefault("truncated_outputs", []).append(result.metadata["truncated"])
         return self._observation(action["tool_call_id"], result.content)
 
     def _observation(self, tool_call_id: str, content: str) -> dict:

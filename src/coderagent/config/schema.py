@@ -60,6 +60,29 @@ class PermissionConfig(BaseModel):
     """Directories outside the working directory that the agent may still touch."""
 
 
+class ContextConfig(BaseModel):
+    context_window: int = 200000
+    reserved_output: int = 8000
+    compact_threshold: float = 0.8
+    keep_recent_turns: int = 20
+    keep_recent_token_ratio: float = 0.4
+    compact_every_turns: int = 40
+    auto_compact: bool = True
+    summarize_model: str = ""
+    """Model used for summarization. Empty means the same model as the agent."""
+
+
+class MemoryConfig(BaseModel):
+    project_path: str = ".coderagent/memory"
+    user_path: str = "~/.coderagent/CLAUDE.md"
+    enabled: bool = True
+
+
+class CheckpointConfig(BaseModel):
+    enabled: bool = True
+    keep: int = 50
+
+
 class SandboxConfig(BaseModel):
     type: str = "local"
     network: str = "restricted"
@@ -71,5 +94,8 @@ class Config(BaseModel):
     agent: AgentConfig = Field(default_factory=AgentConfig)
     tools: ToolConfig = Field(default_factory=ToolConfig)
     permissions: PermissionConfig = Field(default_factory=PermissionConfig)
+    context: ContextConfig = Field(default_factory=ContextConfig)
+    memory: MemoryConfig = Field(default_factory=MemoryConfig)
+    checkpoint: CheckpointConfig = Field(default_factory=CheckpointConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     cwd: Path = Field(default_factory=Path.cwd)

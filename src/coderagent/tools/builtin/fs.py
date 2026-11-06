@@ -4,6 +4,7 @@ import difflib
 from pathlib import Path
 from typing import Any
 
+from coderagent.core.tokens import trim_lines
 from coderagent.tools.base import ToolContext, ToolResult, resolve_path
 
 MAX_LINE_LENGTH = 2000
@@ -93,17 +94,26 @@ class ReadTool:
         offset = max(1, int(params.get("offset") or 1))
         limit = max(1, int(params.get("limit") or DEFAULT_READ_LIMIT))
         selected = lines[offset - 1 : offset - 1 + limit]
-        width = len(str(offset + len(selected) - 1)) if selected else 0
+        truncated, info = trim_lines(selected, ctx.config.max_output_tokens)
+        width = len(str(offset + len(truncated) - 1)) if truncated else 0
         rendered = []
-        for number, line in enumerate(selected, start=offset):
+        for number, line in enumerate(truncated, start=offset):
             if len(line) > MAX_LINE_LENGTH:
                 line = line[:MAX_LINE_LENGTH] + "... [line truncated]"
             rendered.append(f"{number:>{width}}\t{line}")
         output = "\n".join(rendered)
-        last = offset + len(selected) - 1
-        if last < len(lines):
+        last = offset + len(truncated) - 1
+        if last < len(lines) and not info:
             output += f"\n... (showing lines {offset}-{last} of {len(lines)}, use offset={last + 1} to continue)"
-        return ToolResult(output, metadata={"path": str(target), "lines": len(lines)})
+        metadata: dict[str, Any] = {"path": str(target), "lines": len(lines)}
+        if info:
+            metadata["truncated"] = {
+                "path": path,
+                "start_line": offset + info["start_line"] - 1,
+                "end_line": offset + info["end_line"] - 1,
+                "elided_lines": info["elided_lines"],
+            }
+        return ToolResult(output, metadata=metadata)
 
 
 class WriteTool:

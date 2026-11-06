@@ -9,6 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from coderagent.core.tokens import trim_text
 from coderagent.tools.base import ToolContext, ToolResult
 from minisweagent.environments.local import LocalEnvironment
 
@@ -28,13 +29,7 @@ class CodingEnvironment(LocalEnvironment):
 
 def trim_output(text: str, max_output_tokens: int) -> str:
     """Keep the head and the tail of long output, elide the middle."""
-    limit = max(1, int(int(max_output_tokens) * CHARS_PER_TOKEN))
-    if len(text) <= limit:
-        return text
-    head = limit // 2
-    tail = limit - head
-    elided = len(text) - limit
-    return f"{text[:head]}\n... [{elided} characters elided] ...\n{text[-tail:]}"
+    return trim_text(text, max_output_tokens)[0]
 
 
 class BashTool:
