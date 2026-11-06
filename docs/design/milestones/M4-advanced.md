@@ -474,4 +474,6 @@ coder export --session <id> --format otel --out trace.otlp
   别的模型上时，花费记到主 gateway 上，所以主会话的预算仍然管得住它。
 - 一个会话的花费 = 事件日志里所有调用的花费之和。session、trace 指标、`/cost` 和
   `coder export` 报的是同一个数字。
+- `coder` 的输出报两个数：`cost` 是**这一轮**的花费，`session_cost` 是**整个会话**的花费
+  （前面的轮次与结尾那次沉淀都算在内）。会话总额从事件日志算出来，所以它跟 trace 一致。
 - 子 agent 的 `files_touched` 只列**改过**的文件。读过的文件不算，读不是改。
