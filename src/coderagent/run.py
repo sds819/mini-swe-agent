@@ -1,5 +1,6 @@
 """Assembly of the coding agent: config -> model -> environment -> session -> loop."""
 
+import logging
 from pathlib import Path
 
 from coderagent.config.schema import Config, ContextConfig
@@ -12,6 +13,17 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubAgentRunner, load_subagents
 from coderagent.extensions.hooks import HookRunner
+from coderagent.extensions.reflect import (
+    PENDING_HEADER,
+    Reflection,
+    append_facts,
+    append_user_preferences,
+    parse_reflection,
+    pending_path,
+    project_memory_path,
+    reflect_prompt,
+    user_memory_path,
+)
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
@@ -22,6 +34,8 @@ from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.mcp import MCPManager
 from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rule
 from coderagent.tools.rules import load_rules
+
+logger = logging.getLogger("coderagent.run")
 
 
 def build_model(config: Config, model_name: str = "") -> ModelBackend:
@@ -155,6 +169,33 @@ def build_loop(
         subagents=specs,
         router=router,
     )
+
+
+def settle_session(
+    loop: AgentLoop, config: Config, cwd: Path, confirm=None, user_home: Path | None = None
+) -> Reflection:
+    """Ask the model what is worth remembering and write it down.
+
+    The facts about the project are written right away. The preferences of the
+    user are only written when `confirm` says so, otherwise they wait.
+    """
+    messages = loop.context.history.messages
+    if not messages:
+        return Reflection()
+    gateway = purpose_gateway(config, loop.model, "reflect")
+    try:
+        answer = gateway.complete([{"role": "user", "content": reflect_prompt(messages)}])
+    except Exception:
+        logger.warning("The reflection of the session failed", exc_info=True)
+        return Reflection()
+    reflection = parse_reflection(answer)
+    append_facts(project_memory_path(cwd, config.memory), reflection.project_facts, "# Project memory")
+    if reflection.user_preferences:
+        if confirm is not None and confirm(reflection.user_preferences):
+            append_user_preferences(user_memory_path(config.memory, user_home), reflection.user_preferences)
+        else:
+            append_facts(pending_path(cwd), reflection.user_preferences, PENDING_HEADER)
+    return reflection
 
 
 def run_turn(

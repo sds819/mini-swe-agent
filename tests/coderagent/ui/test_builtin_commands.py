@@ -234,3 +234,22 @@ def test_the_sub_agents_are_shown(tmp_path):
     assert "code-explorer" in answer
     assert "verifier" in answer
     assert "read, grep" in answer
+
+
+def test_the_memory_is_shown(tmp_path):
+    context, output = _context(tmp_path)
+    memory = tmp_path / ".coderagent" / "memory"
+    memory.mkdir(parents=True)
+    (memory / "projects.md").write_text("# Project memory\n\n- the build is make build\n", encoding="utf-8")
+    answer = _run(context, output, "/memory")
+    assert "the build is make build" in answer
+    assert "pending preferences" in answer
+
+
+def test_a_fact_can_be_forgotten(tmp_path):
+    context, output = _context(tmp_path)
+    memory = tmp_path / ".coderagent" / "memory"
+    memory.mkdir(parents=True)
+    (memory / "projects.md").write_text("# Project memory\n\n- the build is make build\n", encoding="utf-8")
+    assert "Removed" in _run(context, output, "/memory forget the build is make build")
+    assert "make build" not in (memory / "projects.md").read_text(encoding="utf-8")

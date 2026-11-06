@@ -87,6 +87,9 @@ def _compact(context: CommandContext, argument: str) -> None:
 
 
 def _clear(context: CommandContext, argument: str) -> None:
+    from coderagent.run import settle_session
+
+    settle_session(context.loop, context.config, context.cwd)
     session = context.store.create(context.cwd)
     context.loop.switch_to(session)
     context.session = session
@@ -225,6 +228,45 @@ def _agents(context: CommandContext, argument: str) -> None:
     )
 
 
+def _memory(context: CommandContext, argument: str) -> None:
+    from coderagent.extensions.reflect import (
+        append_user_preferences,
+        clear_pending,
+        forget,
+        pending_path,
+        project_memory_path,
+        read_pending,
+        user_memory_path,
+    )
+
+    cwd = context.cwd
+    project = project_memory_path(cwd, context.config.memory)
+    pending = read_pending(cwd)
+    if argument == "confirm":
+        preferences = clear_pending(cwd)
+        written = append_user_preferences(user_memory_path(context.config.memory), preferences)
+        context.say(f"Wrote {len(written.written)} preference(s) to {user_memory_path(context.config.memory)}.")
+        return
+    if argument.startswith("forget "):
+        text = argument[len("forget ") :].strip()
+        removed = forget(project, text) or forget(pending_path(cwd), text)
+        context.say("Removed." if removed else "Nothing like that in the memory.")
+        return
+    lines = ["project memory:"]
+    lines += [f"  {line}" for line in _lines_of(project)]
+    lines.append("pending preferences:")
+    lines += [f"  {item}" for item in pending] if pending else ["  none"]
+    lines.append("user memory:")
+    lines += [f"  {line}" for line in _lines_of(user_memory_path(context.config.memory))]
+    context.say("\n".join(lines))
+
+
+def _lines_of(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    return [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def _status(context: CommandContext, argument: str) -> None:
     session = context.session
     context.say(
@@ -276,6 +318,7 @@ register(Command(name="mcp", description="Show the MCP servers", handler=_mcp))
 register(Command(name="permissions", description="Show the rules that are in effect", handler=_permissions))
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
 register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))
+register(Command(name="memory", description="Show the memory of the project and of the user", handler=_memory))
 register(Command(name="status", description="Show the state of the session", handler=_status))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))
 register(Command(name="context", description="Show the size of the context", handler=_context))

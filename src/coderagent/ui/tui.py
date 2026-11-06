@@ -319,6 +319,16 @@ class CoderApp(App):
         else:
             self.exit()
 
+    def action_quit(self) -> None:
+        """Leave, after settling the session in the memory."""
+        from coderagent.run import settle_session
+
+        try:
+            settle_session(self.loop, self.config, self.cwd)
+        except Exception:
+            logger.debug("The reflection of the session failed", exc_info=True)
+        self.exit()
+
 
 def main(config: Config, cwd: Path, **kwargs) -> None:
     """Run the interface."""
