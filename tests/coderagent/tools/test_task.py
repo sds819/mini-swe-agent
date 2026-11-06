@@ -127,7 +127,8 @@ def test_the_result_is_structured(tmp_path):
     assert result["cost"] == 0.0
 
 
-def test_the_files_the_sub_agent_touched_are_reported(tmp_path):
+def test_the_files_the_sub_agent_changed_are_reported(tmp_path):
+    """Reading a file is not touching it. Only the changes are reported."""
     model = ScriptedModel(
         [
             {
@@ -135,11 +136,16 @@ def test_the_files_the_sub_agent_touched_are_reported(tmp_path):
                 "content": "",
                 "tool_calls": [_call("read", {"path": "a.py"})],
             },
-            {"role": "assistant", "content": "Read it."},
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [_call("edit", {"path": "b.py", "old_string": "x", "new_string": "y"})],
+            },
+            {"role": "assistant", "content": "Changed it."},
         ]
     )
-    result = _runner(model, tmp_path).run(_spec(), "Find", "Look")
-    assert result["files_touched"] == ["a.py"]
+    result = _runner(model, tmp_path).run(_spec(tools=["read", "edit"]), "Find", "Look")
+    assert result["files_touched"] == ["b.py"]
 
 
 def test_the_sub_agent_stops_at_the_turn_limit(tmp_path):

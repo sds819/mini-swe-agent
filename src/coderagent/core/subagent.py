@@ -213,7 +213,7 @@ def _paths_of(calls: list[dict]) -> list[str]:
         if not isinstance(arguments, dict):
             continue
         path = arguments.get("path")
-        if path and name in ("read", "write", "edit", "multi_edit"):
+        if path and name in ("write", "edit", "multi_edit"):
             paths.append(str(path))
     return paths
 
