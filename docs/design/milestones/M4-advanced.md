@@ -173,7 +173,7 @@ class ModelRouter:
 ### 4.2 流程
 
 ```
-会话结束（/clear 或退出）
+会话结束（/clear、退出，或一次 headless 运行跑完）
   → 若本会话有值得沉淀的内容（改动了多个文件、踩了坑、确立了约定）
   → ModelGateway.complete(purpose="reflect", prompt=...)
   → 模型输出两类内容：
@@ -425,6 +425,8 @@ coder export --session <id> --format otel --out trace.otlp
   `/memory confirm` 确认、`/memory forget <text>` 删除。终端界面里做一个模态框，比一个
   文件复杂得多。
 - 记忆条目没有 `source` 与 `created_at`：写入时去重，文件上限 200 行，超出的部分提示整理。
+- 沉淀的时机是「会话结束」，跟有没有界面无关：一次 headless 运行跑完也沉淀。`memory.enabled`
+  为 false 时连模型都不问。
 
 ### 13.4 Skills
 
