@@ -14,6 +14,7 @@ from coderagent.core.subagent import SubAgentRunner, load_subagents
 from coderagent.extensions.hooks import HookRunner
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
+from coderagent.models.router import ModelRouter
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
 from coderagent.tools.builtin.task import TaskTool
@@ -57,7 +58,7 @@ def _context_config(config: Config, model_name: str) -> ContextConfig:
 
 def purpose_gateway(config: Config, gateway: ModelGateway, purpose: str) -> ModelGateway:
     """The gateway of a purpose. The main one when the purpose is not routed."""
-    name = config.model.routing.get(purpose, "")
+    name = ModelRouter(config.model, gateway).resolve(purpose)
     if not name or name == config.model.model_name:
         return gateway
     return ModelGateway(build_model(config, name))
@@ -97,11 +98,15 @@ def build_loop(
         cwd=cwd,
         summary_model=ModelGateway(build_model(config, config.context.summarize_model))
         if config.context.summarize_model
-        else None,
+        else purpose_gateway(config, gateway, "summarize"),
     )
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
+    router = ModelRouter(config.model, gateway)
+    if model is not None:
+        """An injected model is the main model, whatever the configuration says."""
+        router.main_model = model.get_template_vars().get("model_name", config.model.model_name)
     specs = load_subagents(cwd, user_home)
     runner = SubAgentRunner(
         gateway,
@@ -148,6 +153,7 @@ def build_loop(
         hooks=hooks,
         mcp=mcp,
         subagents=specs,
+        router=router,
     )
 
 

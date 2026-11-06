@@ -93,7 +93,7 @@ def test_the_status_bar_shows_the_session(tmp_path):
             bar.append(app.query_one("StatusBar"))
 
     asyncio.run(go())
-    assert bar[0].model == app.config.model.model_name
+    assert bar[0].model == app.loop.model.backend.model_name
     assert bar[0].mode == "default"
 
 

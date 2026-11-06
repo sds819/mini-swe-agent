@@ -9,6 +9,7 @@ from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import load_subagents
 from coderagent.models.gateway import ModelGateway
+from coderagent.models.router import ModelRouter
 from coderagent.testing.factory import build_executor
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import PermissionMode, PermissionPolicy
@@ -28,6 +29,7 @@ def _context(tmp_path) -> tuple[CommandContext, list[str]]:
         bus,
         tools=executor.registry.schemas(),
         subagents=load_subagents(tmp_path),
+        router=ModelRouter(Config().model),
     )
     output: list[str] = []
     context = CommandContext(
@@ -108,6 +110,12 @@ def test_the_model_is_shown_and_can_be_switched(tmp_path):
     _run(context, output, "/model other/model")
     assert context.config.model.model_name == "other/model"
     assert context.loop.model.backend.model_name == "other/model"
+
+
+def test_the_model_the_user_picks_wins_over_the_routing(tmp_path):
+    context, output = _context(tmp_path)
+    _run(context, output, "/model my/model")
+    assert context.loop.router.resolve("main", {"tokens": 999999}) == "my/model"
 
 
 def test_the_todos_are_shown(tmp_path):

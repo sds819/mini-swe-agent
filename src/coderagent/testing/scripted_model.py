@@ -7,6 +7,8 @@ from coderagent.models.streaming import ModelEvent
 
 
 class ScriptedModel:
+    model_name = "scripted"
+
     def __init__(
         self,
         responses: list[dict] | None = None,

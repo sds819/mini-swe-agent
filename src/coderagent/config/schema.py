@@ -27,12 +27,21 @@ BUILTIN_TOOL_NAMES = [
 ]
 
 
+class RoutingRuleConfig(BaseModel):
+    when: str
+    """A condition on the state of the session, like `tokens > 50000`."""
+    purpose: str
+    """The purpose the model is picked for when the condition holds."""
+
+
 class ModelConfig(BaseModel):
     model_name: str = ""
     """Model name. Falls back to $MSWEA_MODEL_NAME and then to a built-in default."""
     model_kwargs: dict = Field(default_factory=dict)
     max_retries: int = 3
     routing: dict[str, str] = Field(default_factory=dict)
+    """The model of a purpose: `main`, `cheap`, `summarize`, `reflect`, `strong`."""
+    routing_rules: list[RoutingRuleConfig] = Field(default_factory=list)
     set_cache_control: str | None = None
 
 

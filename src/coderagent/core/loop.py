@@ -45,6 +45,7 @@ class AgentLoop:
         hooks=None,
         mcp=None,
         subagents=None,
+        router=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -62,6 +63,8 @@ class AgentLoop:
         """The MCP manager, when the session has servers."""
         self.subagents = subagents or {}
         """The sub agents that are available, by name."""
+        self.router = router
+        """The model router, when the session has one."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(
@@ -134,6 +137,7 @@ class AgentLoop:
                 stop_reason = "cost_exceeded"
                 break
             self.context.maybe_compact()
+            self._route()
             response, error = self._query()
             if response is None:
                 self._publish(EventType.ERROR, {"error": error})
@@ -168,6 +172,39 @@ class AgentLoop:
             messages=turn_messages,
             error=error,
         )
+
+    def _route(self) -> None:
+        """Pick the model of this turn. A change is announced in the event stream."""
+        if self.router is None:
+            return
+        name = self.router.resolve("main", self._routing_context())
+        current = getattr(self.model.backend, "model_name", "")
+        if not name or name == current:
+            return
+        self.model.backend = self.router.backend_for(name)
+        self._publish(
+            EventType.STATE_CHANGE,
+            {
+                "state": self.session.state.value,
+                "model": name,
+                "previous": current,
+                "reason": self._route_reason(),
+            },
+        )
+
+    def _routing_context(self) -> dict:
+        """What the router knows about the session."""
+        return {
+            "tokens": self.context.estimated_tokens(self.tools),
+            "turns": self.session.turn_count,
+            "calls": self.model.n_calls,
+            "cost": self.model.total_cost,
+            "budget": self.cost_limit,
+        }
+
+    def _route_reason(self) -> str:
+        """Why the model changed, in one line."""
+        return self.router.explain(self._routing_context())
 
     def _stop_blocked(self, response: dict) -> bool:
         """Ask the Stop hook whether the agent may stop. A blocked stop means: keep going."""

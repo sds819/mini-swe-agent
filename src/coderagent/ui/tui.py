@@ -166,7 +166,14 @@ class CoderApp(App):
         self._ui(self._show_approval, event.payload)
 
     def _on_state_change(self, event: Event) -> None:
-        self._ui(self._update_status, event.payload.get("state", ""))
+        payload = event.payload
+        if payload.get("model"):
+            self._ui(
+                self._add_message,
+                "assistant",
+                f"Switched from {payload.get('previous', '?')} to {payload['model']}: {payload.get('reason', '')}",
+            )
+        self._ui(self._update_status, payload.get("state", ""))
 
     def _on_error(self, event: Event) -> None:
         self._ui(self._add_message, "error", event.payload.get("error", ""))
@@ -220,7 +227,7 @@ class CoderApp(App):
         bar = self.query_one("#status", StatusBar)
         context = self.loop.context
         bar.update_status(
-            model=self.config.model.model_name,
+            model=getattr(self.loop.model.backend, "model_name", self.config.model.model_name),
             tokens=context.estimated_tokens(self.loop.tools),
             window=context.config.context_window,
             cost=self.loop.model.total_cost,
