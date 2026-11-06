@@ -48,7 +48,7 @@ class MCPClient:
         self.config = config
         self.bus = bus
         self.timeout = timeout
-        self.error = ""
+        self._error = ""
         """Why the server is not available, when it is not."""
         self._session = None
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -61,13 +61,18 @@ class MCPClient:
     def tools(self) -> list[MCPTool]:
         return self._tools
 
+    @property
+    def error(self) -> str:
+        """Why the server is not available, when it is not."""
+        return self._error
+
     def start(self) -> list[MCPTool]:
         """Connect to the server and return its tools. Never raises."""
         self._thread = threading.Thread(target=self._run, daemon=True, name=f"mcp-{self.config.name}")
         self._thread.start()
         self._ready.wait(self.timeout)
-        if self.error:
-            logger.warning("MCP server '%s' is not available: %s", self.config.name, self.error)
+        if self._error:
+            logger.warning("MCP server '%s' is not available: %s", self.config.name, self._error)
         return self._tools
 
     def stop(self) -> None:
@@ -81,14 +86,41 @@ class MCPClient:
             pass
 
     def call(self, name: str, arguments: dict) -> ToolResult:
-        """Call a tool of the server and turn its answer into a tool result."""
+        """Call a tool of the server and turn its answer into a tool result.
+
+        A broken connection is tried once more with a new one.
+        """
         if self._session is None:
             return ToolResult(content=f"Error: the MCP server '{self.config.name}' is not connected.", is_error=True)
         try:
-            result = asyncio.run_coroutine_threadsafe(self._call(name, arguments), self._loop).result(self.timeout)
+            result = self._call_remote(name, arguments)
         except Exception as e:
-            return ToolResult(content=f"Error: the MCP tool '{name}' failed: {type(e).__name__}: {e}", is_error=True)
+            logger.warning("The MCP server '%s' broke: %s", self.config.name, e)
+            self._restart()
+            try:
+                result = self._call_remote(name, arguments)
+            except Exception as retry_error:
+                return ToolResult(
+                    content=f"Error: the MCP tool '{name}' failed: {type(retry_error).__name__}: {retry_error}",
+                    is_error=True,
+                )
         return ToolResult(content=_content_text(result), is_error=bool(getattr(result, "isError", False)))
+
+    def _call_remote(self, name: str, arguments: dict):
+        return asyncio.run_coroutine_threadsafe(self._call(name, arguments), self._loop).result(self.timeout)
+
+    def _restart(self) -> None:
+        """Start over with a new connection."""
+        self.stop()
+        if self._thread is not None:
+            self._thread.join(timeout=self.timeout)
+        self._thread = None
+        self._session = None
+        self._tools = []
+        self._error = ""
+        self._stop = threading.Event()
+        self._ready = threading.Event()
+        self.start()
 
     async def _call(self, name: str, arguments: dict):
         return await self._session.call_tool(name, arguments)
@@ -97,8 +129,8 @@ class MCPClient:
         try:
             asyncio.run(self._main())
         except Exception as e:
-            self.error = _describe(e)
-            logger.warning("MCP server '%s' failed: %s", self.config.name, self.error)
+            self._error = _describe(e)
+            logger.warning("MCP server '%s' failed: %s", self.config.name, self._error)
         finally:
             self._ready.set()
 
