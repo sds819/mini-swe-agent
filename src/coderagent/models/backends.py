@@ -58,12 +58,15 @@ class LiteLLMBackend:
 
     def _normalize(self, response) -> dict:
         message = response.choices[0].message.model_dump()
-        return {
+        normalized = {
             "role": "assistant",
             "content": message.get("content") or "",
-            "tool_calls": message.get("tool_calls") or [],
             "extra": {"cost": self._cost(response)},
         }
+        # An empty tool_calls array is rejected by some providers, so it is left out.
+        if message.get("tool_calls"):
+            normalized["tool_calls"] = message["tool_calls"]
+        return normalized
 
     def _cost(self, response) -> float:
         try:
