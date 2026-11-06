@@ -164,7 +164,10 @@ class GrepTool:
 
 class LsTool:
     name = "ls"
-    description = "List directory entries. `depth` of -1 lists the whole tree recursively."
+    description = (
+        "List directory entries. Directories end with '/', files show their size. "
+        "`depth` of -1 lists the whole tree recursively."
+    )
     parameters = {
         "type": "object",
         "properties": {
@@ -191,6 +194,7 @@ class LsTool:
             level = len(Path(dirpath).relative_to(target).parts)
             if depth >= 0 and level >= depth:
                 dirnames[:] = []
+                filenames = []
             dirnames[:] = sorted(d for d in dirnames if d not in IGNORED_DIRS)
             for name in sorted(dirnames):
                 entries.append((Path(dirpath) / name, "d"))
@@ -201,7 +205,9 @@ class LsTool:
             return ToolResult(f"Directory {target} is empty.")
         lines = []
         for path, kind in entries:
-            size = "" if kind == "d" else f"{path.stat().st_size:>10}"
             relative = path.relative_to(target).as_posix()
-            lines.append(f"{kind} {size}  {relative}")
+            if kind == "d":
+                lines.append(f"{relative}/")
+            else:
+                lines.append(f"{relative} ({path.stat().st_size} B)")
         return ToolResult("\n".join(lines), metadata={"count": len(entries)})

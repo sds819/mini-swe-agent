@@ -84,13 +84,12 @@ def test_grep_skips_binary_files(ctx, tree):
 
 def test_ls_lists_directories_and_files(ctx, tree):
     result = LsTool().run({"path": "."}, ctx)
-    assert "d" in result.content and "pkg" in result.content
-    assert "README.md" in result.content
+    assert result.content.splitlines() == ["README.md (19 B)", "pkg/"]
 
 
 def test_ls_can_recurse(ctx, tree):
     result = LsTool().run({"path": ".", "depth": -1}, ctx)
-    assert "pkg/core.py" in result.content
+    assert "pkg/core.py (26 B)" in result.content.splitlines()
 
 
 def test_ls_rejects_missing_paths(ctx):
