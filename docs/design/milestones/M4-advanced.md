@@ -318,46 +318,46 @@ coder export --session <id> --format otel --out trace.otlp
 ## 9. 任务分解
 
 ### T4.1 子 Agent 骨架
-- [ ] `SubagentSpec` + 定义文件加载
-- [ ] `task` 工具实现
-- [ ] 子 AgentLoop 构造（独立上下文、受限工具集、独立模型档位）
-- [ ] 结果结构化返回
+- [x] `SubagentSpec` + 定义文件加载
+- [x] `task` 工具实现
+- [x] 子 AgentLoop 构造（独立上下文、受限工具集、独立模型档位）
+- [x] 结果结构化返回
 
 ### T4.2 内置子 Agent
-- [ ] `code-explorer` / `verifier` / `refactorer`
-- [ ] `/agents` 命令列出可用子 agent
+- [x] `code-explorer` / `verifier` / `refactorer`
+- [x] `/agents` 命令列出可用子 agent
 
 ### T4.3 模型路由
-- [ ] `RoutingRule` / `ModelRouter.resolve`
-- [ ] 默认策略（轮次/token/预算）
-- [ ] 状态栏与事件提示切换
+- [x] `RoutingRule` / `ModelRouter.resolve`
+- [x] 默认策略（轮次/token/预算）
+- [x] 状态栏与事件提示切换
 
 ### T4.4 经验沉淀
-- [ ] `reflect` prompt 与输出 schema
-- [ ] 项目记忆自动写入
-- [ ] 用户记忆需确认
-- [ ] 去重与长度上限
+- [x] `reflect` prompt 与输出 schema
+- [x] 项目记忆自动写入
+- [x] 用户记忆需确认
+- [x] 去重与长度上限
 
 ### T4.5 Skills
-- [ ] skill 目录扫描与 front-matter 解析
-- [ ] 技能索引注入 system prompt
-- [ ] 模型自主加载 skill 说明
-- [ ] `/skills` 命令
+- [x] skill 目录扫描与 front-matter 解析
+- [x] 技能索引注入 system prompt
+- [x] 模型自主加载 skill 说明
+- [x] `/skills` 命令
 
 ### T4.6 插件
-- [ ] `ExtensionRegistry` 与发现机制
-- [ ] 首次加载的信任确认
-- [ ] 插件 API 文档
+- [x] `ExtensionRegistry` 与发现机制
+- [x] 首次加载的信任确认
+- [x] 插件 API 文档
 
 ### T4.7 远程沙箱
-- [ ] 配置 `sandbox.type` 接到 `minisweagent.environments`
-- [ ] 远程状态在 UI 的呈现
-- [ ] 容器 checkpoint（可选）
+- [x] 配置 `sandbox.type` 接到 `minisweagent.environments`
+- [x] 远程状态在 UI 的呈现
+- [ ] 容器 checkpoint（可选，未实现）
 
 ### T4.8 可观测性
-- [ ] 指标累计
-- [ ] `coder export` 命令（json / otel）
-- [ ] 成本归因报表
+- [x] 指标累计
+- [x] `coder export` 命令（json / otel）
+- [x] 成本归因报表
 
 ---
 
@@ -388,8 +388,70 @@ coder export --session <id> --format otel --out trace.otlp
 
 ## 12. Definition of Done
 
-- [ ] `task` 工具可委派子任务，主上下文不被污染
-- [ ] 子 Agent 工具白名单被强制执行
-- [ ] 模型路由能按上下文长度与预算自动升降档
-- [ ] 经验沉淀可写入项目记忆，用户记忆需确认
-- [ ] `coder export` 输出完整 trace 与指标
+- [x] `task` 工具可委派子任务，主上下文不被污染
+- [x] 子 Agent 工具白名单被强制执行
+- [x] 模型路由能按上下文长度与预算自动升降档
+- [x] 经验沉淀可写入项目记忆，用户记忆需确认
+- [x] `coder export` 输出完整 trace 与指标
+
+---
+
+## 13. 实现说明（与原设计的偏差）
+
+实现与原设计的差异如下，都是有意为之。
+
+### 13.1 子 Agent
+
+- 子 Agent 没有自己的 `AgentLoop`，而是由 `SubAgentRunner` 驱动一个循环：它有独立的
+  messages、受限的 `ToolRegistry`、独立的 `ModelGateway` 和自己的 `max_turns`。另起一个
+  `AgentLoop` 会带来第二套事件流和第二套会话状态，收益不大。
+- 子 Agent 的成本通过 `gateway.total_cost` 加回主会话，主会话的预算因此仍然管得住它。
+- 内置子 Agent 放在 `core/subagent.py` 的 `BUILTIN_SUBAGENTS` 里，而不是单独的目录：
+  它们是代码，不是配置。
+
+### 13.2 模型路由
+
+- 路由规则只比较数字。`tokens > 50000` 这样的写法有效，`state == done` 这样的写法永远
+  不成立，不会被 `eval`，也不会报错。
+- `ModelRouter` 有自己的 `main_model`。注入的模型（测试、脚本）不会被配置里的
+  `model.model_name` 覆盖，路由因此不会把测试用的模型换掉。
+- 默认策略是：预算用掉 80% 降档到廉价模型，轮次超过 30 或 token 超过 50k 升档到高档
+  模型。升档只在配置了 `routing.strong` 时才发生。
+
+### 13.3 经验沉淀
+
+- 用户记忆的确认不是一个弹窗，而是写进 `.coderagent/memory/pending-memory.md`，用户用
+  `/memory confirm` 确认、`/memory forget <text>` 删除。终端界面里做一个模态框，比一个
+  文件复杂得多。
+- 记忆条目没有 `source` 与 `created_at`：写入时去重，文件上限 200 行，超出的部分提示整理。
+
+### 13.4 Skills
+
+- 技能目录是 `.coderagent/skills/<name>/SKILL.md`，一个技能一个目录，因此技能可以带
+  `scripts/` 与 `assets/`。
+- 技能正文通过 `skill` 工具加载，工具的返回里还带着技能目录的路径，模型知道脚本在哪里。
+
+### 13.5 插件
+
+- 插件的信任不是弹窗，而是 `~/.coderagent/trusted-plugins.json` 里的一个列表，
+  `/plugins trust <name>` 写入。第一次加载前问一次，问过就记住。
+- 插件的形式是目录里的 `plugin.py`，里面有一个 `register(registry)` 函数，或者一个带
+  `register` 方法的对象。pip 安装的插件走 `coderagent.plugins` 这个 entry point 组。
+- 插件的命令注册到全局的 `COMMANDS` 里，所以插件的命令和内置的命令一样可用。
+
+### 13.6 远程沙箱
+
+- 只有 `bash` 工具的命令进沙箱。mini-swe-agent 的 `Environment` 协议只有 `execute`，
+  没有文件操作，所以 `read`/`write`/`edit` 仍然作用于本机文件系统。
+- 远程沙箱里的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 魔法被关掉了：一轮对话由模型说
+  结束，而不是由一个哨兵字符串结束。
+- 容器 checkpoint 没有实现。它需要沙箱支持快照，而 mini 的环境没有这个接口。
+
+### 13.7 可观测性
+
+- `coder` 变成了一个命令组：主命令还是 `coder --task ...`，`coder export ...` 是它的
+  子命令。`coder` 不带参数时仍然是终端界面。
+- trace 从事件日志算出来，而不是另外记一份。日志是唯一的事实来源。
+- 成本归因的维度是 purpose（`main`、子 agent 的档位）、model 和 tool。子 agent 的成本
+  来自 `task` 工具返回的 JSON。
+- token 数来自流式响应的 usage，之前的实现把它丢掉了。
