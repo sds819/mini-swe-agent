@@ -22,7 +22,6 @@ permissions:
   include_dirs: []
 
 context:
-  context_window: 200000
   reserved_output: 8000
   compact_threshold: 0.8
   keep_recent_turns: 20

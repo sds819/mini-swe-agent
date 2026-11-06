@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from coderagent.config.schema import Config
+from coderagent.config.schema import Config, ContextConfig
+from coderagent.core.budget import context_window_for
 from coderagent.core.checkpoint import CheckpointStore, create_file_checkpoint
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus
@@ -43,6 +44,13 @@ def build_policy(config: Config, cwd: Path, permission_mode: str | None = None) 
     )
 
 
+def _context_config(config: Config, model_name: str) -> ContextConfig:
+    """The context window follows the model, unless the configuration sets it."""
+    if "context_window" in config.context.model_fields_set:
+        return config.context
+    return config.context.model_copy(update={"context_window": context_window_for(model_name)})
+
+
 def build_loop(
     config: Config,
     cwd: Path,
@@ -58,12 +66,13 @@ def build_loop(
     session.permission_mode = policy.mode.value
     bus = EventBus()
     registry = build_registry(config.tools.enabled, config.tools.disabled)
-    gateway = ModelGateway(model if model is not None else build_model(config))
+    backend = model if model is not None else build_model(config)
+    gateway = ModelGateway(backend)
     context = ContextEngine(
         session,
         store,
         bus,
-        config.context,
+        _context_config(config, config.model.model_name),
         gateway,
         system_prompt=config.agent.system_prompt,
         memory_config=config.memory,

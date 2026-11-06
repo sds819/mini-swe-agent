@@ -2,6 +2,27 @@
 
 from dataclasses import dataclass
 
+MODEL_CONTEXT_WINDOWS = {
+    "gpt-": 128000,
+    "claude": 200000,
+    "deepseek": 64000,
+    "qwen": 32768,
+    "llama": 8192,
+    "gemini": 1000000,
+    "mistral": 32768,
+}
+"""Context windows of the model families we know. Matched as a prefix of the
+model name or of the part after the provider."""
+
+
+def context_window_for(model_name: str, default: int = 200000) -> int:
+    """The context window of a model, looked up by name."""
+    name = model_name.split("/")[-1].lower()
+    for prefix, window in MODEL_CONTEXT_WINDOWS.items():
+        if name.startswith(prefix):
+            return window
+    return default
+
 
 @dataclass
 class BudgetGuard:
