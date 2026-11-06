@@ -405,7 +405,8 @@ coder export --session <id> --format otel --out trace.otlp
 - 子 Agent 没有自己的 `AgentLoop`，而是由 `SubAgentRunner` 驱动一个循环：它有独立的
   messages、受限的 `ToolRegistry`、独立的 `ModelGateway` 和自己的 `max_turns`。另起一个
   `AgentLoop` 会带来第二套事件流和第二套会话状态，收益不大。
-- 子 Agent 的成本通过 `gateway.total_cost` 加回主会话，主会话的预算因此仍然管得住它。
+- 子 Agent 的成本加回主会话，主会话的预算因此仍然管得住它。计的是它自己那几次调用，
+  详见 13.8。
 - 内置子 Agent 放在 `core/subagent.py` 的 `BUILTIN_SUBAGENTS` 里，而不是单独的目录：
   它们是代码，不是配置。
 
@@ -455,3 +456,16 @@ coder export --session <id> --format otel --out trace.otlp
 - 成本归因的维度是 purpose（`main`、子 agent 的档位）、model 和 tool。子 agent 的成本
   来自 `task` 工具返回的 JSON。
 - token 数来自流式响应的 usage，之前的实现把它丢掉了。
+
+### 13.8 成本核算（实测后修正）
+
+真机联调时发现原来的成本算法是错的，这里是修正后的规则：
+
+- 子 agent 的成本是它**自己**那几次调用的花费，不是它用的那个 gateway 的累计值。子 agent
+  常常和主 agent 共用一个 gateway，累计值里混着主 agent 已经花掉的钱。
+- 子 agent 用自己的模型时，它的花费记到主 gateway 上，所以主会话的预算仍然管得住它。
+- 压缩时生成摘要的那次调用也是一次模型调用。它的花费写进 `compaction` 事件里，因此在
+  事件日志里，和别的调用一样被计入。
+- 一个会话的花费 = 事件日志里所有调用的花费之和。session、trace 指标、`/cost` 和
+  `coder export` 报的是同一个数字。
+- 子 agent 的 `files_touched` 只列**改过**的文件。读过的文件不算，读不是改。
