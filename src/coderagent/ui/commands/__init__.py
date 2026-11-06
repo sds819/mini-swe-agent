@@ -16,6 +16,7 @@ from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import Session, SessionStore
 from coderagent.tools.permissions import PermissionPolicy
+from coderagent.ui.custom_commands import find_custom, run_custom
 
 
 @dataclass
@@ -77,6 +78,10 @@ def run(context: CommandContext, line: str) -> bool:
         return False
     load_builtins()
     name, _, argument = line[1:].partition(" ")
+    custom = find_custom(context.cwd, name)
+    if custom is not None:
+        run_custom(context, custom, argument.strip())
+        return True
     command = find(name)
     if command is None:
         context.say(f"Unknown command '/{name}'. Try /help.")
