@@ -36,6 +36,27 @@ def test_rebuild_skips_unknown_event_types(tmp_path):
     assert store.rebuild(session.id).state == SessionState.IDLE
 
 
+def test_the_cost_of_a_sub_agent_is_part_of_the_session(tmp_path):
+    """The session costs what the agent spent, the sub agents included."""
+    store = SessionStore(tmp_path)
+    session = store.create(tmp_path)
+    store.append(session.id, Event(EventType.ASSISTANT_MESSAGE, session.id, 2.0, {"message": {}, "cost": 0.25}))
+    store.append(
+        session.id,
+        Event(EventType.TOOL_CALL, session.id, 3.0, {"actions": [{"tool": "task", "tool_call_id": "1"}]}),
+    )
+    store.append(
+        session.id,
+        Event(
+            EventType.TOOL_RESULT,
+            session.id,
+            4.0,
+            {"messages": [{"role": "tool", "tool_call_id": "1", "content": '{"cost": 0.5, "purpose": "cheap"}'}]},
+        ),
+    )
+    assert store.rebuild(session.id).total_cost == 0.75
+
+
 def test_list_is_newest_first(tmp_path):
     store = SessionStore(tmp_path)
     older = store.create(tmp_path)

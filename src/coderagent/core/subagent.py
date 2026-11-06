@@ -132,6 +132,7 @@ class SubAgentRunner:
         registry = self._restricted(spec)
         executor = ToolExecutor(registry, self.policy, self.ctx_factory, self.approver)
         gateway = self._gateway(spec)
+        before = gateway.total_cost
         messages = [
             {"role": "system", "content": spec.system_prompt or spec.description},
             {"role": "user", "content": f"{description}\n\n{prompt}".strip()},
@@ -145,7 +146,7 @@ class SubAgentRunner:
             try:
                 response = gateway.query(messages, tools=schemas)
             except Exception as e:
-                return self._result("error", f"{type(e).__name__}: {e}", [], [], gateway, turns)
+                return self._result("error", f"{type(e).__name__}: {e}", [], [], gateway, before, turns)
             turns += 1
             messages.append(response)
             summary = response.get("content", "") or summary
@@ -158,9 +159,7 @@ class SubAgentRunner:
             messages.extend(executor.execute(actions))
         else:
             status = "max_turns"
-        if gateway is not self.gateway:
-            self.gateway.total_cost += gateway.total_cost
-        return self._result(status, summary, _findings(summary), touched, gateway, turns)
+        return self._result(status, summary, _findings(summary), touched, gateway, before, turns)
 
     def _restricted(self, spec: SubagentSpec) -> ToolRegistry:
         """The registry with only the tools of the white list."""
@@ -187,13 +186,19 @@ class SubAgentRunner:
             )
         )
 
-    def _result(self, status: str, summary: str, findings: list[str], touched: list[str], gateway, turns: int) -> dict:
+    def _result(
+        self, status: str, summary: str, findings: list[str], touched: list[str], gateway, before: float, turns: int
+    ) -> dict:
+        """What the sub agent spent. When it ran on its own model, the cost is booked on the main one."""
+        cost = gateway.total_cost - before
+        if gateway is not self.gateway:
+            self.gateway.total_cost += cost
         return {
             "status": status,
             "summary": summary,
             "findings": findings,
             "files_touched": sorted(set(touched)),
-            "cost": gateway.total_cost,
+            "cost": cost,
             "turns": turns,
         }
 

@@ -174,6 +174,46 @@ def test_the_cost_of_the_sub_agent_is_added_to_the_main_one(tmp_path):
     assert gateway.total_cost == 0.25
 
 
+def test_the_sub_agent_only_pays_for_its_own_calls(tmp_path):
+    """The main agent had already spent something when the sub agent starts."""
+    model = ScriptedModel([{"role": "assistant", "content": "Done.", "extra": {"cost": 0.25}}])
+    gateway = ModelGateway(model)
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=Path(tmp_path))
+    runner = SubAgentRunner(
+        gateway,
+        build_registry(),
+        policy,
+        lambda: build_context(tmp_path, policy=policy),
+        gateway_for=lambda purpose: gateway,
+    )
+    result = runner.run(_spec(), "Find", "Look")
+    assert result["cost"] == 0.25
+
+
+def test_the_cost_of_a_second_sub_agent_is_not_counted_twice(tmp_path):
+    """The gateway of the purpose is shared, so the second run must only add its own cost."""
+    gateway = ModelGateway(
+        ScriptedModel(
+            [
+                {"role": "assistant", "content": "Done.", "extra": {"cost": 0.25}},
+                {"role": "assistant", "content": "Done.", "extra": {"cost": 0.25}},
+            ]
+        )
+    )
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=Path(tmp_path))
+    main = ModelGateway(ScriptedModel([{"role": "assistant", "content": "ok"}]))
+    runner = SubAgentRunner(
+        main,
+        build_registry(),
+        policy,
+        lambda: build_context(tmp_path, policy=policy),
+        gateway_for=lambda purpose: gateway,
+    )
+    runner.run(_spec(), "Find", "Look")
+    runner.run(_spec(), "Find", "Look")
+    assert main.total_cost == 0.5
+
+
 def test_a_broken_sub_agent_is_reported_as_an_error(tmp_path):
     model = ScriptedModel(side_effect=lambda messages: (_ for _ in ()).throw(RuntimeError("no model")))
     result = _runner(model, tmp_path).run(_spec(), "Find", "Look")

@@ -82,6 +82,9 @@ def collect(events: list[Event]) -> Metrics:
                 _sub_agent_cost(metrics, tools.get(message.get("tool_call_id", "")), message.get("content", ""))
         elif event.type == EventType.COMPACTION:
             metrics.compactions += 1
+            cost = float(payload.get("cost") or 0.0)
+            metrics.total_cost += cost
+            metrics.per_purpose_cost["summarize"] = metrics.per_purpose_cost.get("summarize", 0.0) + cost
         elif event.type == EventType.ERROR:
             metrics.errors += 1
     timestamps = [event.timestamp for event in events if event.timestamp]
@@ -191,6 +194,7 @@ def _sub_agent_cost(metrics: Metrics, tool: str, content: str) -> None:
         return
     cost = float(result.get("cost") or 0.0)
     purpose = str(result.get("purpose") or "subagent")
+    metrics.total_cost += cost
     metrics.per_purpose_cost[purpose] = metrics.per_purpose_cost.get(purpose, 0.0) + cost
 
 

@@ -191,3 +191,24 @@ def test_the_summary_survives_a_round_trip_through_the_events(tmp_path):
     restored.restore()
     assert isinstance(restored.summary, Summary)
     assert restored.summary.goal == "the goal"
+
+
+def test_the_cost_of_the_summary_is_recorded_and_booked(tmp_path):
+    """The summary is a model call, so it costs money and the session knows it."""
+
+    class CostlyModel(FakeModel):
+        def __init__(self) -> None:
+            super().__init__()
+            self.total_cost = 0.0
+
+        def complete(self, messages, **kwargs) -> str:
+            self.total_cost += 0.05
+            return super().complete(messages, **kwargs)
+
+    model = CostlyModel()
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0)
+    engine = make_engine(tmp_path, model=model, config=config)
+    fill(engine, 4)
+    assert engine.compact()
+    events = engine.store.events(engine.session.id)
+    assert [event.payload["cost"] for event in events if event.type == EventType.COMPACTION] == [0.05]

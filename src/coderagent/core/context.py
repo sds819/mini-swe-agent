@@ -184,7 +184,12 @@ class ContextEngine:
         if cut <= 0:
             return False
         compacted = self.history.messages[:cut]
+        before = getattr(self.summary_model, "total_cost", 0.0)
         summary = self._summarize(compacted)
+        cost = getattr(self.summary_model, "total_cost", 0.0) - before
+        if self.summary_model is not self.model:
+            """The summary ran on its own model, so its cost is booked on the main one."""
+            self.model.total_cost = getattr(self.model, "total_cost", 0.0) + cost
         self.summaries = [summary]
         self.history.messages = self.history.messages[cut:]
         self.last_compact_turn = self.session.turn_count
@@ -195,6 +200,7 @@ class ContextEngine:
             payload={
                 "compacted_messages": cut,
                 "tokens": estimate_tokens(compacted),
+                "cost": cost,
                 "summary": summary.to_dict(),
                 "summaries": [item.to_dict() for item in self.summaries],
             },

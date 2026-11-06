@@ -132,6 +132,7 @@ class AgentLoop:
         cost = 0.0
         n_calls = 0
         stop_blocks = 0
+        before = self.model.total_cost
         while True:
             if self.cancel is not None and self.cancel():
                 stop_reason = "interrupted"
@@ -150,7 +151,6 @@ class AgentLoop:
                 stop_reason = "error"
                 break
             n_calls += 1
-            cost += response.get("extra", {}).get("cost", 0.0)
             response.setdefault("extra", {}).update(
                 {"purpose": "main", "model": getattr(self.model.backend, "model_name", "")}
             )
@@ -171,6 +171,8 @@ class AgentLoop:
             self._set_state(SessionState.THINKING)
 
         self.session.total_cost = self.model.total_cost
+        # What the turn cost: everything the agent spent, the sub agents and the summaries included.
+        cost = self.model.total_cost - before
         self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE)
         self._session_end()
         return TurnResult(

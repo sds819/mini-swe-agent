@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 
 from coderagent.core.events import Event, EventType
+from coderagent.core.telemetry import collect
 from coderagent.paths import config_home
 
 
@@ -93,7 +94,8 @@ class SessionStore:
     def rebuild(self, session_id: str) -> Session:
         """Replay the event log to get the current session state."""
         session = Session(id=session_id, cwd=Path("."), created_at=0.0, updated_at=0.0)
-        for event in self.events(session_id):
+        events = self.events(session_id)
+        for event in events:
             payload = event.payload
             if event.type == EventType.STATE_CHANGE:
                 session.state = SessionState(payload.get("state", session.state.value))
@@ -107,11 +109,11 @@ class SessionStore:
                     session.permission_mode = payload["permission_mode"]
             elif event.type == EventType.USER_MESSAGE:
                 session.turn_count += 1
-            elif event.type == EventType.ASSISTANT_MESSAGE:
-                session.total_cost += payload.get("cost", 0.0)
             elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
                 session.metadata["todos"] = payload["todos"]
             session.updated_at = event.timestamp
+        # The cost of the session is the cost of every call in the log, the sub agents included.
+        session.total_cost = collect(events).total_cost
         return session
 
     def list(self, cwd: Path | None = None) -> list[Session]:
