@@ -69,6 +69,10 @@ nav:
       - "ProgramBench": usage/programbench.md
       - "Inspector": usage/inspector.md
       - "Output files": usage/output_files.md
+    - "Coding agent":
+      - "Commands": usage/coderagent_commands.md
+      - "MCP servers": usage/coderagent_mcp.md
+      - "Hooks": usage/coderagent_hooks.md
     - "Language models":
       - "Quick start": models/quickstart.md
       - "Local models": models/local_models.md

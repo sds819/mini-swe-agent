@@ -322,73 +322,73 @@ class HookRunner:
 ## 6. 任务分解
 
 ### T6.1 流式模型层
-- [ ] `ModelEvent` 定义
-- [ ] `ToolCallAccumulator`（含「name 重复片」处理）
-- [ ] `ModelGateway.query_stream` 接 litellm `stream=True`
-- [ ] `query` 改为消费流式结果
-- [ ] reasoning 事件累积
+- [x] `ModelEvent` 定义
+- [x] `ToolCallAccumulator`（含「name 重复片」处理）
+- [x] `ModelGateway.query_stream` 接 litellm `stream=True`
+- [x] `query` 改为消费流式结果
+- [x] reasoning 事件累积
 
 **验收**：`test_streaming.py` — 模拟多片 tool_call 拼接正确；非法 JSON 抛 `FormatError`。
 
 ### T6.2 TUI 骨架
-- [ ] textual App 布局（StatusBar / 消息区 / 输入区）
-- [ ] 事件订阅接线
-- [ ] 输入框提交 → `AgentLoop.run_turn`
-- [ ] Ctrl-C 中断当前 turn（`InterruptAgentFlow` 语义）
+- [x] textual App 布局（StatusBar / 消息区 / 输入区）
+- [x] 事件订阅接线
+- [x] 输入框提交 → `AgentLoop.run_turn`
+- [x] Ctrl-C 中断当前 turn（`InterruptAgentFlow` 语义）
 
 **验收**：`test_tui.py`（用 textual 的 `run_test()`）——发送一条消息后能观察到 assistant 消息块出现。
 
 ### T6.3 消息与工具卡片
-- [ ] `MessageBlock`（user/assistant/error）
-- [ ] reasoning 折叠
-- [ ] `ToolCard`（状态、耗时、参数摘要、结果折叠）
-- [ ] 长输出折叠 + 展开
+- [x] `MessageBlock`（user/assistant/error）
+- [x] reasoning 折叠
+- [x] `ToolCard`（状态、耗时、参数摘要、结果折叠）
+- [x] 长输出折叠 + 展开
 
 ### T6.4 Diff 预览
-- [ ] `difflib` 生成 unified diff
-- [ ] `DiffView` 渲染（颜色、折叠）
-- [ ] 执行前展示（与审批弹窗合并）
+- [x] `difflib` 生成 unified diff
+- [x] `DiffView` 渲染（颜色、折叠）
+- [x] 执行前展示（与审批弹窗合并）
 
 ### T6.5 审批弹窗
-- [ ] `ApprovalPrompt`（工具、参数、命中规则、原因）
-- [ ] `y` / `n` / `a` 三选项
-- [ ] 拒绝时把理由作为工具错误回传
-- [ ] `a` → 写入用户级规则文件
+- [x] `ApprovalPrompt`（工具、参数、命中规则、原因）
+- [x] `y` / `n` / `a` 三选项
+- [x] 拒绝时把理由作为工具错误回传
+- [x] `a` → 写入用户级规则文件
 
 ### T6.6 状态栏与 Todo 面板
-- [ ] `StatusBar`：模型、token、成本、cwd、权限模式
-- [ ] `TodoPanel`：订阅 todo 变更
+- [x] `StatusBar`：模型、token、成本、cwd、权限模式
+- [x] `TodoPanel`：订阅 todo 变更
 
 ### T6.7 Slash 命令框架
-- [ ] `Command` dataclass + 注册表 + 分发
-- [ ] 输入框识别 `/` 开头 → 命令分发（否则视为普通消息）
-- [ ] 内置命令全部实现（M0/M1/M2 已实现的逻辑接进来）
+- [x] `Command` dataclass + 注册表 + 分发
+- [x] 输入框识别 `/` 开头 → 命令分发（否则视为普通消息）
+- [x] 内置命令全部实现（M0/M1/M2 已实现的逻辑接进来）
 
 ### T6.8 自定义命令
-- [ ] 加载 `.coderagent/commands/*.md`
-- [ ] front-matter 解析（`description` `argument-hint` `allowed-tools` `model`）
-- [ ] `$ARGUMENTS` / `$1` 替换
-- [ ] `allowed-tools` 构造受限 Registry
+- [x] 加载 `.coderagent/commands/*.md`
+- [x] front-matter 解析（`description` `argument-hint` `allowed-tools` `model`）
+- [x] `$ARGUMENTS` / `$1` 替换
+- [x] `allowed-tools` 构造受限 Registry
 
 ### T6.9 MCP 客户端
-- [ ] `MCPServerConfig`、配置加载
-- [ ] stdio 传输连接
-- [ ] tool 列表拉取 → 转成 `Tool` → 注册（`mcp__server__tool`）
-- [ ] 调用与结果回填
-- [ ] 断线重连一次
-- [ ] MCP 工具走权限层
+- [x] `MCPServerConfig`、配置加载
+- [x] stdio 传输连接
+- [x] tool 列表拉取 → 转成 `Tool` → 注册（`mcp__server__tool`）
+- [x] 调用与结果回填
+- [x] 断线重连一次
+- [x] MCP 工具走权限层
 
 ### T6.10 Hooks
-- [ ] `HookConfig` / `HookRunner`
-- [ ] 六个事件点接入
-- [ ] `PreToolUse` 改写参数 → 再走权限检查
-- [ ] `Stop` 的 block 语义（要求 agent 继续）
+- [x] `HookConfig` / `HookRunner`
+- [x] 六个事件点接入
+- [x] `PreToolUse` 改写参数 → 再走权限检查
+- [x] `Stop` 的 block 语义（要求 agent 继续）
 
 ### T6.11 配置扩展
-- [ ] `MCPConfig`、`HookConfig`、`UIConfig`
+- [x] `MCPConfig`、`HookConfig`、`UIConfig`
 
 ### T6.12 文档
-- [ ] `docs/usage/` 补充 MCP、Hooks、自定义命令说明
+- [x] `docs/usage/` 补充 MCP、Hooks、自定义命令说明
 
 ---
 
@@ -421,9 +421,43 @@ class HookRunner:
 
 ## 9. Definition of Done
 
-- [ ] TUI 中能看到流式输出、工具卡片、diff、审批弹窗、状态栏
-- [ ] 至少 18 个内置 slash 命令可用
-- [ ] 自定义命令（`.md`）能运行并限制工具集
-- [ ] 至少一个真实 MCP server 的工具可在会话中调用
-- [ ] `PreToolUse` hook 能拦截工具调用并改写参数
-- [ ] headless 模式行为与 TUI 一致（同一 trace）
+- [x] TUI 中能看到流式输出、工具卡片、diff、审批弹窗、状态栏
+- [x] 至少 18 个内置 slash 命令可用
+- [x] 自定义命令（`.md`）能运行并限制工具集
+- [x] 至少一个真实 MCP server 的工具可在会话中调用
+- [x] `PreToolUse` hook 能拦截工具调用并改写参数
+- [x] headless 模式行为与 TUI 一致（同一 trace）
+
+---
+
+## 10. 实现说明（与原设计的偏差）
+
+| 项 | 设计 | 实现 | 原因 |
+|---|---|---|---|
+| 流式接口 | `ModelGateway.query_stream` | 后端与网关都有 `query_stream`；`query` 由流折叠而来 | 网关要记账（成本/调用次数），折叠只有一处实现 |
+| 增量事件 | 事件写入 event log | `TEXT_DELTA` / `REASONING` 只走 `EventBus`，不写日志 | 日志是「事实」，一个字一个字记会把它撑爆 |
+| TUI 并发模型 | AgentLoop 跑在协程里 | AgentLoop 保持同步，跑在 textual 的 worker 线程里 | 核心不引入异步依赖；界面线程通过 `call_from_thread` 更新 |
+| 组件实现 | 每个组件一个容器 + 子组件 | `MessageBlock` / `ToolCard` 是 `Static`，用 `render()` 画 | `compose()` 是异步的，流式文本会在 compose 之前到达；`render()` 没有这个时序问题 |
+| reasoning 折叠 | 可展开的折叠区 | 折叠成一行暗色文字 | 同上：单行渲染无法再挂子组件 |
+| 长输出折叠 | 可展开 | 前 8 行 + 「▸ N more lines」 | 同上；折叠区要 compose，无法在流式刷新时安全挂载 |
+| Diff 展示 | 执行前在弹窗里，执行后在卡片里 | 同左 | 弹窗里的 diff 由 `prospective_diff()` 在执行前算出来 |
+| 审批 | 弹窗阻塞等待 | `TUIAprover` 发 `APPROVAL_REQUEST` 事件并等 `threading.Event`，界面按 y/n/a 回答 | 审批发生在 worker 线程里，不能阻塞界面线程 |
+| 审批「always」 | 写用户级规则文件 | 同左（`ToolExecutor._remember`） | M1 已有 |
+| MCP 传输 | stdio 优先，SSE/HTTP 预留 | 只实现 stdio；`url`/`headers` 在配置里但未使用 | mcp SDK 2.x 的 http 传输 API 与设计稿写的不一致 |
+| MCP 并发 | 异步客户端 | 每个 server 一个线程 + 自己的 event loop，调用走 `run_coroutine_threadsafe` | MCP SDK 是异步的，agent 是同步的 |
+| MCP 工具命名 | `mcp__<server>__<tool>` | 同左；工具另外记住 server 里的原名 | server 只认自己的名字，改了名就调不通 |
+| MCP 断线重连 | 重连一次 | 同左：调用抛错时重启连接再试一次 | 失败两次就返回错误，不无限重试 |
+| Hooks 顺序 | PreToolUse 在权限检查之前 | 同左：先跑 hook（可改参数），再判权限 | 被审批的必须是改写后的命令 |
+| Stop hook | 要求 agent 继续 | 同左，但一轮最多拦 3 次 | 拦不住就停，避免死循环烧钱 |
+| Hook 失败 | 记日志不阻断（可选 strict） | 同左；超时按「放行」处理 | 同上 |
+| 内置命令 | 17 个 | 19 个（多了 `/status` `/export` `/context`） | M0/M1/M2 已有的能力顺手接进来 |
+| 自定义命令 | front matter + `$ARGUMENTS`/`$1` | 同左；`argument-hint` 也接受 YAML 列表 | `argument-hint: [file]` 在 YAML 里是列表 |
+| 工具限制 | 临时构造受限 Registry | 同左；命令结束后原样换回 | 命令跑在自己的上下文里 |
+| 配置 | `MCPConfig` / `HookConfig` / `UIConfig` | 同左；`ui.theme` 暂未使用 | 主题跟随终端，没有单独的开关 |
+| 文档 | `docs/usage/` | `docs/usage/coderagent_{commands,mcp,hooks}.md` | 现有 `docs/usage/` 是 `mini` 的文档，单独开一组 |
+
+**实测**（DeepSeek，`deepseek/deepseek-flash`）：
+
+- TUI 真机（pty）跑通：状态栏显示 `deepseek/deepseek-flash | 1.5k/64k | $0.0000 | <cwd> | default`，模型调用 `ls` 后工具卡片与流式回答都正常显示。
+- 真实 MCP server（本地 20 行的 echo server）通过 stdio 连接，`mcp__echo__echo` 可调用；server 进程自杀后客户端自动重连一次并调用成功。
+- 自定义命令 `/commit README.md` 真实跑通，工具被限制为 `bash` + `read`。
