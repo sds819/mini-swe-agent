@@ -8,8 +8,8 @@ from coderagent.tools.builtin import TOOL_NAMES
 
 def test_builtin_tool_names_match_the_config():
     assert set(TOOL_NAMES) <= set(BUILTIN_TOOL_NAMES)
-    """The `task` tool is the only one outside the static registry: it needs the agent."""
-    assert set(BUILTIN_TOOL_NAMES) - set(TOOL_NAMES) == {"task"}
+    """The `task` and `skill` tools are outside the static registry: they need the project."""
+    assert set(BUILTIN_TOOL_NAMES) - set(TOOL_NAMES) == {"task", "skill"}
 
 
 def test_defaults_are_loaded(tmp_path, monkeypatch):

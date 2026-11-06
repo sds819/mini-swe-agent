@@ -24,11 +24,13 @@ from coderagent.extensions.reflect import (
     reflect_prompt,
     user_memory_path,
 )
+from coderagent.extensions.skills import load_skills, skill_index
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
+from coderagent.tools.builtin.skill import SkillTool
 from coderagent.tools.builtin.task import TaskTool
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.mcp import MCPManager
@@ -101,13 +103,22 @@ def build_loop(
         registry.register(tool)
     backend = model if model is not None else build_model(config)
     gateway = ModelGateway(backend)
+    router = ModelRouter(config.model, gateway)
+    if model is not None:
+        """An injected model is the main model, whatever the configuration says."""
+        router.main_model = model.get_template_vars().get("model_name", config.model.model_name)
+    specs = load_subagents(cwd, user_home)
+    skills = load_skills(cwd, user_home)
+    system_prompt = config.agent.system_prompt
+    if skill_index(skills):
+        system_prompt = f"{system_prompt}\n\n{skill_index(skills)}"
     context = ContextEngine(
         session,
         store,
         bus,
         _context_config(config, config.model.model_name),
         gateway,
-        system_prompt=config.agent.system_prompt,
+        system_prompt=system_prompt,
         memory_config=config.memory,
         cwd=cwd,
         summary_model=ModelGateway(build_model(config, config.context.summarize_model))
@@ -117,11 +128,6 @@ def build_loop(
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
-    router = ModelRouter(config.model, gateway)
-    if model is not None:
-        """An injected model is the main model, whatever the configuration says."""
-        router.main_model = model.get_template_vars().get("model_name", config.model.model_name)
-    specs = load_subagents(cwd, user_home)
     runner = SubAgentRunner(
         gateway,
         registry,
@@ -134,6 +140,8 @@ def build_loop(
     )
     if "task" in config.tools.enabled and "task" not in config.tools.disabled:
         registry.register(TaskTool(runner, specs))
+    if "skill" in config.tools.enabled and "skill" not in config.tools.disabled:
+        registry.register(SkillTool(skills))
 
     def before_write(tool: str, params: dict) -> None:
         """Snapshot the file before a write tool changes it."""
@@ -160,7 +168,7 @@ def build_loop(
         bus,
         context=context,
         tools=registry.schemas(),
-        system_prompt=config.agent.system_prompt,
+        system_prompt=system_prompt,
         max_turns=config.agent.max_turns,
         cost_limit=config.agent.cost_limit,
         checkpoints=checkpoints,

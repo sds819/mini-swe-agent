@@ -236,6 +236,18 @@ def test_the_sub_agents_are_shown(tmp_path):
     assert "read, grep" in answer
 
 
+def test_the_skills_are_shown(tmp_path):
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "skills" / "pdf-report"
+    directory.mkdir(parents=True)
+    (directory / "SKILL.md").write_text(
+        "---\nname: pdf-report\ndescription: Make a PDF report.\n---\nMake it.", encoding="utf-8"
+    )
+    answer = _run(context, output, "/skills")
+    assert "pdf-report" in answer
+    assert "Make a PDF report." in answer
+
+
 def test_the_memory_is_shown(tmp_path):
     context, output = _context(tmp_path)
     memory = tmp_path / ".coderagent" / "memory"

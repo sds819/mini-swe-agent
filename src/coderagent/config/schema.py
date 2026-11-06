@@ -24,6 +24,7 @@ BUILTIN_TOOL_NAMES = [
     "bash_kill",
     "todo_write",
     "task",
+    "skill",
 ]
 
 

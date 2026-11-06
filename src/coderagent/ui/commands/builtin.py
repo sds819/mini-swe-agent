@@ -228,6 +228,18 @@ def _agents(context: CommandContext, argument: str) -> None:
     )
 
 
+def _skills(context: CommandContext, argument: str) -> None:
+    from coderagent.extensions.skills import load_skills
+
+    skills = load_skills(context.cwd, context.loop.context.user_home)
+    if not skills:
+        context.say("No skills.")
+        return
+    context.say(
+        "\n".join(f"{skill.name:<16} {skill.description}\n{'':<16} {skill.directory}" for skill in skills.values())
+    )
+
+
 def _memory(context: CommandContext, argument: str) -> None:
     from coderagent.extensions.reflect import (
         append_user_preferences,
@@ -318,6 +330,7 @@ register(Command(name="mcp", description="Show the MCP servers", handler=_mcp))
 register(Command(name="permissions", description="Show the rules that are in effect", handler=_permissions))
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
 register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))
+register(Command(name="skills", description="Show the skills that are available", handler=_skills))
 register(Command(name="memory", description="Show the memory of the project and of the user", handler=_memory))
 register(Command(name="status", description="Show the state of the session", handler=_status))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))
