@@ -253,6 +253,17 @@ def _record_reflection(
     loop.session.total_cost = loop.model.total_cost
 
 
+def settle(loop: AgentLoop, config: Config, cwd: Path) -> Reflection:
+    """Settle the session in the memory. A failure here must not break the run."""
+    if not config.memory.enabled:
+        return Reflection()
+    try:
+        return settle_session(loop, config, cwd)
+    except Exception:
+        logger.warning("The reflection of the session failed", exc_info=True)
+        return Reflection()
+
+
 def run_turn(
     task: str,
     config: Config,
@@ -263,6 +274,10 @@ def run_turn(
     session=None,
     permission_mode: str | None = None,
 ) -> TurnResult:
-    return build_loop(config, cwd, model=model, store=store, session=session, permission_mode=permission_mode).run_turn(
-        task
-    )
+    loop = build_loop(config, cwd, model=model, store=store, session=session, permission_mode=permission_mode)
+    result = loop.run_turn(task)
+    """A session that ends is settled in the memory, the same way as in the interface."""
+    if result.stop_reason not in ("error", "cost_exceeded"):
+        """A turn that failed or ran out of budget has nothing to remember, and no money to do it."""
+        settle(loop, config, cwd)
+    return result

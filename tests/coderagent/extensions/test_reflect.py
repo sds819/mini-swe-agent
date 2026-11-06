@@ -22,7 +22,7 @@ from coderagent.extensions.reflect import (
 )
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.streaming import ModelEvent
-from coderagent.run import settle_session
+from coderagent.run import run_turn, settle_session
 from coderagent.testing.scripted_model import ScriptedModel
 
 
@@ -242,3 +242,71 @@ def test_a_reflection_that_fails_is_still_paid_for(tmp_path):
     assert reflections[0].payload["cost"] == 0.3
     assert loop.model.total_cost == 0.3
     assert collect(loop.store.events(loop.session.id)).total_cost == 0.3
+
+
+def test_a_headless_run_settles_the_session(tmp_path):
+    """A session that ends is settled in the memory, the same way as in the interface."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    model = ScriptedModel(
+        [
+            {"role": "assistant", "content": "done"},
+            {"role": "assistant", "content": _answer(project_facts=["the tests need pytest -m slow"])},
+        ]
+    )
+    store = SessionStore(tmp_path / "sessions")
+    run_turn("fix the bug", config, cwd=tmp_path, model=model, store=store)
+    text = project_memory_path(tmp_path, config.memory).read_text(encoding="utf-8")
+    assert "the tests need pytest -m slow" in text
+    events = [event for session in store.list(tmp_path) for event in store.events(session.id)]
+    assert [event for event in events if event.type == EventType.REFLECTION]
+
+
+def test_a_run_does_not_settle_when_the_memory_is_off(tmp_path):
+    """The memory is off: the model is not even asked."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    config.memory.enabled = False
+    model = ScriptedModel([{"role": "assistant", "content": "done"}])
+    run_turn("fix the bug", config, cwd=tmp_path, model=model, store=SessionStore(tmp_path / "sessions"))
+    assert len(model.calls) == 1
+    assert not project_memory_path(tmp_path, config.memory).exists()
+
+
+def test_a_run_survives_a_reflection_that_fails(tmp_path):
+    """The reflection is a nice extra: it must not break the run."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    model = ScriptedModel([{"role": "assistant", "content": "done"}])
+    result = run_turn("fix the bug", config, cwd=tmp_path, model=model, store=SessionStore(tmp_path / "sessions"))
+    assert result.stop_reason == "end_turn"
+    assert not project_memory_path(tmp_path, config.memory).exists()
+
+
+def test_a_run_that_failed_is_not_settled(tmp_path):
+    """The model is down: there is nothing to remember and no model to ask."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+
+    def side_effect(messages):
+        if len(model.calls) == 1:
+            raise RuntimeError("the provider is down")
+        return {"role": "assistant", "content": _answer(project_facts=["a fact"])}
+
+    model = ScriptedModel(side_effect=side_effect)
+    result = run_turn("fix the bug", config, cwd=tmp_path, model=model, store=SessionStore(tmp_path / "sessions"))
+    assert result.stop_reason == "error"
+    assert len(model.calls) == 1
+    assert not project_memory_path(tmp_path, config.memory).exists()
+
+
+def test_a_run_that_ran_out_of_budget_is_not_settled(tmp_path):
+    """The budget is gone: the reflection must not spend more."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    config.agent.cost_limit = 0.05
+    call = {"id": "c1", "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": "ls"})}}
+    model = ScriptedModel([{"role": "assistant", "content": "", "tool_calls": [call], "extra": {"cost": 0.1}}])
+    result = run_turn("fix the bug", config, cwd=tmp_path, model=model, store=SessionStore(tmp_path / "sessions"))
+    assert result.stop_reason == "cost_exceeded"
+    assert len(model.calls) == 1
