@@ -1,0 +1,134 @@
+"""Executor: model tool calls -> permission check -> tool run -> observation messages."""
+
+import json
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+from coderagent.core.events import Event, EventType
+from coderagent.tools.base import ToolContext, ToolResult
+from coderagent.tools.permissions import ApprovalDecision, Approver, PermissionPolicy, pattern_for
+from coderagent.tools.registry import ToolRegistry
+
+SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}
+
+
+class ToolExecutor:
+    def __init__(
+        self,
+        registry: ToolRegistry,
+        policy: PermissionPolicy,
+        ctx_factory,
+        approver: Approver | None = None,
+        *,
+        rules_home=None,
+    ) -> None:
+        self.registry = registry
+        self.policy = policy
+        self.ctx_factory = ctx_factory
+        self.approver = approver
+        self.rules_home = rules_home
+
+    def plan(self, actions: list[dict]) -> list[dict]:
+        """Parse raw tool calls into normalized actions."""
+        planned = []
+        for call in actions:
+            function = call.get("function") or {}
+            name = function.get("name") or call.get("name") or ""
+            raw_arguments = function.get("arguments", call.get("arguments", "{}"))
+            action = {
+                "tool": name,
+                "tool_call_id": call.get("id", ""),
+                "args": {},
+                "raw": call,
+            }
+            if isinstance(raw_arguments, dict):
+                action["args"] = raw_arguments
+            else:
+                try:
+                    parsed = json.loads(raw_arguments or "{}")
+                except json.JSONDecodeError as error:
+                    action["error"] = (
+                        f"Error: could not parse the arguments of '{name}' as JSON ({error}). "
+                        "Send the arguments as a JSON object."
+                    )
+                else:
+                    if not isinstance(parsed, dict):
+                        action["error"] = f"Error: the arguments of '{name}' must be a JSON object."
+                    else:
+                        action["args"] = parsed
+            planned.append(action)
+        return planned
+
+    def execute(self, actions: list[dict]) -> list[dict]:
+        """Run the actions and return observation messages in input order."""
+        if not actions:
+            return []
+        ctx = self.ctx_factory()
+        prepared = [self._prepare(action) for action in actions]
+        if any(action["tool"] in SEQUENTIAL_TOOLS for action in prepared) or len(prepared) == 1:
+            return [self._run(action, ctx) for action in prepared]
+        with ThreadPoolExecutor(max_workers=len(prepared)) as pool:
+            return list(pool.map(lambda action: self._run(action, ctx), prepared))
+
+    def _prepare(self, action: dict) -> dict:
+        """Resolve permissions before running anything."""
+        if action.get("error"):
+            return action
+        tool = self.registry.get(action["tool"])
+        if tool is None:
+            action["error"] = (
+                f"Error: unknown tool '{action['tool']}'. Available tools: {', '.join(self.registry.names())}."
+            )
+            return action
+        decision = self.policy.evaluate(action["tool"], action["args"])
+        action["decision"] = decision
+        if decision.decision == "deny":
+            action["error"] = f"Error: permission denied for '{action['tool']}'. {decision.reason}".strip()
+            return action
+        if decision.decision == "ask":
+            approver = self.approver
+            if approver is None:
+                action["error"] = (
+                    f"Error: '{action['tool']}' needs approval but no approver is available. "
+                    "Run with --permission-mode bypass to allow it."
+                )
+                return action
+            answer = approver.request(action["tool"], action["args"], decision.reason)
+            if answer == ApprovalDecision.DENY:
+                action["error"] = f"Error: the user denied '{action['tool']}'."
+                return action
+            if answer == ApprovalDecision.ALWAYS:
+                self._remember(action["tool"], action["args"])
+        return action
+
+    def _remember(self, tool: str, params: dict) -> None:
+        """Persist an 'always allow' decision in the user rule file."""
+        from coderagent.tools.rules import add_rule
+
+        add_rule(tool, pattern_for(tool, params), "allow", "always allowed by the user", self.rules_home)
+
+    def _run(self, action: dict, ctx: ToolContext) -> dict:
+        if action.get("error"):
+            return self._observation(action["tool_call_id"], action["error"])
+        tool = self.registry.get(action["tool"])
+        try:
+            result: ToolResult = tool.run(action["args"], ctx)
+        except Exception as e:
+            return self._observation(
+                action["tool_call_id"], f"Error: '{action['tool']}' failed: {type(e).__name__}: {e}"
+            )
+        self._publish(action, result, ctx)
+        return self._observation(action["tool_call_id"], result.content)
+
+    def _observation(self, tool_call_id: str, content: str) -> dict:
+        return {"role": "tool", "tool_call_id": tool_call_id, "content": content}
+
+    def _publish(self, action: dict, result: ToolResult, ctx: ToolContext) -> None:
+        ctx.bus.publish(
+            Event(
+                type=EventType.TOOL_RESULT,
+                session_id=ctx.session.id,
+                timestamp=time.time(),
+                payload={"tool": action["tool"], "content": result.content, "is_error": result.is_error},
+            )
+        )
