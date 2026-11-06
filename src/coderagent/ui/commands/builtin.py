@@ -240,6 +240,31 @@ def _skills(context: CommandContext, argument: str) -> None:
     )
 
 
+def _plugins(context: CommandContext, argument: str) -> None:
+    from coderagent.extensions.plugins import TRUSTED, discover, remember, trust_decision
+
+    plugins = discover(context.cwd, context.loop.context.user_home)
+    if argument.startswith("trust "):
+        name = argument[len("trust ") :].strip()
+        plugin = next((item for item in plugins if item.name == name), None)
+        if plugin is None:
+            context.say(f"No plugin '{name}'.")
+            return
+        remember(name, TRUSTED, context.loop.context.user_home)
+        context.say(f"Trusted '{name}'. It is loaded the next time the agent starts.")
+        return
+    if not plugins:
+        context.say("No plugins.")
+        return
+    context.say(
+        "\n".join(
+            f"{plugin.name:<16} {trust_decision(plugin.name, context.loop.context.user_home) or 'not trusted'}"
+            f"  {plugin.source}"
+            for plugin in plugins
+        )
+    )
+
+
 def _memory(context: CommandContext, argument: str) -> None:
     from coderagent.extensions.reflect import (
         append_user_preferences,
@@ -331,6 +356,7 @@ register(Command(name="permissions", description="Show the rules that are in eff
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
 register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))
 register(Command(name="skills", description="Show the skills that are available", handler=_skills))
+register(Command(name="plugins", description="Show the plugins, or trust one of them", handler=_plugins))
 register(Command(name="memory", description="Show the memory of the project and of the user", handler=_memory))
 register(Command(name="status", description="Show the state of the session", handler=_status))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))

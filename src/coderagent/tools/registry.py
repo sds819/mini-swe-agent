@@ -44,6 +44,9 @@ class ToolRegistry:
     def names(self) -> list[str]:
         return list(self._tools)
 
+    def all(self) -> list[Tool]:
+        return list(self._tools.values())
+
     def schemas(self, budget_tokens: int | None = None) -> list[dict]:
         """OpenAI-compatible tool schemas, trimmed to fit the token budget."""
         schemas = [self._schema(tool) for tool in self._tools.values()]

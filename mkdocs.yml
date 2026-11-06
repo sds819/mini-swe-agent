@@ -73,6 +73,7 @@ nav:
       - "Commands": usage/coderagent_commands.md
       - "MCP servers": usage/coderagent_mcp.md
       - "Hooks": usage/coderagent_hooks.md
+      - "Plugins": usage/coderagent_plugins.md
     - "Language models":
       - "Quick start": models/quickstart.md
       - "Local models": models/local_models.md

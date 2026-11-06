@@ -248,6 +248,27 @@ def test_the_skills_are_shown(tmp_path):
     assert "Make a PDF report." in answer
 
 
+def test_the_plugins_are_shown(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "plugins" / "hello"
+    directory.mkdir(parents=True)
+    (directory / "plugin.py").write_text("def register(registry):\n    pass\n", encoding="utf-8")
+    answer = _run(context, output, "/plugins")
+    assert "hello" in answer
+    assert "not trusted" in answer
+
+
+def test_a_plugin_can_be_trusted(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    context, output = _context(tmp_path)
+    directory = tmp_path / ".coderagent" / "plugins" / "hello"
+    directory.mkdir(parents=True)
+    (directory / "plugin.py").write_text("def register(registry):\n    pass\n", encoding="utf-8")
+    assert "Trusted" in _run(context, output, "/plugins trust hello")
+    assert (tmp_path / "home" / "trusted-plugins.json").exists()
+
+
 def test_the_memory_is_shown(tmp_path):
     context, output = _context(tmp_path)
     memory = tmp_path / ".coderagent" / "memory"

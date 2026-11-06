@@ -1,0 +1,87 @@
+# Plugins
+
+A plugin adds tools, commands, hooks or model backends to the agent. A plugin is
+a directory with a `plugin.py` in it:
+
+```
+.coderagent/plugins/hello/
+└── plugin.py
+```
+
+The plugin runs in the process of the agent, without a sandbox. It is only
+loaded when the user has trusted it.
+
+## Where a plugin is looked for
+
+| Where | What |
+|---|---|
+| `~/.coderagent/plugins/*/` | The plugins of the user |
+| `.coderagent/plugins/*/` | The plugins of the project |
+| The entry point group `coderagent.plugins` | The plugins that are installed with pip |
+
+The plugins of the project come first, so a project may replace a plugin of
+the user with the same name.
+
+## Trusting a plugin
+
+```bash
+/plugins            # the plugins that were found, and what the user answered for them
+/plugins trust hello
+```
+
+The answer is remembered in `~/.coderagent/trusted-plugins.json` (`MSWEA_CODER_HOME`
+moves it). A plugin that was not trusted is never loaded, and the trust is
+remembered too, so the question is asked once.
+
+## The API of a plugin
+
+The plugin file has a `register` function, or an object with a `register`
+method. The function gets the extension registry:
+
+```python
+# .coderagent/plugins/hello/plugin.py
+from coderagent.tools.base import ToolResult
+from coderagent.ui.commands import Command
+
+
+class HelloTool:
+    name = "hello"
+    description = "Say hello to the user."
+
+    parameters = {"type": "object", "properties": {"name": {"type": "string"}}}
+
+    def run(self, params, ctx):
+        return ToolResult(f"Hello, {params.get('name', 'there')}!")
+
+
+def hello(context, argument):
+    context.say("Hello!")
+
+
+def register(registry):
+    registry.tools.register(HelloTool())
+    registry.commands.append(Command(name="hello", description="Say hello", handler=hello))
+```
+
+The registry has four parts:
+
+| Part | What it is |
+|---|---|
+| `registry.tools` | The tools the model may call |
+| `registry.commands` | The slash commands the user may type |
+| `registry.hooks` | The hooks, in the format of the configuration |
+| `registry.model_backends` | The model backends, by name |
+
+A tool that the plugin registers goes through the same permission check as the
+tools of the agent, so the rules of the project apply to it as well.
+
+## Writing a plugin that is installed with pip
+
+```python
+# pyproject.toml
+[project.entry-points."coderagent.plugins"]
+hello = "hello_plugin:plugin"
+```
+
+The object the entry point points at is loaded the same way as a `plugin.py`:
+it is either a `register` function or an object with a `register` method.

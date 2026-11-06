@@ -29,6 +29,10 @@ coder --task "/help"  # a command without the interface
 | `/mcp` | The MCP servers and their state |
 | `/permissions` | The rules that are in effect |
 | `/hooks` | The hooks that are loaded |
+| `/agents` | The sub agents that are available |
+| `/skills` | The skills that are available |
+| `/plugins` | The plugins, or trust one of them |
+| `/memory` | The memory of the project and of the user |
 | `/status` | The state of the session |
 | `/export` | Write the conversation to a file |
 | `/context` | The size of the context |

@@ -13,6 +13,7 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
 from coderagent.core.subagent import SubAgentRunner, load_subagents
 from coderagent.extensions.hooks import HookRunner
+from coderagent.extensions.plugins import load as load_plugins
 from coderagent.extensions.reflect import (
     PENDING_HEADER,
     Reflection,
@@ -36,6 +37,7 @@ from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.mcp import MCPManager
 from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rule
 from coderagent.tools.rules import load_rules
+from coderagent.ui.commands import register as register_command
 
 logger = logging.getLogger("coderagent.run")
 
@@ -101,6 +103,13 @@ def build_loop(
     mcp = MCPManager(config.mcp, bus)
     for tool in mcp.start():
         registry.register(tool)
+    extensions, plugins = load_plugins(cwd, user_home)
+    for tool in extensions.tools.all():
+        registry.register(tool)
+    for command in extensions.commands:
+        register_command(command)
+    for event, matchers in extensions.hooks.events.items():
+        config.hooks.events.setdefault(event, []).extend(matchers)
     backend = model if model is not None else build_model(config)
     gateway = ModelGateway(backend)
     router = ModelRouter(config.model, gateway)
@@ -176,6 +185,7 @@ def build_loop(
         mcp=mcp,
         subagents=specs,
         router=router,
+        plugins=plugins,
     )
 
 
