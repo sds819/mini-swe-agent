@@ -2,7 +2,17 @@
 
 from typing import Any
 
+import litellm
+
 from coderagent.core.protocols import ModelBackend
+
+
+def is_context_overflow(error: Exception) -> bool:
+    """True when the provider refused the request because the context was too long."""
+    if isinstance(error, litellm.exceptions.ContextWindowExceededError):
+        return True
+    text = str(error).lower()
+    return any(marker in text for marker in ("context window", "context_length_exceeded", "maximum context length"))
 
 
 class ModelGateway:

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from coderagent.config.schema import Config
+from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
@@ -16,9 +17,9 @@ from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rul
 from coderagent.tools.rules import load_rules
 
 
-def build_model(config: Config) -> ModelBackend:
+def build_model(config: Config, model_name: str = "") -> ModelBackend:
     return LiteLLMBackend(
-        config.model.model_name,
+        model_name or config.model.model_name,
         model_kwargs=config.model.model_kwargs,
         set_cache_control=config.model.set_cache_control,
     )
@@ -55,14 +56,29 @@ def build_loop(
     session.permission_mode = policy.mode.value
     bus = EventBus()
     registry = build_registry(config.tools.enabled, config.tools.disabled)
+    gateway = ModelGateway(model if model is not None else build_model(config))
+    context = ContextEngine(
+        session,
+        store,
+        bus,
+        config.context,
+        gateway,
+        system_prompt=config.agent.system_prompt,
+        memory_config=config.memory,
+        cwd=cwd,
+        summary_model=ModelGateway(build_model(config, config.context.summarize_model))
+        if config.context.summarize_model
+        else None,
+    )
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
-    executor = ToolExecutor(registry, policy, lambda: ctx, HeadlessApprover(allow=False))
+    executor = ToolExecutor(registry, policy, lambda: ctx, HeadlessApprover(allow=False), on_path=context.note_path)
     return AgentLoop(
-        ModelGateway(model if model is not None else build_model(config)),
+        gateway,
         executor,
         session,
         store,
         bus,
+        context=context,
         tools=registry.schemas(),
         system_prompt=config.agent.system_prompt,
         max_turns=config.agent.max_turns,

@@ -3,10 +3,12 @@
 import time
 from dataclasses import dataclass, field
 
+from coderagent.config.schema import ContextConfig
+from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
-from coderagent.models.gateway import ModelGateway
+from coderagent.models.gateway import ModelGateway, is_context_overflow
 
 
 @dataclass
@@ -32,6 +34,7 @@ class AgentLoop:
         store: SessionStore,
         bus: EventBus,
         *,
+        context: ContextEngine | None = None,
         tools: list[dict] | None = None,
         system_prompt: str = "",
         max_turns: int = 50,
@@ -46,7 +49,15 @@ class AgentLoop:
         self.system_prompt = system_prompt
         self.max_turns = max_turns
         self.cost_limit = cost_limit
-        self.messages = self._restore_messages()
+        self.context = context or ContextEngine(
+            session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
+        )
+        self.context.system_prompt = system_prompt or self.context.system_prompt
+        self.context.restore()
+
+    @property
+    def messages(self) -> list[dict]:
+        return self.context.history.messages
 
     def run(self, user_input: str) -> TurnResult:
         """Alias for `run_turn`; the caller drives the conversation."""
@@ -54,10 +65,10 @@ class AgentLoop:
 
     def run_turn(self, user_input: str) -> TurnResult:
         """Run one turn: query the model, execute its tool calls, repeat until it stops."""
-        start = len(self.messages)
-        self.messages.append({"role": "user", "content": user_input})
+        turn_messages: list[dict] = []
+        self.context.append({"role": "user", "content": user_input})
+        turn_messages.append({"role": "user", "content": user_input})
         self.session.turn_count += 1
-        self._publish(EventType.USER_MESSAGE, {"content": user_input})
         self._set_state(SessionState.THINKING)
 
         stop_reason = "end_turn"
@@ -71,20 +82,16 @@ class AgentLoop:
             if self.cost_limit and self.model.total_cost >= self.cost_limit:
                 stop_reason = "cost_exceeded"
                 break
-            try:
-                response = self.model.query(self._context(), tools=self.tools)
-            except Exception as e:
-                error = f"{type(e).__name__}: {e}"
+            self.context.maybe_compact()
+            response, error = self._query()
+            if response is None:
                 self._publish(EventType.ERROR, {"error": error})
                 stop_reason = "error"
                 break
             n_calls += 1
             cost += response.get("extra", {}).get("cost", 0.0)
-            self.messages.append(response)
-            self._publish(
-                EventType.ASSISTANT_MESSAGE,
-                {"message": response, "cost": response.get("extra", {}).get("cost", 0.0)},
-            )
+            self.context.append(response)
+            turn_messages.append(response)
             tool_calls = response.get("tool_calls") or []
             if not tool_calls:
                 break
@@ -92,10 +99,8 @@ class AgentLoop:
             actions = self.executor.plan(tool_calls)
             self._publish(EventType.TOOL_CALL, {"actions": actions})
             observations = self.executor.execute(actions)
-            self.messages.extend(observations)
-            self._publish(
-                EventType.TOOL_RESULT, {"messages": observations, "todos": self.session.metadata.get("todos", [])}
-            )
+            self.context.extend(observations)
+            turn_messages.extend(observations)
             self._set_state(SessionState.THINKING)
 
         self.session.total_cost = self.model.total_cost
@@ -105,24 +110,23 @@ class AgentLoop:
             turn_count=self.session.turn_count,
             cost=cost,
             stop_reason=stop_reason,
-            messages=self.messages[start:],
+            messages=turn_messages,
             error=error,
         )
 
-    def _context(self) -> list[dict]:
-        return ([{"role": "system", "content": self.system_prompt}] if self.system_prompt else []) + self.messages
-
-    def _restore_messages(self) -> list[dict]:
-        """Rebuild the conversation from the event log."""
-        messages: list[dict] = []
-        for event in self.store.events(self.session.id):
-            if event.type == EventType.USER_MESSAGE:
-                messages.append({"role": "user", "content": event.payload.get("content", "")})
-            elif event.type == EventType.ASSISTANT_MESSAGE:
-                messages.append(event.payload.get("message", {}))
-            elif event.type == EventType.TOOL_RESULT:
-                messages.extend(event.payload.get("messages", []))
-        return messages
+    def _query(self) -> tuple[dict | None, str]:
+        """Ask the model. When the provider says the context is too big, compact and try once more."""
+        try:
+            return self.model.query(self.context.build_messages(tools=self.tools), tools=self.tools), ""
+        except Exception as e:
+            if not is_context_overflow(e):
+                return None, f"{type(e).__name__}: {e}"
+            if not self.context.force_compact():
+                return None, f"{type(e).__name__}: {e} (nothing left to compact)"
+            try:
+                return self.model.query(self.context.build_messages(tools=self.tools), tools=self.tools), ""
+            except Exception as retry_error:
+                return None, f"{type(retry_error).__name__}: {retry_error}"
 
     def _publish(self, event_type: EventType, payload: dict) -> None:
         event = Event(type=event_type, session_id=self.session.id, timestamp=time.time(), payload=payload)

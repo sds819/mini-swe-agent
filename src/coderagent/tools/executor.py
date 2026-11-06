@@ -6,7 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 from coderagent.core.events import Event, EventType
 from coderagent.tools.base import ToolContext, ToolResult
-from coderagent.tools.permissions import ApprovalDecision, Approver, PermissionPolicy, pattern_for
+from coderagent.tools.permissions import (
+    WRITE_TOOLS,
+    ApprovalDecision,
+    Approver,
+    PermissionPolicy,
+    pattern_for,
+)
 from coderagent.tools.registry import ToolRegistry
 
 SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}
@@ -21,12 +27,18 @@ class ToolExecutor:
         approver: Approver | None = None,
         *,
         rules_home=None,
+        on_path=None,
+        before_write=None,
     ) -> None:
         self.registry = registry
         self.policy = policy
         self.ctx_factory = ctx_factory
         self.approver = approver
         self.rules_home = rules_home
+        self.on_path = on_path
+        """Called with the path of every path based tool, so the engine can pick up instructions."""
+        self.before_write = before_write
+        """Called with (tool, params) before a write tool runs, e.g. to take a checkpoint."""
 
     def plan(self, actions: list[dict]) -> list[dict]:
         """Parse raw tool calls into normalized actions."""
@@ -111,6 +123,11 @@ class ToolExecutor:
         if action.get("error"):
             return self._observation(action["tool_call_id"], action["error"])
         tool = self.registry.get(action["tool"])
+        path = action["args"].get("path")
+        if path and self.on_path:
+            self.on_path(str(path))
+        if action["tool"] in WRITE_TOOLS and self.before_write:
+            self.before_write(action["tool"], action["args"])
         try:
             result: ToolResult = tool.run(action["args"], ctx)
         except Exception as e:
