@@ -69,20 +69,25 @@ def trim_text(text: str, max_tokens: int) -> tuple[str, dict]:
         return text, {}
     head = int(max_tokens * 0.4 * CHARS_PER_TOKEN)
     tail = int(max_tokens * 0.4 * CHARS_PER_TOKEN)
-    elided = max(0, len(text) - head - tail)
-    trimmed = (
-        f"{text[:head]}\n... [{elided} characters elided] ...\n{text[-tail:]}"
-        if tail
-        else f"{text[:head]}\n... [{elided} characters elided] ..."
-    )
+    head_text, tail_text = text[:head], text[-tail:] if tail else ""
+    elided_characters = max(0, len(text) - len(head_text) - len(tail_text))
+    elided_lines = max(0, text.count("\n") - head_text.count("\n") - tail_text.count("\n"))
+    elided_tokens = max(0, count_text_tokens(text) - count_text_tokens(head_text) - count_text_tokens(tail_text))
+    marker = f"\n... [{elided_lines} lines, {elided_tokens} tokens elided, use grep/offset to view that region] ...\n"
+    trimmed = f"{head_text}{marker}{tail_text}" if tail else f"{head_text}{marker}"
     return trimmed, {
-        "elided_characters": elided,
-        "elided_tokens": max(0, count_text_tokens(text) - count_text_tokens(trimmed)),
+        "elided_characters": elided_characters,
+        "elided_lines": elided_lines,
+        "elided_tokens": elided_tokens,
     }
 
 
 def trim_lines(lines: list[str], max_tokens: int) -> tuple[list[str], dict]:
-    """Keep the head and the tail of a list of lines, elide the middle."""
+    """Keep the head and the tail of a list of lines, elide the middle.
+
+    The marker in the middle is not a line of the file, so the caller needs to know
+    how many lines came from the head to keep the line numbers right.
+    """
     if count_text_tokens("\n".join(lines)) <= max_tokens:
         return lines, {}
     budget = max(1.0, max_tokens * 0.4)
@@ -109,4 +114,5 @@ def trim_lines(lines: list[str], max_tokens: int) -> tuple[list[str], dict]:
         "elided_lines": elided,
         "start_line": head_end + 1,
         "end_line": tail_start,
+        "head_lines": head_end,
     }

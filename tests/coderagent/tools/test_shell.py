@@ -38,12 +38,12 @@ def test_bash_kills_a_command_that_runs_too_long(ctx):
 
 def test_bash_trims_long_output(ctx):
     result = BashTool().run({"command": "for i in $(seq 1 20000); do echo 0123456789; done"}, ctx)
-    assert "characters elided" in result.content
+    assert "tokens elided" in result.content
 
 
 def test_trim_output_keeps_the_head_and_the_tail():
     trimmed = trim_output("a" * 100 + "b" * 100, 4)
-    assert "characters elided" in trimmed
+    assert "tokens elided" in trimmed
     assert trimmed.startswith("a")
     assert trimmed.endswith("b")
 

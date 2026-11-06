@@ -56,7 +56,7 @@ def test_long_text_keeps_the_head_and_the_tail():
     assert info["elided_characters"] > 0
     assert text.startswith("a")
     assert text.endswith("b")
-    assert "characters elided" in text
+    assert "tokens elided" in text
 
 
 def test_long_line_lists_keep_the_head_and_the_tail():

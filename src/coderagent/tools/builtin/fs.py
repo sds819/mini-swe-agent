@@ -95,16 +95,29 @@ class ReadTool:
         limit = max(1, int(params.get("limit") or DEFAULT_READ_LIMIT))
         selected = lines[offset - 1 : offset - 1 + limit]
         truncated, info = trim_lines(selected, ctx.config.max_output_tokens)
-        width = len(str(offset + len(truncated) - 1)) if truncated else 0
+        head = info.get("head_lines", len(truncated))
+        if info:
+            tail_start = offset + info["end_line"] - 1
+            numbered = (
+                [(offset + index, line) for index, line in enumerate(truncated[:head])]
+                + [(0, truncated[head])]
+                + [(tail_start + index, line) for index, line in enumerate(truncated[head + 1 :])]
+            )
+        else:
+            numbered = [(offset + index, line) for index, line in enumerate(truncated)]
+        width = len(str(max((number for number, _ in numbered), default=0)))
         rendered = []
-        for number, line in enumerate(truncated, start=offset):
+        for number, line in numbered:
             if len(line) > MAX_LINE_LENGTH:
                 line = line[:MAX_LINE_LENGTH] + "... [line truncated]"
-            rendered.append(f"{number:>{width}}\t{line}")
+            rendered.append(f"{number:>{width}}\t{line}" if number else line)
         output = "\n".join(rendered)
-        last = offset + len(truncated) - 1
-        if last < len(lines) and not info:
-            output += f"\n... (showing lines {offset}-{last} of {len(lines)}, use offset={last + 1} to continue)"
+        last = offset + len(selected) - 1
+        if last < len(lines):
+            if info:
+                output += f"\n... ({len(lines)} lines in the file, use offset={last + 1} to continue)"
+            else:
+                output += f"\n... (showing lines {offset}-{last} of {len(lines)}, use offset={last + 1} to continue)"
         metadata: dict[str, Any] = {"path": str(target), "lines": len(lines)}
         if info:
             metadata["truncated"] = {
