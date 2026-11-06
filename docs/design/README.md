@@ -1,7 +1,17 @@
 # Coding Agent 设计文档集
 
 > 目标：在 mini-SWE-agent 的极简哲学之上，构建一个对标 Codex CLI / Claude Code 的交互式 coding agent。
-> 状态：设计阶段（WIP），尚未开始实现。
+> 状态：实现中（WIP）。M0 / M1 / M2 已完成。
+
+## 里程碑进度
+
+| 里程碑 | 主题 | 状态 | 代码位置 |
+|---|---|---|---|
+| M0 | 骨架与配置 | ✅ 已完成 | `src/coderagent/{core,config,models,run}` |
+| M1 | 工具系统与权限 | ✅ 已完成 | `src/coderagent/{tools,testing}` |
+| M2 | 上下文治理与会话管理 | ✅ 已完成 | `src/coderagent/core/{context,summarize,checkpoint,tokens,budget,history,instructions,memory}.py`、`src/coderagent/ui/commands/` |
+| M3 | 交互体验与扩展 | ⬜ 未开始 | — |
+| M4 | 进阶能力 | ⬜ 未开始 | — |
 
 ## 文档索引
 
