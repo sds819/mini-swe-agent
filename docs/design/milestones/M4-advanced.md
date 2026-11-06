@@ -468,6 +468,8 @@ coder export --session <id> --format otel --out trace.otlp
 - 子 agent 用自己的模型时，它的花费记到主 gateway 上，所以主会话的预算仍然管得住它。
 - 压缩时生成摘要的那次调用也是一次模型调用。它的花费写进 `compaction` 事件里，因此在
   事件日志里，和别的调用一样被计入。
+- 会话结束时那次「经验沉淀」也是一次模型调用。它的花费写进 `reflection` 事件里。它跑在
+  别的模型上时，花费记到主 gateway 上，所以主会话的预算仍然管得住它。
 - 一个会话的花费 = 事件日志里所有调用的花费之和。session、trace 指标、`/cost` 和
   `coder export` 报的是同一个数字。
 - 子 agent 的 `files_touched` 只列**改过**的文件。读过的文件不算，读不是改。
