@@ -17,4 +17,6 @@ def test_every_builtin_tool_declares_a_usable_schema():
 
 
 def test_the_config_knows_every_builtin_tool():
-    assert BUILTIN_TOOL_NAMES == TOOL_NAMES
+    assert set(TOOL_NAMES) <= set(BUILTIN_TOOL_NAMES)
+    """The `task` tool is the only one outside the static registry: it needs the agent."""
+    assert set(BUILTIN_TOOL_NAMES) - set(TOOL_NAMES) == {"task"}

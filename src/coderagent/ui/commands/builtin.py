@@ -210,6 +210,19 @@ def _hooks(context: CommandContext, argument: str) -> None:
     context.say("\n".join(lines))
 
 
+def _agents(context: CommandContext, argument: str) -> None:
+    specs = context.loop.subagents
+    if not specs:
+        context.say("No sub agents.")
+        return
+    context.say(
+        "\n".join(
+            f"{spec.name:<16} {spec.model_purpose:<6} {', '.join(spec.tools)}\n{'':<16} {spec.description}"
+            for spec in specs.values()
+        )
+    )
+
+
 def _status(context: CommandContext, argument: str) -> None:
     session = context.session
     context.say(
@@ -260,6 +273,7 @@ register(Command(name="todos", description="Show the task list", handler=_todos)
 register(Command(name="mcp", description="Show the MCP servers", handler=_mcp))
 register(Command(name="permissions", description="Show the rules that are in effect", handler=_permissions))
 register(Command(name="hooks", description="Show the hooks that are loaded", handler=_hooks))
+register(Command(name="agents", description="Show the sub agents that are available", handler=_agents))
 register(Command(name="status", description="Show the state of the session", handler=_status))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))
 register(Command(name="context", description="Show the size of the context", handler=_context))

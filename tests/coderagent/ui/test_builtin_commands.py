@@ -7,6 +7,7 @@ from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
+from coderagent.core.subagent import load_subagents
 from coderagent.models.gateway import ModelGateway
 from coderagent.testing.factory import build_executor
 from coderagent.testing.scripted_model import ScriptedModel
@@ -26,6 +27,7 @@ def _context(tmp_path) -> tuple[CommandContext, list[str]]:
         store,
         bus,
         tools=executor.registry.schemas(),
+        subagents=load_subagents(tmp_path),
     )
     output: list[str] = []
     context = CommandContext(
@@ -216,3 +218,11 @@ def test_no_mcp_servers_are_configured(tmp_path):
 def test_the_context_size_is_shown(tmp_path):
     context, output = _context(tmp_path)
     assert "tokens" in _run(context, output, "/context")
+
+
+def test_the_sub_agents_are_shown(tmp_path):
+    context, output = _context(tmp_path)
+    answer = _run(context, output, "/agents")
+    assert "code-explorer" in answer
+    assert "verifier" in answer
+    assert "read, grep" in answer

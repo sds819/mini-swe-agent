@@ -10,7 +10,7 @@ agent:
   cost_limit: 0.0
 
 tools:
-  enabled: [read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write]
+  enabled: [read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write, task]
   disabled: []
   bash_timeout: 120
   max_output_tokens: 8000

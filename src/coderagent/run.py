@@ -10,11 +10,13 @@ from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
+from coderagent.core.subagent import SubAgentRunner, load_subagents
 from coderagent.extensions.hooks import HookRunner
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
+from coderagent.tools.builtin.task import TaskTool
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.mcp import MCPManager
 from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rule
@@ -53,6 +55,14 @@ def _context_config(config: Config, model_name: str) -> ContextConfig:
     return config.context.model_copy(update={"context_window": context_window_for(model_name)})
 
 
+def purpose_gateway(config: Config, gateway: ModelGateway, purpose: str) -> ModelGateway:
+    """The gateway of a purpose. The main one when the purpose is not routed."""
+    name = config.model.routing.get(purpose, "")
+    if not name or name == config.model.model_name:
+        return gateway
+    return ModelGateway(build_model(config, name))
+
+
 def build_loop(
     config: Config,
     cwd: Path,
@@ -63,6 +73,7 @@ def build_loop(
     permission_mode: str | None = None,
     bus: EventBus | None = None,
     approver=None,
+    user_home: Path | None = None,
 ) -> AgentLoop:
     store = store or SessionStore()
     session = session or store.create(cwd)
@@ -91,6 +102,19 @@ def build_loop(
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
+    specs = load_subagents(cwd, user_home)
+    runner = SubAgentRunner(
+        gateway,
+        registry,
+        policy,
+        lambda: ctx,
+        approver=approver,
+        gateway_for=lambda purpose: purpose_gateway(config, gateway, purpose),
+        bus=bus,
+        session_id=session.id,
+    )
+    if "task" in config.tools.enabled and "task" not in config.tools.disabled:
+        registry.register(TaskTool(runner, specs))
 
     def before_write(tool: str, params: dict) -> None:
         """Snapshot the file before a write tool changes it."""
@@ -123,6 +147,7 @@ def build_loop(
         checkpoints=checkpoints,
         hooks=hooks,
         mcp=mcp,
+        subagents=specs,
     )
 
 

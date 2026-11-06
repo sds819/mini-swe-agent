@@ -44,6 +44,7 @@ class AgentLoop:
         checkpoints=None,
         hooks=None,
         mcp=None,
+        subagents=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -59,6 +60,8 @@ class AgentLoop:
         """The hook runner, when the session has hooks."""
         self.mcp = mcp
         """The MCP manager, when the session has servers."""
+        self.subagents = subagents or {}
+        """The sub agents that are available, by name."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(

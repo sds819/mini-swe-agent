@@ -23,6 +23,7 @@ BUILTIN_TOOL_NAMES = [
     "bash_output",
     "bash_kill",
     "todo_write",
+    "task",
 ]
 
 
