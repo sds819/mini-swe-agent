@@ -103,6 +103,8 @@ class HookCommand(BaseModel):
     type: str = "command"
     command: str
     timeout: int = 10
+    strict: bool = False
+    """When the hook fails, block the action instead of letting it through."""
 
 
 class HookMatcher(BaseModel):

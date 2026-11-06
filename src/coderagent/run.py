@@ -10,6 +10,7 @@ from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
+from coderagent.extensions.hooks import HookRunner
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.tools.base import ToolContext
@@ -83,6 +84,7 @@ def build_loop(
     )
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
+    hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
 
     def before_write(tool: str, params: dict) -> None:
         """Snapshot the file before a write tool changes it."""
@@ -99,6 +101,7 @@ def build_loop(
         HeadlessApprover(allow=False),
         on_path=context.note_path,
         before_write=before_write,
+        hooks=hooks,
     )
     return AgentLoop(
         gateway,
@@ -112,6 +115,7 @@ def build_loop(
         max_turns=config.agent.max_turns,
         cost_limit=config.agent.cost_limit,
         checkpoints=checkpoints,
+        hooks=hooks,
     )
 
 

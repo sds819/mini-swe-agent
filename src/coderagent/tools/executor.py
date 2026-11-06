@@ -29,6 +29,7 @@ class ToolExecutor:
         rules_home=None,
         on_path=None,
         before_write=None,
+        hooks=None,
     ) -> None:
         self.registry = registry
         self.policy = policy
@@ -39,6 +40,8 @@ class ToolExecutor:
         """Called with the path of every path based tool, so the engine can pick up instructions."""
         self.before_write = before_write
         """Called with (tool, params) before a write tool runs, e.g. to take a checkpoint."""
+        self.hooks = hooks
+        """The hook runner, when the session has hooks."""
 
     def plan(self, actions: list[dict]) -> list[dict]:
         """Parse raw tool calls into normalized actions."""
@@ -92,6 +95,13 @@ class ToolExecutor:
                 f"Error: unknown tool '{action['tool']}'. Available tools: {', '.join(self.registry.names())}."
             )
             return action
+        if self.hooks:
+            hook = self.hooks.apply("PreToolUse", {"tool": action["tool"], "params": action["args"]})
+            if hook.blocked:
+                action["error"] = f"Error: the hook blocked '{action['tool']}'. {hook.reason}".strip()
+                return action
+            if hook.updated_input is not None:
+                action["args"] = hook.updated_input
         decision = self.policy.evaluate(action["tool"], action["args"])
         action["decision"] = decision
         if decision.decision == "deny":
@@ -137,7 +147,16 @@ class ToolExecutor:
         self._publish(action, result, ctx)
         if result.metadata.get("truncated"):
             ctx.session.metadata.setdefault("truncated_outputs", []).append(result.metadata["truncated"])
-        return self._observation(action["tool_call_id"], result.content)
+        content = result.content
+        if self.hooks:
+            hook = self.hooks.apply(
+                "PostToolUse", {"tool": action["tool"], "params": action["args"], "result": content}
+            )
+            if hook.blocked:
+                content = f"Error: the hook blocked '{action['tool']}'. {hook.reason}".strip()
+            if hook.additional_context:
+                content = f"{content}\n\n[hook] {hook.additional_context}"
+        return self._observation(action["tool_call_id"], content)
 
     def _observation(self, tool_call_id: str, content: str) -> dict:
         return {"role": "tool", "tool_call_id": tool_call_id, "content": content}

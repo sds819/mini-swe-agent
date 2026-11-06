@@ -42,6 +42,7 @@ class AgentLoop:
         max_turns: int = 50,
         cost_limit: float = 0.0,
         checkpoints=None,
+        hooks=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -53,11 +54,14 @@ class AgentLoop:
         self.max_turns = max_turns
         self.cost_limit = cost_limit
         self.checkpoints = checkpoints
+        self.hooks = hooks
+        """The hook runner, when the session has hooks."""
         self.context = context or ContextEngine(
             session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
         )
         self.context.system_prompt = system_prompt or self.context.system_prompt
         self.context.restore()
+        self._session_start()
 
     @property
     def messages(self) -> list[dict]:
@@ -78,6 +82,7 @@ class AgentLoop:
             cwd=session.cwd,
         )
         self.context.restore()
+        self._session_start()
 
     def run(self, user_input: str) -> TurnResult:
         """Alias for `run_turn`; the caller drives the conversation."""
@@ -86,8 +91,22 @@ class AgentLoop:
     def run_turn(self, user_input: str) -> TurnResult:
         """Run one turn: query the model, execute its tool calls, repeat until it stops."""
         turn_messages: list[dict] = []
-        self.context.append({"role": "user", "content": user_input})
-        turn_messages.append({"role": "user", "content": user_input})
+        prompt = user_input
+        if self.hooks:
+            hook = self.hooks.apply("UserPromptSubmit", {"prompt": user_input})
+            if hook.blocked:
+                self._publish(EventType.ERROR, {"error": hook.reason or "the prompt was blocked"})
+                return TurnResult(
+                    session_id=self.session.id,
+                    turn_count=self.session.turn_count,
+                    cost=0.0,
+                    stop_reason="error",
+                    error=hook.reason or "the prompt was blocked",
+                )
+            if hook.additional_context:
+                prompt = f"{user_input}\n\n[hook] {hook.additional_context}"
+        self.context.append({"role": "user", "content": prompt})
+        turn_messages.append({"role": "user", "content": prompt})
         self.session.turn_count += 1
         self._set_state(SessionState.THINKING)
 
@@ -95,6 +114,7 @@ class AgentLoop:
         error = ""
         cost = 0.0
         n_calls = 0
+        stop_blocks = 0
         while True:
             if self.max_turns and n_calls >= self.max_turns:
                 stop_reason = "max_turns"
@@ -114,6 +134,9 @@ class AgentLoop:
             turn_messages.append(response)
             tool_calls = response.get("tool_calls") or []
             if not tool_calls:
+                if stop_blocks < 3 and self._stop_blocked(response):
+                    stop_blocks += 1
+                    continue
                 break
             self._set_state(SessionState.EXECUTING)
             actions = self.executor.plan(tool_calls)
@@ -125,6 +148,7 @@ class AgentLoop:
 
         self.session.total_cost = self.model.total_cost
         self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE)
+        self._session_end()
         return TurnResult(
             session_id=self.session.id,
             turn_count=self.session.turn_count,
@@ -133,6 +157,27 @@ class AgentLoop:
             messages=turn_messages,
             error=error,
         )
+
+    def _stop_blocked(self, response: dict) -> bool:
+        """Ask the Stop hook whether the agent may stop. A blocked stop means: keep going."""
+        if not self.hooks:
+            return False
+        hook = self.hooks.apply("Stop", {"last_message": response.get("content", "")})
+        if not hook.blocked:
+            return False
+        self.context.append({"role": "user", "content": f"[hook] {hook.reason}"})
+        return True
+
+    def _session_start(self) -> None:
+        if self.hooks:
+            self.hooks.apply("SessionStart", {"session_id": self.session.id, "cwd": str(self.session.cwd)})
+
+    def _session_end(self) -> None:
+        if self.hooks:
+            self.hooks.apply(
+                "SessionEnd",
+                {"session_id": self.session.id, "turns": self.session.turn_count, "cost": self.session.total_cost},
+            )
 
     def _query(self) -> tuple[dict | None, str]:
         """Ask the model. When the provider says the context is too big, compact and try once more."""
