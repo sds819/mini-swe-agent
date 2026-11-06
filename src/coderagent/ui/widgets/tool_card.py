@@ -16,6 +16,14 @@ def summarize(args: dict[str, Any]) -> str:
     return ", ".join(f"{key}={value}" for key, value in list(args.items())[:2])
 
 
+def _fold(text: str, lines: int = 8) -> str:
+    """The first lines of a long output; the rest is only counted."""
+    rows = text.splitlines()
+    if len(rows) <= lines:
+        return text
+    return "\n".join([*rows[:lines], f"▸ {len(rows) - lines} more lines"])
+
+
 class ToolCard(Static):
     """One tool call, from the moment it starts until it is done."""
 
@@ -48,7 +56,7 @@ class ToolCard(Static):
         if self.diff:
             lines.append(colorize_diff(self.diff))
         else:
-            lines.append(f"[dim]{self.content[:500]}[/dim]")
+            lines.append(f"[dim]{_fold(self.content)}[/dim]")
         return "\n".join(lines)
 
     def start(self) -> None:
