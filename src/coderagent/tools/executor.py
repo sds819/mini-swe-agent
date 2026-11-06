@@ -167,6 +167,12 @@ class ToolExecutor:
                 type=EventType.TOOL_RESULT,
                 session_id=ctx.session.id,
                 timestamp=time.time(),
-                payload={"tool": action["tool"], "content": result.content, "is_error": result.is_error},
+                payload={
+                    "tool": action["tool"],
+                    "tool_call_id": action["tool_call_id"],
+                    "content": result.content,
+                    "is_error": result.is_error,
+                    "diff": result.metadata.get("diff", ""),
+                },
             )
         )

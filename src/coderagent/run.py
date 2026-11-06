@@ -61,12 +61,14 @@ def build_loop(
     store: SessionStore | None = None,
     session=None,
     permission_mode: str | None = None,
+    bus: EventBus | None = None,
+    approver=None,
 ) -> AgentLoop:
     store = store or SessionStore()
     session = session or store.create(cwd)
     policy = build_policy(config, cwd, permission_mode)
     session.permission_mode = policy.mode.value
-    bus = EventBus()
+    bus = bus or EventBus()
     registry = build_registry(config.tools.enabled, config.tools.disabled)
     mcp = MCPManager(config.mcp, bus)
     for tool in mcp.start():
@@ -102,7 +104,7 @@ def build_loop(
         registry,
         policy,
         lambda: ctx,
-        HeadlessApprover(allow=False),
+        approver or HeadlessApprover(allow=False),
         on_path=context.note_path,
         before_write=before_write,
         hooks=hooks,

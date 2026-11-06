@@ -59,6 +59,8 @@ class AgentLoop:
         """The hook runner, when the session has hooks."""
         self.mcp = mcp
         """The MCP manager, when the session has servers."""
+        self.cancel = None
+        """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(
             session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
         )
@@ -119,6 +121,9 @@ class AgentLoop:
         n_calls = 0
         stop_blocks = 0
         while True:
+            if self.cancel is not None and self.cancel():
+                stop_reason = "interrupted"
+                break
             if self.max_turns and n_calls >= self.max_turns:
                 stop_reason = "max_turns"
                 break

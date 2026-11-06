@@ -1,5 +1,6 @@
 """Command line interface."""
 
+import sys
 from pathlib import Path
 
 import litellm
@@ -109,6 +110,7 @@ def main(
     continue_last: bool = typer.Option(False, "--continue", help="Continue the last session of this directory"),
     fork: str = typer.Option("", "--fork", help="Copy the session with this id and continue in the copy"),
     list_sessions: bool = typer.Option(False, "--list", help="List the sessions of this directory"),
+    tui: bool = typer.Option(False, "--tui", help="Start the terminal interface"),
 ) -> None:
     # fmt: on
     config = load_config(config_spec, cwd=cwd)
@@ -120,6 +122,11 @@ def main(
         return
     session = pick_session(store, cwd, resume, continue_last, fork)
     if not task:
+        if tui or sys.stdin.isatty():
+            from coderagent.ui.tui import main as run_tui
+
+            run_tui(config, cwd, store=store, session=session)
+            return
         typer.echo(f"session {session.id}" if session else "no task given")
         return
     if task.startswith("/"):
