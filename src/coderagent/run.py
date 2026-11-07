@@ -13,7 +13,7 @@ from coderagent.core.loop import AgentLoop, TurnResult
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
-from coderagent.core.subagent import SubAgentRunner, load_subagents
+from coderagent.core.subagent import SubAgentRunner, load_subagents, subagent_index
 from coderagent.core.telemetry import collect
 from coderagent.extensions.hooks import HookRunner
 from coderagent.extensions.plugins import load as load_plugins
@@ -128,6 +128,8 @@ def build_loop(
     system_prompt = config.agent.system_prompt
     if skill_index(skills):
         system_prompt = f"{system_prompt}\n\n{skill_index(skills)}"
+    if subagent_index(specs):
+        system_prompt = f"{system_prompt}\n\n{subagent_index(specs)}"
     context = ContextEngine(
         session,
         store,

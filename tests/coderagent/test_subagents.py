@@ -79,3 +79,9 @@ def test_the_project_sub_agent_wins_over_the_user_one(tmp_path):
         )
     specs = load_subagents(tmp_path, home)
     assert specs["scout"].description == "from the project"
+
+
+def test_the_index_of_the_sub_agents_goes_into_the_system_prompt(tmp_path):
+    loop = _loop(tmp_path)
+    assert "code-explorer" in loop.context.system_prompt
+    assert "verifier" in loop.context.system_prompt

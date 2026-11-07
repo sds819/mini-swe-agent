@@ -234,6 +234,19 @@ def render_result(result: dict) -> str:
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
+def subagent_index(specs: dict[str, SubagentSpec]) -> str:
+    """The index of the sub agents, as it goes into the system prompt."""
+    if not specs:
+        return ""
+    lines = [
+        "<subagents>",
+        "These sub agents are available. Hand a job to one with the `task` tool.",
+        *[f"- {spec.render()}" for spec in specs.values()],
+        "</subagents>",
+    ]
+    return "\n".join(lines)
+
+
 __all__ = [
     "BUILTIN_SUBAGENTS",
     "SubAgentRunner",
@@ -241,6 +254,7 @@ __all__ = [
     "load_subagents",
     "parse_subagent",
     "render_result",
+    "subagent_index",
 ]
 
 BUILTIN_SUBAGENTS.update(
