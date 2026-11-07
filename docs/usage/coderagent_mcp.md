@@ -82,8 +82,13 @@ The other servers keep working.
 
 ```
 filesystem       connected
-remote           failed: the connection was refused
+remote           not connected
+broken           failed: MCPError: Connection closed
 ```
+
+`not connected` is a server that was never started: it has no `command`, so
+the http transport would be needed and it is not implemented yet. `failed` is
+a server that was started and did not come up.
 
 When a call breaks the connection, the agent reconnects and tries the call one
 more time. When it fails again, the error goes back to the model.
