@@ -70,6 +70,7 @@ nav:
       - "Inspector": usage/inspector.md
       - "Output files": usage/output_files.md
     - "Coding agent":
+      - "Quick start": usage/coderagent_quickstart.md
       - "Overview": usage/coderagent.md
       - "Commands": usage/coderagent_commands.md
       - "Sub agents": usage/coderagent_subagents.md
