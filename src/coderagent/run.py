@@ -19,6 +19,7 @@ from coderagent.extensions.hooks import HookRunner
 from coderagent.extensions.plugins import load as load_plugins
 from coderagent.extensions.reflect import (
     PENDING_HEADER,
+    MemoryWrite,
     Reflection,
     append_facts,
     append_user_preferences,
@@ -226,14 +227,20 @@ def settle_session(
         """The reflection ran on its own model, so its cost is booked on the main one."""
         loop.model.total_cost += cost
     reflection = parse_reflection(message.get("content", ""))
-    append_facts(project_memory_path(cwd, config.memory), reflection.project_facts, "# Project memory")
+    _warn(append_facts(project_memory_path(cwd, config.memory), reflection.project_facts, "# Project memory"))
     if reflection.user_preferences:
         if confirm is not None and confirm(reflection.user_preferences):
-            append_user_preferences(user_memory_path(config.memory, user_home), reflection.user_preferences)
+            _warn(append_user_preferences(user_memory_path(config.memory, user_home), reflection.user_preferences))
         else:
-            append_facts(pending_path(cwd), reflection.user_preferences, PENDING_HEADER)
+            _warn(append_facts(pending_path(cwd), reflection.user_preferences, PENDING_HEADER))
     _record_reflection(loop, gateway, cost, message, reflection)
     return reflection
+
+
+def _warn(write: MemoryWrite) -> None:
+    """Say it when nothing was written, so that a full file is not a silent loss."""
+    if write.warning:
+        logger.warning("The memory was not written: %s", write.warning)
 
 
 def _record_reflection(

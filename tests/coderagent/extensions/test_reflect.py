@@ -310,3 +310,17 @@ def test_a_run_that_ran_out_of_budget_is_not_settled(tmp_path):
     result = run_turn("fix the bug", config, cwd=tmp_path, model=model, store=SessionStore(tmp_path / "sessions"))
     assert result.stop_reason == "cost_exceeded"
     assert len(model.calls) == 1
+
+
+def test_a_full_memory_is_not_written_and_it_says_so(tmp_path, caplog):
+    """The memory does not grow past its limit, and the loss is not silent."""
+    config = Config()
+    config.memory = _memory(tmp_path)
+    path = project_memory_path(tmp_path, config.memory)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(f"- fact {index}" for index in range(MAX_LINES)), encoding="utf-8")
+    loop = _loop(tmp_path, _answer(project_facts=["a new fact"]))
+    with caplog.at_level("WARNING"):
+        settle_session(loop, config, tmp_path, user_home=_user_home(tmp_path))
+    assert "a new fact" not in path.read_text(encoding="utf-8")
+    assert "The memory was not written" in caplog.text
