@@ -451,6 +451,13 @@ coder export --session <id> --format otel --out trace.otlp
 - 远程沙箱里的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 魔法被关掉了：一轮对话由模型说
   结束，而不是由一个哨兵字符串结束。
 - 容器 checkpoint 没有实现。它需要沙箱支持快照，而 mini 的环境没有这个接口。
+- `sandbox.network` 和 `sandbox.writable_roots` 删掉了。它们从来没有生效过：mini 的环境
+  各自有一套配置（`run_args`、`wrapper_args`、`contree_config`、`deployment_extra_kwargs`），
+  没有统一的网络开关，也没有统一的可写目录清单。留着这两个选项只会让人以为它们管用。
+  网络策略写进环境里（`sandbox: {type: docker, run_args: ["--rm", "--network", "none"]}`），
+  路径限制交给权限层（`permissions.deny_paths`、`permissions.include_dirs`）。
+- `sandbox` 里的其余选项原样传给环境，环境不认识的选项被忽略。`/sandbox` 列出的是**真正
+  在生效**的选项。
 
 ### 13.7 可观测性
 

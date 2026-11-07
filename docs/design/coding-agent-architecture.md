@@ -677,9 +677,8 @@ mcp:
       command: npx -y @modelcontextprotocol/server-filesystem .
 
 sandbox:
-  type: local              # local|docker|bubblewrap
-  network: restricted       # none|restricted|full
-  writable_roots: ["."]
+  type: local              # local|swerex_docker|bubblewrap|contree
+  # 其余选项原样传给环境（如 docker 的 run_args、image）
 ```
 
 ---

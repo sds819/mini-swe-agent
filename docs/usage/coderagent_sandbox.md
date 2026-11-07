@@ -56,10 +56,29 @@ one, and `/sandbox` shows the whole configuration:
 
 ```
 type: swerex_docker
-network: restricted
-writable roots: .
+image: python:3.11
 environment: swerex_docker
 ```
+
+The options that are in effect are listed between the type and the environment.
+
+## The sandbox has no policy of its own
+
+The sandbox is the environment of mini-swe-agent, so it has no network policy
+and no list of writable directories. A network policy is a property of the
+environment, and it is written there:
+
+```yaml
+sandbox:
+  type: swerex_docker
+  image: python:3.11
+  run_args: ["--rm", "--network", "none"]
+```
+
+The paths the agent may touch are a property of the agent, not of the sandbox.
+They are bounded by the permission layer: `permissions.deny_paths` for the paths
+that are off limits and `permissions.include_dirs` for the ones outside the
+directory of the session that are allowed.
 
 ## What is still local
 
