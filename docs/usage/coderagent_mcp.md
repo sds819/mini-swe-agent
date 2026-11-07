@@ -14,39 +14,76 @@ mcp:
   timeout: 30
   servers:
     - name: filesystem
-      command: npx -y @modelcontextprotocol/server-filesystem ${workspace}
+      command: npx -y @modelcontextprotocol/server-filesystem /path/to/the/project
       env:
         LOG_LEVEL: info
-    - name: remote
-      url: https://example.com/mcp
-      headers:
-        Authorization: Bearer ${TOKEN}
 ```
 
 The servers are read from the project file `.coderagent/config.yaml` and from
 the user file `~/.coderagent/config.yaml`.
 
-- `command` starts the server over the standard input and output. This is the
-  transport that works today.
-- `url` and `headers` are for the http transport. The interface is there, the
-  transport is not implemented yet.
-- `enabled: false` skips a server.
+| Key | What it is |
+|---|---|
+| `name` | The name of the server. It is part of the name of its tools |
+| `command` | The command that starts the server, over the standard input and output |
+| `env` | The environment of the server |
+| `enabled` | `false` skips the server |
+| `timeout` | How long the agent waits for the server, in seconds |
+
+Only the standard input and output transport works today. A server with a
+`url` and no `command` is skipped: the http transport is not implemented yet.
+
+The `env` of a server **replaces** its environment, it does not add to it. A
+server that needs `PATH` has to be given one:
+
+```yaml
+mcp:
+  servers:
+    - name: filesystem
+      command: npx -y @modelcontextprotocol/server-filesystem .
+      env:
+        PATH: /usr/local/bin:/usr/bin:/bin
+```
 
 ## What the tools look like
 
 The tools of a server are named `mcp__<server>__<tool>`, so they never clash
 with the built-in tools. The schema of the tool is the schema of the server.
 
-The tools of a server are external code, so they go through the permission
-layer like every other tool: in the default mode the user has to approve them.
-A rule that allows them for good looks like this:
-
-```json
-{"tool": "mcp__filesystem__read_file", "pattern": "*", "decision": "allow"}
+```
+mcp__filesystem__read_file
+mcp__filesystem__list_directory
 ```
 
-## What happens when a server fails
+The tools of a server are external code, so they go through the permission
+layer like every other tool: in the default mode the user has to approve them.
+A rule that allows one for good looks like this:
 
-The servers are started when the session starts. A server that does not start
-is skipped, the reason is in the log and `/mcp` shows it. The other servers keep
-working.
+```yaml
+# .coderagent/rules.yaml
+rules:
+  - tool: "mcp__filesystem__read_file"
+    pattern: "*"
+    decision: allow
+```
+
+The name of the tool is the whole name, with the server in it. The `pattern`
+is `*` or the same name: a glob does not work here.
+
+## The servers and the session
+
+The servers are started when the session starts, one thread each. A server
+that does not start is skipped, the reason is in the log and `/mcp` shows it.
+The other servers keep working.
+
+```
+/mcp
+```
+
+```
+filesystem       connected
+remote           failed: the connection was refused
+```
+
+When a call breaks the connection, the agent reconnects and tries the call one
+more time. When it fails again, the error goes back to the model.

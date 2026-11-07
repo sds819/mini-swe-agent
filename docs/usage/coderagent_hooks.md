@@ -22,21 +22,41 @@ hooks:
             command: ruff format {file}
 ```
 
-- `matcher` is a regular expression of the tool names. An empty matcher means
-  every tool.
-- `command` runs with the shell, in the directory of the session.
-- `timeout` is in seconds. The default is 10.
+| Key | What it is | Default |
+|---|---|---|
+| `matcher` | A regular expression of the tool names. Empty means every tool | |
+| `command` | The command to run, with the shell, in the directory of the session | |
+| `timeout` | How long it may take, in seconds | 10 |
+| `strict` | When the hook fails, block the action instead of letting it through | false |
+
+The hooks of the project live in `.coderagent/config.yaml`, the hooks of the
+user in `~/.coderagent/config.yaml`. A plugin may bring hooks too.
+
+The matcher is matched against the name of the tool, so it only means
+something for `PreToolUse` and `PostToolUse`. Leave it empty for the other
+events.
 
 ## The moments
 
 | Hook | When | What it can do |
 |---|---|---|
-| `SessionStart` | The session starts | Add context |
+| `SessionStart` | The session starts | Nothing. It is a notification |
 | `UserPromptSubmit` | After the prompt, before the model | Add context, or block the prompt |
 | `PreToolUse` | Before the tool runs | Allow, deny, or rewrite the arguments |
 | `PostToolUse` | After the tool ran | Add context, or block the result |
 | `Stop` | The agent wants to stop | Send it back to work |
-| `SessionEnd` | The session ends | Nothing |
+| `SessionEnd` | The session ends | Nothing. It is a notification |
+
+Each event has its own payload:
+
+| Hook | What it reads |
+|---|---|
+| `SessionStart` | `session_id`, `cwd` |
+| `UserPromptSubmit` | `prompt` |
+| `PreToolUse` | `tool`, `params` |
+| `PostToolUse` | `tool`, `params`, `result` |
+| `Stop` | `last_message` |
+| `SessionEnd` | `session_id`, `turns`, `cost` |
 
 ## What a hook answers
 
@@ -60,10 +80,30 @@ The keys are:
 - `additionalContext`: something for the model to read.
 - `updatedInput`: the arguments the tool gets instead of the ones of the model.
 
-The `PreToolUse` hook runs **before** the permission check, so the command that
-is approved is the command that was rewritten.
+Nothing on the standard output means the hook has no opinion. The output of
+several hooks is put together: a `deny` wins over everything, the contexts are
+concatenated and the last `updatedInput` wins.
+
+## What the answer does
+
+| The answer | What happens |
+|---|---|
+| `PreToolUse` denies | The tool call fails, the reason goes back to the model |
+| `PreToolUse` rewrites the arguments | The tool runs with the new arguments |
+| `PostToolUse` denies | The result of the tool becomes an error |
+| `PostToolUse` adds context | The context is appended to the result of the tool |
+| `UserPromptSubmit` denies | The turn ends with an error, the model is not called |
+| `UserPromptSubmit` adds context | The context is appended to the prompt |
+| `Stop` denies | The agent goes on, the reason is a new message for it |
+
+The `PreToolUse` hook runs **before** the permission check, so the command
+that is approved is the command that was rewritten.
 
 ## When a hook fails
 
 A hook that crashes, times out or writes something that is not JSON is ignored:
-the action goes on. Set `strict: true` on the hook to block the action instead.
+the action goes on.
+
+`strict: true` changes one thing: a hook that ends with a non-zero exit code
+denies the action, and its standard error is the reason. A timeout and a
+broken answer are ignored either way.

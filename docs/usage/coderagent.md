@@ -414,7 +414,7 @@ whole one when the description fits the task. The files of the user are in
 
 ### The plugins
 
-A plugin adds tools, commands, hooks or model backends. It is a directory
+A plugin adds tools, commands or hooks to the agent. It is a directory
 with a `plugin.py` in it, and it runs in the process of the agent, without a
 sandbox. A plugin is only loaded when it is trusted:
 
@@ -456,7 +456,7 @@ pip install "mini-swe-agent[mcp]"
 mcp:
   servers:
     - name: filesystem
-      command: npx -y @modelcontextprotocol/server-filesystem ${workspace}
+      command: npx -y @modelcontextprotocol/server-filesystem .
 ```
 
 See [MCP servers](coderagent_mcp.md).

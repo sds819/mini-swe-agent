@@ -441,6 +441,7 @@ coder export --session <id> --format otel --out trace.otlp
 - 插件的形式是目录里的 `plugin.py`，里面有一个 `register(registry)` 函数，或者一个带
   `register` 方法的对象。pip 安装的插件走 `coderagent.plugins` 这个 entry point 组。
 - 插件的命令注册到全局的 `COMMANDS` 里，所以插件的命令和内置的命令一样可用。
+- `registry.model_backends` 这张表插件可以填，但 agent 没有读它：模型后端还没接线。
 
 ### 13.6 远程沙箱
 

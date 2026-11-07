@@ -19,8 +19,9 @@ loaded when the user has trusted it.
 | `.coderagent/plugins/*/` | The plugins of the project |
 | The entry point group `coderagent.plugins` | The plugins that are installed with pip |
 
-The plugins of the project come first, so a project may replace a plugin of
-the user with the same name.
+The name of a plugin is the name of its directory. A plugin of the project and
+a plugin of the user with the same name are **both** loaded: the name is only
+the name of the plugin, the trust is remembered by that name.
 
 ## Trusting a plugin
 
@@ -29,9 +30,22 @@ the user with the same name.
 /plugins trust hello
 ```
 
-The answer is remembered in `~/.coderagent/trusted-plugins.json` (`MSWEA_CODER_HOME`
-moves it). A plugin that was not trusted is never loaded, and the trust is
-remembered too, so the question is asked once.
+A plugin that was not trusted is never loaded, and nothing is asked: the
+answer comes from `/plugins trust`. The answer is remembered in
+`~/.coderagent/trusted-plugins.json` (`MSWEA_CODER_HOME` moves it), so it is
+given once and holds for every session.
+
+```
+hello            trusted      directory
+other            not trusted  directory
+```
+
+The last column says where the plugin came from: a directory, or an entry
+point of an installed package.
+
+A plugin that the user refused stays away until the name is trusted again. The
+trust is by name, so it holds for the plugin of the project and for the plugin
+of the user that have the same name.
 
 ## The API of a plugin
 
@@ -72,8 +86,16 @@ The registry has four parts:
 | `registry.hooks` | The hooks, in the format of the configuration |
 | `registry.model_backends` | The model backends, by name |
 
+The tools, the commands and the hooks are used by the agent. The model
+backends are not wired yet: a plugin may fill the table, but the agent does
+not read it.
+
 A tool that the plugin registers goes through the same permission check as the
 tools of the agent, so the rules of the project apply to it as well.
+
+A command that the plugin registers works like a built-in one: the user types
+`/hello`, and the handler gets the context of the session and the text of the
+line.
 
 ## Writing a plugin that is installed with pip
 
