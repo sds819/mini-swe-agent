@@ -32,6 +32,7 @@ from coderagent.extensions.skills import load_skills, skill_index
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
+from coderagent.paths import config_home
 from coderagent.tools.base import ToolContext
 from coderagent.tools.builtin import build_registry
 from coderagent.tools.builtin.skill import SkillTool
@@ -99,6 +100,8 @@ def build_loop(
 ) -> AgentLoop:
     store = store or SessionStore()
     session = session or store.create(cwd)
+    user_home = user_home or config_home()
+    """The root of the user level data: the agents, the skills, the plugins, the memory."""
     policy = build_policy(config, cwd, permission_mode)
     session.permission_mode = policy.mode.value
     bus = bus or EventBus()
@@ -134,6 +137,7 @@ def build_loop(
         system_prompt=system_prompt,
         memory_config=config.memory,
         cwd=cwd,
+        user_home=user_home,
         summary_model=ModelGateway(build_model(config, config.context.summarize_model))
         if config.context.summarize_model
         else purpose_gateway(config, gateway, "summarize"),

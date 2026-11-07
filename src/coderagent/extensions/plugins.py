@@ -25,7 +25,8 @@ from coderagent.paths import config_home
 from coderagent.tools.registry import ToolRegistry
 from coderagent.ui.commands import Command
 
-PLUGINS_DIR = Path(".coderagent") / "plugins"
+PLUGINS_DIR = "plugins"
+"""The directory of the plugins. In the project it is under `.coderagent`."""
 PLUGIN_FILE = "plugin.py"
 ENTRY_POINT_GROUP = "coderagent.plugins"
 TRUST_FILE = "trusted-plugins.json"
@@ -119,10 +120,8 @@ def remember(name: str, decision: str, user_home: Path | None = None) -> Path:
 
 
 def _directories(cwd: Path, user_home: Path | None) -> list[Path]:
-    directories = []
-    if user_home is not None:
-        directories.append(Path(user_home) / PLUGINS_DIR)
-    directories.append(Path(cwd) / PLUGINS_DIR)
+    home = Path(user_home) if user_home else config_home()
+    directories = [home / PLUGINS_DIR, Path(cwd) / ".coderagent" / PLUGINS_DIR]
     return [directory for directory in directories if directory.is_dir()]
 
 

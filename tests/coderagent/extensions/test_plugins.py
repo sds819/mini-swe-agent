@@ -43,8 +43,14 @@ def test_a_plugin_is_found(tmp_path):
 
 
 def test_a_plugin_of_the_user_is_found(tmp_path):
-    _write(Path(tmp_path) / "home" / ".coderagent" / "plugins", name="mine")
+    _write(Path(tmp_path) / "home" / "plugins", name="mine")
     assert [plugin.name for plugin in discover(tmp_path, tmp_path / "home")] == ["mine"]
+
+
+def test_a_plugin_of_the_user_is_found_without_a_user_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(tmp_path / "home"))
+    _write(Path(tmp_path) / "home" / "plugins", name="mine")
+    assert [plugin.name for plugin in discover(tmp_path)] == ["mine"]
 
 
 def test_an_untrusted_plugin_is_not_loaded(tmp_path):

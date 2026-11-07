@@ -23,10 +23,13 @@ from pathlib import Path
 import yaml
 
 from coderagent.core.events import EventBus
+from coderagent.paths import config_home
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.registry import ToolRegistry
 
-AGENTS_DIR = Path(".coderagent") / "agents"
+AGENTS_DIR = "agents"
+"""The directory of the sub agents. In the project it is under `.coderagent`."""
+
 DEFAULT_TOOLS = ["read", "grep", "glob", "bash"]
 
 BUILTIN_SUBAGENTS: dict[str, "SubagentSpec"] = {}
@@ -84,7 +87,7 @@ def _tool_list(value) -> list[str]:
 
 
 def load_subagents(cwd: Path, user_home: Path | None = None) -> dict[str, SubagentSpec]:
-    """The sub agents of the project and of the user. The user wins on a name clash."""
+    """The sub agents of the project and of the user. The project wins on a name clash."""
     specs: dict[str, SubagentSpec] = dict(BUILTIN_SUBAGENTS)
     for directory in _directories(cwd, user_home):
         for path in sorted(directory.glob("*.md")):
@@ -95,10 +98,8 @@ def load_subagents(cwd: Path, user_home: Path | None = None) -> dict[str, Subage
 
 
 def _directories(cwd: Path, user_home: Path | None) -> list[Path]:
-    directories = []
-    if user_home is not None:
-        directories.append(Path(user_home) / AGENTS_DIR)
-    directories.append(Path(cwd) / AGENTS_DIR)
+    home = Path(user_home) if user_home else config_home()
+    directories = [home / AGENTS_DIR, Path(cwd) / ".coderagent" / AGENTS_DIR]
     return [directory for directory in directories if directory.is_dir()]
 
 

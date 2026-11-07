@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from coderagent.config.schema import MemoryConfig
+from coderagent.paths import config_home
 
 MAX_LINES = 200
 """The project memory does not grow past this. Then it has to be tidied up."""
@@ -134,7 +135,7 @@ def pending_path(cwd: Path) -> Path:
 
 def user_memory_path(config: MemoryConfig, user_home: Path | None = None) -> Path:
     """The file with the preferences of the user."""
-    home = Path(user_home) if user_home else Path.home() / ".coderagent"
+    home = Path(user_home) if user_home else config_home()
     return home / Path(config.user_path).name
 
 

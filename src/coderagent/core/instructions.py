@@ -7,6 +7,8 @@ loaded lazily, when a tool touches something inside them.
 from dataclasses import dataclass
 from pathlib import Path
 
+from coderagent.paths import config_home
+
 PROJECT_FILES = ("AGENTS.md", "CLAUDE.md")
 USER_FILE = "CLAUDE.md"
 
@@ -33,7 +35,7 @@ def read_block(path: Path) -> InstructionBlock | None:
 def load_instructions(cwd: Path, user_home: Path | None = None) -> list[InstructionBlock]:
     """The user level and the project level instructions, in that order."""
     blocks = []
-    home = Path(user_home) if user_home else Path.home() / ".coderagent"
+    home = Path(user_home) if user_home else config_home()
     for path in (home / USER_FILE, Path(cwd) / "AGENTS.md", Path(cwd) / "CLAUDE.md"):
         block = read_block(path)
         if block:

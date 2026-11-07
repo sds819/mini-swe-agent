@@ -8,6 +8,7 @@ from pathlib import Path
 
 from coderagent.config.schema import MemoryConfig
 from coderagent.core.instructions import InstructionBlock, read_block
+from coderagent.paths import config_home
 
 
 def project_memory_files(cwd: Path, config: MemoryConfig) -> list[Path]:
@@ -27,5 +28,5 @@ def load_project_memory(cwd: Path, config: MemoryConfig) -> list[InstructionBloc
 
 
 def load_user_memory(config: MemoryConfig, user_home: Path | None = None) -> InstructionBlock | None:
-    home = Path(user_home) if user_home else Path.home() / ".coderagent"
+    home = Path(user_home) if user_home else config_home()
     return read_block(home / Path(config.user_path).name)

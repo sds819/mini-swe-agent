@@ -48,10 +48,24 @@ def test_the_project_skill_is_found(tmp_path):
 
 def test_the_project_skill_wins_over_the_user_one(tmp_path):
     home = Path(tmp_path) / "home"
-    _write(home / ".coderagent" / "skills", text=SKILL.replace("PDF report", "user one"))
+    _write(home / "skills", text=SKILL.replace("PDF report", "user one"))
     _write(Path(tmp_path) / ".coderagent" / "skills", text=SKILL.replace("PDF report", "project one"))
     skills = load_skills(tmp_path, home)
     assert skills["pdf-report"].description == "Make a project one out of a folder of notes."
+
+
+def test_the_skill_of_the_user_is_found(tmp_path):
+    home = Path(tmp_path) / "home"
+    _write(home / "skills", text=SKILL.replace("PDF report", "user one"))
+    skills = load_skills(tmp_path, home)
+    assert skills["pdf-report"].description == "Make a user one out of a folder of notes."
+
+
+def test_the_skill_of_the_user_is_found_without_a_user_home(tmp_path, monkeypatch):
+    home = Path(tmp_path) / "home"
+    monkeypatch.setenv("MSWEA_CODER_HOME", str(home))
+    _write(home / "skills", text=SKILL.replace("PDF report", "user one"))
+    assert "pdf-report" in load_skills(tmp_path)
 
 
 def test_the_index_names_every_skill(tmp_path):

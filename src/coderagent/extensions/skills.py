@@ -26,7 +26,10 @@ from pathlib import Path
 
 import yaml
 
-SKILLS_DIR = Path(".coderagent") / "skills"
+from coderagent.paths import config_home
+
+SKILLS_DIR = "skills"
+"""The directory of the skills. In the project it is under `.coderagent`."""
 SKILL_FILE = "SKILL.md"
 
 
@@ -84,10 +87,8 @@ def load_skills(cwd: Path, user_home: Path | None = None) -> dict[str, Skill]:
 
 
 def _directories(cwd: Path, user_home: Path | None) -> list[Path]:
-    directories = []
-    if user_home is not None:
-        directories.append(Path(user_home) / SKILLS_DIR)
-    directories.append(Path(cwd) / SKILLS_DIR)
+    home = Path(user_home) if user_home else config_home()
+    directories = [home / SKILLS_DIR, Path(cwd) / ".coderagent" / SKILLS_DIR]
     return [directory for directory in directories if directory.is_dir()]
 
 
