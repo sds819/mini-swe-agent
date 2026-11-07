@@ -38,6 +38,9 @@ coder --task "/help"  # a command without the interface
 | `/export` | Write the conversation to a file |
 | `/context` | The size of the context |
 
+The money of `/cost` is the money of the session. A new session (`/clear`) starts
+at zero, whatever the session before it spent.
+
 ## Your own commands
 
 A command is a markdown file in `.coderagent/commands`. The file starts with a
