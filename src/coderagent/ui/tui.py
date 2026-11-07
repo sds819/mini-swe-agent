@@ -231,7 +231,7 @@ class CoderApp(App):
             model=getattr(self.loop.model.backend, "model_name", self.config.model.model_name),
             tokens=context.estimated_tokens(self.loop.tools),
             window=context.config.context_window,
-            cost=self.loop.model.total_cost,
+            cost=self.loop.session.total_cost,
             cwd=str(self.cwd),
             mode=self.loop.executor.policy.mode.value,
             state=state,

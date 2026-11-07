@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from coderagent.config.schema import Config
 from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.events import EventBus
@@ -16,13 +18,13 @@ from coderagent.tools.permissions import PermissionMode, PermissionPolicy
 from coderagent.ui.commands import COMMANDS, CommandContext, find, load_builtins, run
 
 
-def _context(tmp_path) -> tuple[CommandContext, list[str]]:
+def _context(tmp_path, responses=None) -> tuple[CommandContext, list[str]]:
     store = SessionStore(tmp_path / "sessions")
     session = store.create(tmp_path)
     bus = EventBus()
     executor = build_executor(tmp_path)
     loop = AgentLoop(
-        ModelGateway(ScriptedModel([{"role": "assistant", "content": "ok"}])),
+        ModelGateway(ScriptedModel(responses or [{"role": "assistant", "content": "ok"}])),
         executor,
         session,
         store,
@@ -149,6 +151,25 @@ def test_clear_starts_a_new_session(tmp_path):
     _run(context, output, "/clear")
     assert context.session.id != before
     assert context.loop.session.id == context.session.id
+
+
+def test_the_new_session_of_clear_pays_nothing_of_the_old_one(tmp_path):
+    """The money of the session before `/clear` stays with that session."""
+    context, output = _context(
+        tmp_path,
+        [
+            {"role": "assistant", "content": "ok", "extra": {"cost": 0.5}},
+            {"role": "assistant", "content": "no facts", "extra": {"cost": 0.2}},
+            {"role": "assistant", "content": "ok", "extra": {"cost": 0.3}},
+        ],
+    )
+    context.loop.run("hi")
+    assert context.session.total_cost == pytest.approx(0.5)
+
+    _run(context, output, "/clear")
+    context.loop.run("again")
+    assert context.session.total_cost == pytest.approx(0.3)
+    assert context.store.rebuild(context.session.id).total_cost == pytest.approx(0.3)
 
 
 def test_resume_lists_the_sessions(tmp_path):

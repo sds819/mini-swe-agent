@@ -164,9 +164,9 @@ def _cost(context: CommandContext, argument: str) -> None:
     metrics = collect(context.store.events(context.session.id))
     context.say(
         f"model: {context.config.model.model_name}\n"
-        f"calls: {loop.model.n_calls}\n"
+        f"calls: {metrics.model_calls}\n"
         f"tokens in the context: {loop.context.estimated_tokens()}\n"
-        f"cost so far: ${loop.model.total_cost:.4f}\n" + metrics.report()
+        f"cost so far: ${loop.session.total_cost:.4f}\n" + metrics.report()
     )
 
 
