@@ -30,7 +30,7 @@ def build_environment(config: SandboxConfig, cwd: Path) -> Any:
     from minisweagent.environments import get_environment
     from minisweagent.environments.local import LocalEnvironment
 
-    options = config.model_dump(exclude={"type", "network", "writable_roots"})
+    options = config.model_dump(exclude={"type"})
     environment = get_environment(options, default_type=config.type)
     if isinstance(environment, LocalEnvironment):
         """A local environment works in the directory of the session."""

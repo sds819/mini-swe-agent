@@ -273,7 +273,15 @@ def test_the_sandbox_is_shown(tmp_path):
     context, output = _context(tmp_path)
     answer = _run(context, output, "/sandbox")
     assert "type: local" in answer
-    assert "network: restricted" in answer
+    assert "environment: local" in answer
+
+
+def test_the_options_of_the_sandbox_are_shown(tmp_path):
+    """The options that are in effect are shown, the ones that are not are not there."""
+    context, output = _context(tmp_path)
+    context.config.sandbox.image = "python:3.11"
+    answer = _run(context, output, "/sandbox")
+    assert "image: python:3.11" in answer
 
 
 def test_the_cost_is_attributed(tmp_path):

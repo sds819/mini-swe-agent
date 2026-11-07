@@ -140,8 +140,7 @@ class SandboxConfig(BaseModel):
     """The options of the environment, like `image` for a container."""
 
     type: str = "local"
-    network: str = "restricted"
-    writable_roots: list[str] = Field(default_factory=lambda: ["."])
+    """The kind of environment. `local` or one of the environments of mini-swe-agent."""
 
 
 class Config(BaseModel):

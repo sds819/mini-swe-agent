@@ -324,12 +324,10 @@ def _sandbox(context: CommandContext, argument: str) -> None:
     from coderagent.core.sandbox import describe
 
     sandbox = context.config.sandbox
-    context.say(
-        f"type: {sandbox.type}\n"
-        f"network: {sandbox.network}\n"
-        f"writable roots: {', '.join(sandbox.writable_roots)}\n"
-        f"environment: {describe(context.loop.sandbox, sandbox.type)}"
-    )
+    lines = [f"type: {sandbox.type}"]
+    lines += [f"{key}: {value}" for key, value in (sandbox.model_extra or {}).items()]
+    lines.append(f"environment: {describe(context.loop.sandbox, sandbox.type)}")
+    context.say("\n".join(lines))
 
 
 def _export(context: CommandContext, argument: str) -> None:

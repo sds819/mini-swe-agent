@@ -39,6 +39,15 @@ def test_the_sentinel_of_mini_is_not_used_in_the_remote_sandbox(tmp_path):
     assert environment._check_finished(output) is None
 
 
+def test_the_options_of_the_configuration_reach_the_environment(tmp_path):
+    """Every option of `sandbox` is passed on to the environment."""
+    environment = build_environment(
+        SandboxConfig(type="minisweagent.environments.local.LocalEnvironment", cwd="/elsewhere", timeout=7), tmp_path
+    )
+    assert environment.config.cwd == str(tmp_path)
+    assert environment.config.timeout == 7
+
+
 def test_the_environment_is_described(tmp_path):
     assert describe(build_environment(SandboxConfig(type="local"), tmp_path)) == "local"
     assert describe(None) == "local"

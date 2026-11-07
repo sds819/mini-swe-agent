@@ -54,5 +54,3 @@ ui:
 
 sandbox:
   type: local
-  network: restricted
-  writable_roots: ["."]
