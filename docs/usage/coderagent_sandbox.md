@@ -80,6 +80,9 @@ They are bounded by the permission layer: `permissions.deny_paths` for the paths
 that are off limits and `permissions.include_dirs` for the ones outside the
 directory of the session that are allowed.
 
+A configuration that still has `sandbox.network` or `sandbox.writable_roots`
+keeps working: they are unknown options now, and unknown options are ignored.
+
 ## What is still local
 
 The tools that read and write files (`read`, `write`, `edit`, …) work on the
