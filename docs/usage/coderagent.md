@@ -110,6 +110,18 @@ When the agent wants to run a tool that needs approval, the interface asks.
 `y` allows it once, `n` refuses it, `a` allows it for the rest of the
 session. The refusal goes back to the model, which then does something else.
 
+The answers are listed one per line, each in a numbered box:
+
+```
+1 [*] y allow
+2 [-] n deny
+3 [-] a always allow
+```
+
+The box of the picked answer is starred in red, the others have a grey dash.
+The arrow keys (`←`/`→` or `↑`/`↓`) move the pick, the numbers jump to an
+answer, and `enter` confirms it.
+
 ## The configuration
 
 Four layers, the later ones win:

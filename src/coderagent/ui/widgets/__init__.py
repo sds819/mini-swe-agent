@@ -1,6 +1,6 @@
 """The widgets of the terminal interface."""
 
-from coderagent.ui.widgets.approval_prompt import ApprovalPrompt
+from coderagent.ui.widgets.approval_prompt import ApprovalPrompt, Options
 from coderagent.ui.widgets.diff_view import DiffView, make_diff
 from coderagent.ui.widgets.message_block import MessageBlock
 from coderagent.ui.widgets.status_bar import StatusBar
@@ -11,6 +11,7 @@ __all__ = [
     "ApprovalPrompt",
     "DiffView",
     "MessageBlock",
+    "Options",
     "StatusBar",
     "TodoPanel",
     "ToolCard",

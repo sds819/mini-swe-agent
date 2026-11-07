@@ -180,6 +180,93 @@ def test_the_approval_is_asked_and_the_tool_runs(tmp_path):
     assert asked == ["bash"]
 
 
+def test_the_answers_are_picked_with_the_arrow_keys(tmp_path):
+    call = {
+        "id": "call_1",
+        "type": "function",
+        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+    }
+    app = _app(
+        tmp_path,
+        responses=[
+            {"role": "assistant", "content": "", "tool_calls": [call], "extra": {"cost": 0.0}},
+            {"role": "assistant", "content": "done", "extra": {"cost": 0.0}},
+        ],
+        mode="default",
+    )
+    decisions = []
+    answer = app.approver.answer
+
+    def record(key, decision):
+        decisions.append(decision)
+        answer(key, decision)
+
+    app.approver.answer = record
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"write it")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: app.pending_approval is not None)
+            prompt = app.pending_approval
+            assert prompt.selected_key == "y"
+            await pilot.press("right")
+            assert prompt.selected_key == "n"
+            await pilot.press("down")
+            assert prompt.selected_key == "a"
+            await pilot.press("up")
+            assert prompt.selected_key == "n"
+            await pilot.press("left")
+            assert prompt.selected_key == "y"
+            await pilot.press("right")
+            await pilot.press("enter")
+            assert await _wait_for(lambda: app.pending_approval is None)
+
+    asyncio.run(go())
+    assert decisions == [ApprovalDecision.DENY]
+
+
+def test_the_selected_answer_is_red(tmp_path):
+    from coderagent.ui.widgets import ApprovalPrompt
+
+    prompt = ApprovalPrompt("bash", {"command": "ls"}, "")
+    assert "\\[[red]*[/red]] [bold]y[/bold] allow" in prompt.options.markup()
+    assert "\\[[gray]-[/gray]] [bold]n[/bold] deny" in prompt.options.markup()
+    prompt.move(1)
+    assert "\\[[red]*[/red]] [bold]n[/bold] deny" in prompt.options.markup()
+    assert "\\[[red]*[/red]] [bold]y[/bold] allow" not in prompt.options.markup()
+
+
+def test_the_answers_are_one_per_line_and_numbered(tmp_path):
+    from coderagent.ui.widgets import ApprovalPrompt
+
+    prompt = ApprovalPrompt("bash", {"command": "ls"}, "")
+    lines = prompt.options.markup().split("\n")
+    assert len(lines) == 4
+    assert lines[0].startswith("[bold]1[/bold] ")
+    assert "[bold]y[/bold] allow" in lines[0]
+    assert lines[1].startswith("[gray]2[/gray] ")
+    assert "[bold]n[/bold] deny" in lines[1]
+    assert lines[2].startswith("[gray]3[/gray] ")
+    assert "[bold]a[/bold] always allow" in lines[2]
+
+
+def test_several_answers_can_be_picked(tmp_path):
+    from coderagent.ui.widgets import Options
+
+    options = Options((("y", "allow"), ("n", "deny"), ("a", "always allow")), multi=True)
+    assert options.selected_keys == ["y"]
+    options.toggle(2)
+    options.toggle(2)
+    assert options.selected_keys == ["y"]
+    options.toggle(1)
+    assert options.selected_keys == ["y", "n"]
+    assert options.markup().count("\\[[red]*[/red]]") == 2
+    options.move(1)
+    assert options.selected_keys == ["y", "n"]
+    assert options.markup().count("\\[[gray]-[/gray]]") == 1
+
+
 def test_the_approver_waits_for_the_answer(tmp_path):
     bus = EventBus()
     approver = TUIAprover(bus)

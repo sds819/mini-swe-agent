@@ -130,6 +130,15 @@ coder --task "..." --permission-mode bypass
 | `bypass` | 全放行。只在容器或一次性 checkout 里用 |
 
 界面里被问到的时候：`y` 允许这一次，`n` 拒绝，`a` 本次会话都允许。
+选项是一行一个、带编号的方框，选中的那个是红星 `[*]`，没选的是灰杠 `[-]`：
+
+```
+1 [*] y allow
+2 [-] n deny
+3 [-] a always allow
+```
+
+方向键（`←`/`→` 或 `↑`/`↓`）移动选中项，数字键直接跳到那一项，回车确认。
 拒绝的理由会回到模型，模型会改主意而不是硬来。
 
 想固定某些规则，写在 `.coderagent/rules.yaml`（项目）和 `~/.coderagent/rules.yaml`（用户）：

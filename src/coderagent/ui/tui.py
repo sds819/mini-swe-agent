@@ -302,16 +302,44 @@ class CoderApp(App):
     # -- the keys ---------------------------------------------------------
 
     def on_key(self, event) -> None:
-        if self.pending_approval is None or event.key not in ("y", "n", "a"):
+        prompt = self.pending_approval
+        if prompt is None:
             return
-        decision = {"y": ApprovalDecision.ALLOW, "n": ApprovalDecision.DENY, "a": ApprovalDecision.ALWAYS}[event.key]
+        if event.key in ("left", "up"):
+            prompt.move(-1)
+            event.stop()
+            return
+        if event.key in ("right", "down"):
+            prompt.move(1)
+            event.stop()
+            return
+        if event.key == " ":
+            prompt.options.toggle(prompt.options.cursor)
+            event.stop()
+            return
+        if event.key.isdigit():
+            index = int(event.key) - 1
+            if 0 <= index < len(prompt.options.items):
+                prompt.options.toggle(index)
+                event.stop()
+                return
+        if event.key == "enter":
+            self._decide(prompt.selected_key)
+            event.stop()
+            return
+        if event.key in ("y", "n", "a"):
+            self._decide(event.key)
+            event.stop()
+
+    def _decide(self, key: str) -> None:
+        """Give the answer of the user to the waiting tool."""
+        decision = {"y": ApprovalDecision.ALLOW, "n": ApprovalDecision.DENY, "a": ApprovalDecision.ALWAYS}[key]
         self.pending_approval.remove()
         self.pending_approval = None
         self.approver.answer(self.approval_id, decision)
         input_widget = self.query_one("#input", Input)
         input_widget.disabled = False
         input_widget.focus()
-        event.stop()
 
     def action_interrupt(self) -> None:
         """Stop the turn that is running."""
