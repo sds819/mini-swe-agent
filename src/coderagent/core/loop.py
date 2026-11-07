@@ -135,20 +135,24 @@ class AgentLoop:
         cost = 0.0
         n_calls = 0
         stop_blocks = 0
+        base = self.session.total_cost
         before = self.model.total_cost
         while True:
+            # The tools of the last round may have spent money too.
+            before = self._bill(before)
             if self.cancel is not None and self.cancel():
                 stop_reason = "interrupted"
                 break
             if self.max_turns and n_calls >= self.max_turns:
                 stop_reason = "max_turns"
                 break
-            if self.cost_limit and self.model.total_cost >= self.cost_limit:
+            if self.cost_limit and self.session.total_cost >= self.cost_limit:
                 stop_reason = "cost_exceeded"
                 break
             self.context.maybe_compact()
             self._route()
             response, error = self._query()
+            before = self._bill(before)
             if response is None:
                 self._publish(EventType.ERROR, {"error": error})
                 stop_reason = "error"
@@ -173,9 +177,8 @@ class AgentLoop:
             turn_messages.extend(observations)
             self._set_state(SessionState.THINKING)
 
-        self.session.total_cost = self.model.total_cost
         # What the turn cost: everything the agent spent, the sub agents and the summaries included.
-        cost = self.model.total_cost - before
+        cost = self.session.total_cost - base
         self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE)
         self._session_end()
         return TurnResult(
@@ -186,6 +189,15 @@ class AgentLoop:
             messages=turn_messages,
             error=error,
         )
+
+    def _bill(self, before: float) -> float:
+        """Put what the gateway spent on the bill of this session.
+
+        The gateway is shared by all the sessions of the process, the bill is not: a
+        session pays for its own calls only.
+        """
+        self.session.total_cost += self.model.total_cost - before
+        return self.model.total_cost
 
     def _route(self) -> None:
         """Pick the model of this turn. A change is announced in the event stream."""
@@ -212,7 +224,7 @@ class AgentLoop:
             "tokens": self.context.estimated_tokens(self.tools),
             "turns": self.session.turn_count,
             "calls": self.model.n_calls,
-            "cost": self.model.total_cost,
+            "cost": self.session.total_cost,
             "budget": self.cost_limit,
         }
 

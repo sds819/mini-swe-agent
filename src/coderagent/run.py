@@ -251,7 +251,8 @@ def _record_reflection(
     )
     loop.bus.publish(event)
     loop.store.append(loop.session.id, event)
-    loop.session.total_cost = loop.model.total_cost
+    loop.session.total_cost += cost
+    """The reflection is not part of a turn, so its cost is added to the session directly."""
 
 
 def settle(loop: AgentLoop, config: Config, cwd: Path) -> Reflection:
