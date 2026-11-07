@@ -72,6 +72,10 @@ nav:
     - "Coding agent":
       - "Overview": usage/coderagent.md
       - "Commands": usage/coderagent_commands.md
+      - "Sub agents": usage/coderagent_subagents.md
+      - "Skills": usage/coderagent_skills.md
+      - "Memory": usage/coderagent_memory.md
+      - "Model routing": usage/coderagent_routing.md
       - "MCP servers": usage/coderagent_mcp.md
       - "Hooks": usage/coderagent_hooks.md
       - "Plugins": usage/coderagent_plugins.md

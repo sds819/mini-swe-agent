@@ -169,7 +169,7 @@ provider as it is. `model.routing` maps a purpose to a model:
 | Purpose | What it is for |
 |---|---|
 | `main` | The agent itself |
-| `cheap` | The small jobs: the summaries, the memory |
+| `cheap` | The small jobs: the sub agents that look around |
 | `summarize` | The summary of a compacted context |
 | `reflect` | What the session writes into the memory |
 | `strong` | A stronger model, when the routing rules ask for it |
@@ -187,7 +187,7 @@ model:
 
 The rules compare numbers only, they are parsed and not evaluated, so a
 configuration file cannot run code. The interface says in the event stream when
-the model changes and why.
+the model changes and why. See [Model routing](coderagent_routing.md).
 
 ### The tools
 
@@ -301,7 +301,7 @@ user wait for a confirmation.
 
 The project memory is `.coderagent/memory/projects.md`, the preferences of the
 user are `~/.coderagent/CLAUDE.md`. `memory.enabled: false` turns the whole
-thing off, the model is not even asked.
+thing off, the model is not even asked. See [Memory](coderagent_memory.md).
 
 ### The checkpoints
 
@@ -384,7 +384,8 @@ You write the documentation of a module. Read the code, then write the docs.
 ```
 
 The tools are a white list: the sub agent cannot reach anything else. The
-files of the user are in `~/.coderagent/agents`.
+files of the user are in `~/.coderagent/agents`. See
+[Sub agents](coderagent_subagents.md).
 
 ### The skills
 
@@ -409,7 +410,7 @@ Run `scripts/make_report.py` to build the report...
 
 The model sees the name and the description of every skill, and loads the
 whole one when the description fits the task. The files of the user are in
-`~/.coderagent/skills`.
+`~/.coderagent/skills`. See [Skills](coderagent_skills.md).
 
 ### The plugins
 
@@ -502,7 +503,7 @@ the `session_cost` of the command line.
 | `.coderagent/plugins/*/plugin.py` | The plugins of the project |
 | `.coderagent/commands/*.md` | The commands of the project |
 | `.coderagent/memory/projects.md` | What the agent remembers about the project |
-| `.coderagent/memory/pending-memory.md` | The preferences that wait for a confirmation |
+| `.coderagent/pending-memory.md` | The preferences that wait for a confirmation |
 | `AGENTS.md`, `CLAUDE.md` | The instructions of the project |
 | `~/.coderagent/config.yaml` | The configuration of the user |
 | `~/.coderagent/rules.yaml` | The permission rules of the user |
