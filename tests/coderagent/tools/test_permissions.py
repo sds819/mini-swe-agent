@@ -1,6 +1,6 @@
 import pytest
 
-from coderagent.tools.permissions import PermissionMode, PermissionPolicy, Rule, glob_to_regex
+from coderagent.tools.permissions import PermissionMode, PermissionPolicy, Rule, glob_to_regex, mode_block, mode_note
 
 
 def test_the_default_mode_allows_reads_and_asks_for_everything_else(tmp_path):
@@ -105,3 +105,21 @@ def test_the_bookkeeping_tools_never_need_approval(tmp_path):
     policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
     assert policy.check("todo_write", {"todos": []}) == "allow"
     assert policy.check("bash_output", {"task_id": "x"}) == "allow"
+
+
+@pytest.mark.parametrize("mode", [PermissionMode.PLAN, PermissionMode.READONLY])
+def test_the_modes_that_take_tools_away_are_explained_to_the_model(mode):
+    assert mode_note(mode)
+    assert mode_block(mode).startswith(f'<permission_mode mode="{mode.value}">')
+    assert mode_note(mode) in mode_block(mode)
+
+
+@pytest.mark.parametrize("mode", [PermissionMode.DEFAULT, PermissionMode.ACCEPT_EDITS, PermissionMode.BYPASS])
+def test_the_modes_that_take_nothing_away_need_no_explanation(mode):
+    assert mode_note(mode) == ""
+    assert mode_block(mode) == ""
+
+
+def test_plan_and_readonly_are_told_different_things():
+    assert "plan you would follow" in mode_note(PermissionMode.PLAN)
+    assert "describe the change you would make" in mode_note(PermissionMode.READONLY)

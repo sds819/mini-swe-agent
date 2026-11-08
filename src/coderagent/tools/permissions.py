@@ -43,6 +43,34 @@ class ApprovalDecision(str, Enum):
     ALWAYS = "always"
 
 
+MODE_NOTES = {
+    PermissionMode.PLAN: (
+        "You are in plan mode. You may only look around: `read`, `glob`, `grep` and `ls` work, "
+        "but every tool that changes something, `bash` included, is refused. Investigate the task "
+        "and answer with the plan you would follow. The user decides whether it is executed."
+    ),
+    PermissionMode.READONLY: (
+        "You are in read-only mode. You may only look around: `read`, `glob`, `grep` and `ls` work, "
+        "but every tool that changes something, `bash` included, is refused. Answer with what you "
+        "found and describe the change you would make, but do not make it."
+    ),
+}
+"""What the model is told when the mode takes tools away from it."""
+
+
+def mode_note(mode: PermissionMode) -> str:
+    """The note for the model, empty when the mode needs no explanation."""
+    return MODE_NOTES.get(PermissionMode(mode), "")
+
+
+def mode_block(mode: PermissionMode) -> str:
+    """The note as the block the model sees, empty when the mode needs no explanation."""
+    note = mode_note(mode)
+    if not note:
+        return ""
+    return f'<permission_mode mode="{PermissionMode(mode).value}">\n{note}\n</permission_mode>'
+
+
 class Approver(Protocol):
     def request(self, tool: str, params: dict, reason: str) -> ApprovalDecision: ...
 
