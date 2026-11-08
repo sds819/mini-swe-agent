@@ -98,6 +98,48 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 - **环境变量里的 key 在页面上看不到**。页面读的是配置文件，而 `DEEPSEEK_API_KEY` 这类变量
   在环境里，所以 `api_key_set` 会是 false——这是正常的，页面管的是配置文件里的 key。
 
+## 权限 {#permissions}
+
+权限有两个地方管，管的不是同一件事：
+
+| 在哪 | 改什么 | 什么时候生效 |
+|---|---|---|
+| 设置页（`/settings`） | 用户级配置文件里的 `permissions:` 段 | **下一个**会话 |
+| 聊天页（`/`） | 当前这个会话的权限模式 | **立刻** |
+
+### 五个模式
+
+| 模式 | 意思 |
+|---|---|
+| `default` | 凡是会改东西的工具都要审批 |
+| `acceptEdits` | 写操作直接放行，其余的还是要问 |
+| `plan` | 只读：agent 只看不改，把计划写出来 |
+| `readonly` | 只读：agent 只看不改，把看到的说出来 |
+| `bypass` | 一律不问，所有工具调用都放行——无人值守跑的时候用 |
+
+`plan` 和 `readonly` 会拒掉所有会改东西的工具（`bash` 也算），而且模型会被告知这件事，
+所以它会说出看到的东西，而不是动手去改。
+
+### 设置页
+
+表单里有模式、禁止访问的路径、额外的目录，写到和模型同一个用户级文件
+`~/.coderagent/config.yaml`（或者 `$MSWEA_CODER_HOME/config.yaml`）。项目级的文件永远不写，
+`permissions.rules` 里的规则也不动——那些是审批卡片上 `Always allow` 按钮的事。
+
+和模型一样，**对新会话生效**：跑着的会话还是它原来的模式。
+
+### 聊天页
+
+右栏顶上有一个模式下拉框。改一下就把当前会话的模式换掉，不用重启任何东西：策略是原地改的，
+所以下一个工具调用就能看到，模型也会在下次组装上下文时知道。这就是无人值守跑法最省事的地方——
+跑测试前拨到 `bypass`，跑完拨回 `default`。
+
+### 服务端启动时钉死的模式
+
+`coder web --permission-mode bypass` 会把模式钉死：它盖过配置文件，因为策略是按
+`permission_mode or config.permissions.mode` 建的。服务端是带模式启动的，设置页会明说，
+不会让你以为改了文件就生效了。
+
 ## 审批 {#approvals}
 
 agent 要跑命令、写文件时会问。卡片上有三个按钮：
@@ -145,17 +187,19 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | POST | `/api/sessions/{id}/fork` | 复制一个会话 |
 | POST | `/api/sessions/{id}/messages` | 发消息，或者跑 slash 命令 |
 | POST | `/api/sessions/{id}/interrupt` | 停掉正在跑的那一轮 |
+| POST | `/api/sessions/{id}/mode` | 换掉这个会话的权限模式 |
 | POST | `/api/approvals/{id}` | 允许、拒绝、或者永久允许一个工具 |
 | GET | `/api/commands` | 有哪些 slash 命令 |
 | GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
 | PUT | `/api/config/model` | 把模型设置写进用户级文件 |
+| PUT | `/api/config/permissions` | 把权限设置写进用户级文件 |
 | POST | `/api/config/model/test` | 拿设置试一下 |
 | GET | `/api/files?path=&depth=` | 一个目录里的条目 |
 | GET | `/api/file?path=` | 一个文件的内容 |
 | GET | `/api/diff?path=` | 工作区里这个文件的改动 |
 
 状态码：正忙着在跑一轮时再发消息 → `409`；审批 id 不认识 → `404`；路径越界 → `403`；
-空消息 → `400`。
+空消息 → `400`；权限模式不认识 → `400`。
 
 ## 安全模型 {#security}
 

@@ -263,6 +263,37 @@ mini 的 retry 次数来自 `$MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`
 在 `web/server.py` 建模型前把这个环境变量设成 `model.max_retries`，一行解决；
 否则表单里就是个摆设。
 
+### 8.5 权限设置
+
+权限分两层，作用不同：
+
+| 层 | 改什么 | 生效时机 |
+|---|---|---|
+| 设置页 | 用户级配置文件的 `permissions:` 段 | **新会话** |
+| 聊天页检查器 | 当前会话的 `PermissionPolicy` | **立刻** |
+
+**写**：`web/config_api.py` 的 `write_user_permissions()`，和 `write_user_model()` 同构——
+只写用户级文件，只改 `permissions.mode` / `deny_paths` / `include_dirs`，
+**`permissions.rules` 原样保留**（规则是审批卡片上 `Always allow` 按钮写的，不是页面的事）。
+
+**读**：`permissions_view(cwd, server_mode=...)` 给出 mode / modes / deny_paths /
+include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判断每个字段来自哪一层，
+和 §8.2 的 `sources()` 同一套办法。
+
+**运行中切换**：`SessionRuntime.set_mode()` 原地改 `loop.executor.policy.mode` 和
+`loop.session.permission_mode`——**和 `/mode` 命令完全相同的两行**。策略是执行器问的那个对象，
+所以下一个工具调用就能看到；`ContextEngine` 拿的是同一个策略对象，`<permission_mode>`
+提示会自动跟着变，不用重建上下文。loop 还没建时只记下模式，`build_loop()` 用它。
+
+**`--permission-mode` 盖过文件**：`build_policy()` 是 `permission_mode or config.permissions.mode`
+（`run.py:68`）。服务器带模式启动时，配置文件里的 `permissions.mode` 是死的——页面要**如实说**，
+不能让用户以为改了生效了（`server_mode` 非空时 `source["mode"]` 报 `server`）。
+
+**一个坑**：`status()` 在 loop 还没建时返回的是 `config.permissions.mode`，不是会话自己的模式。
+不改这一行，新建会话切换后状态栏显示旧值。
+
+**不做的**：浏览器里编辑 `rules.yaml`；把权限写进项目级 `.coderagent/config.yaml`（会进 git）。
+
 ---
 
 ## 9. 文件浏览与 diff
@@ -392,6 +423,13 @@ web 直接复用，不重写路径安全逻辑。
 ### T5.9 实跑
 - [x] 用真实模型跑一遍，把踩到的坑回写进文档
 
+### T5.10 权限设置
+- [x] `config_api.permissions_view()` / `write_user_permissions()`（读写用户级 `permissions:` 段）
+- [x] `SessionRuntime.set_mode()`（运行中切换）+ `status()` 的模式
+- [x] `PUT /api/config/permissions` 与 `POST /api/sessions/{id}/mode`（非法模式 400）
+- [x] 设置页的权限表单 + 聊天页检查器的模式下拉框
+- [x] `tests/coderagent/web/test_api_permissions.py`
+
 ---
 
 ## 14. 测试计划
@@ -437,6 +475,7 @@ fixture 用 `load_config([], cwd=tmp_path)` + `ScriptedModel` 建 app，`TestCli
 - [x] 浏览器里能完整跑一轮：发消息 → 看流式输出 → 触发审批 → 允许 → 看工具卡与 diff
       （走 HTTP API 与事件流验证；审批与工具卡另有测试覆盖）
 - [x] `/settings` 能改 model_name / api_base / api_key 并测试连通性，写进用户级配置
+- [x] 权限能改：设置页写用户级 `permissions:` 段（新会话生效），聊天页能切换运行中会话的模式（立刻生效）
 - [x] 文件树能浏览、读文件、看 diff，越界路径返回 403
 - [x] 会话能列表 / 续接 / fork，回放能看到历史消息与工具 diff
 - [x] `pytest tests/coderagent -q` 全绿

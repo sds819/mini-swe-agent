@@ -104,6 +104,56 @@ A **new** session reads the files again, so the new settings apply from the
 next session on. The session you are in keeps the model it has; use `/model
 <name>` to switch it right away.
 
+## Permissions
+
+The permissions are in two places, and they do different things.
+
+| Where | What it changes | When it takes effect |
+|---|---|---|
+| The settings page (`/settings`) | The `permissions:` section of the user level configuration file | The **next** session |
+| The chat page (`/`) | The mode of the session that is running | **Right away** |
+
+### The modes
+
+| Mode | What it means |
+|---|---|
+| `default` | Every tool that changes something asks for approval |
+| `acceptEdits` | The writes go through, everything else asks |
+| `plan` | Read only: the agent looks around and writes down the plan |
+| `readonly` | Read only: the agent looks around and answers |
+| `bypass` | Nothing is asked: every tool call is allowed. For unattended runs |
+
+`plan` and `readonly` refuse every tool that changes something, `bash`
+included, and the model is told about it, so it answers with what it found
+instead of changing anything.
+
+### The settings page
+
+The form has the mode, the denied paths and the extra directories, and it is
+written to the same user level file as the model: `~/.coderagent/config.yaml`
+(or `$MSWEA_CODER_HOME/config.yaml`). The project level file is never
+written, and the rules of `permissions.rules` are left alone — those are the
+business of the `Always allow` button of the approvals.
+
+Like the model, it takes effect for the **new** sessions: a session that is
+running keeps the mode it has.
+
+### The chat page
+
+The inspector has a mode box at the top. Changing it switches the mode of the
+session that is running, without restarting anything: the policy is changed
+in place, so the next tool call sees it, and the model is told about it the
+next time the context is put together. This is what makes an unattended run
+easy — put the session on `bypass` before the test run, back to `default`
+afterwards.
+
+### The mode the server was started with
+
+`coder web --permission-mode bypass` pins the mode: it wins over the files,
+because the policy is built with `permission_mode or config.permissions.mode`.
+The settings page says so when the server was started with one, instead of
+letting you believe that a change in the file took effect.
+
 ## The API
 
 Everything the pages do is a plain HTTP call, so you can drive the agent from
@@ -129,10 +179,12 @@ somewhere else cannot drive your agent. `curl` is not affected.
 | POST | `/api/sessions/{id}/fork` | Copy a session |
 | POST | `/api/sessions/{id}/messages` | Send a message, or run a slash command |
 | POST | `/api/sessions/{id}/interrupt` | Stop the turn that is running |
+| POST | `/api/sessions/{id}/mode` | Change the permission mode of the session |
 | POST | `/api/approvals/{id}` | Allow, deny or always allow a tool |
 | GET | `/api/commands` | The slash commands |
 | GET | `/api/config` | The model configuration, with the layer of every field |
 | PUT | `/api/config/model` | Write the model settings to the user file |
+| PUT | `/api/config/permissions` | Write the permission settings to the user file |
 | POST | `/api/config/model/test` | Try the settings out |
 | GET | `/api/files?path=&depth=` | The entries of a directory |
 | GET | `/api/file?path=` | The content of a file |
@@ -140,7 +192,7 @@ somewhere else cannot drive your agent. `curl` is not affected.
 
 A turn that is already running makes the next message fail with `409`. An
 approval that nobody is waiting for is a `404`. A path outside the working
-directory is a `403`.
+directory is a `403`. A permission mode that does not exist is a `400`.
 
 ## Approvals
 

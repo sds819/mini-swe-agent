@@ -133,7 +133,9 @@ coder web
 
 The chat page is the terminal interface with a window around it, and the
 settings page writes the model configuration — including the API key — for
-you. The pages, the API and the security model are in
+you. The permissions are there too: the settings page writes the mode that the
+new sessions get, the chat page switches the mode of the session that is
+running. The pages, the API and the security model are in
 [The web interface](coderagent_web.md).
 
 ## The configuration
