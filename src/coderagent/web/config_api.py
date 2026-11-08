@@ -13,9 +13,16 @@ import yaml
 
 from coderagent.config.loader import config_layers, load_config
 from coderagent.paths import config_home
+from coderagent.tools.permissions import PermissionMode
 
 SECRET_MARKERS = ("key", "token", "secret", "password")
 """The names of the settings that never leave the server in clear text."""
+
+PERMISSION_MODES = [mode.value for mode in PermissionMode]
+"""The permission modes the browser can choose from."""
+
+PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs")
+"""The permission settings that live directly under `permissions:`."""
 
 DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules")
 """The settings of the model that live directly under `model:`."""
@@ -102,6 +109,71 @@ def layers_preview(cwd: Path) -> list[dict[str, Any]]:
 
 def user_config_path() -> Path:
     return config_home() / "config.yaml"
+
+
+def _permission_of(layer: dict) -> dict:
+    permissions = layer.get("permissions")
+    return permissions if isinstance(permissions, dict) else {}
+
+
+def _permission_source(layers: list[tuple[str, dict]], field: str) -> str:
+    """The layer the setting comes from, the last one that defines it."""
+    source = "defaults"
+    for name, layer in layers:
+        if field in _permission_of(layer):
+            source = name
+    return source
+
+
+def permissions_view(cwd: Path, *, server_mode: str = "") -> dict[str, Any]:
+    """The permission settings, as the browser sees them.
+
+    `server_mode` is the mode the server was started with. It wins over the
+    files, so it is what the page shows and what the user has to be told about.
+    """
+    layers = config_layers(cwd)
+    permissions = load_config([], cwd=cwd).permissions
+    source = {field: _permission_source(layers, field) for field in PERMISSION_FIELDS}
+    if server_mode:
+        source["mode"] = "server"
+    return {
+        "mode": server_mode or permissions.mode,
+        "modes": list(PERMISSION_MODES),
+        "deny_paths": list(permissions.deny_paths),
+        "include_dirs": list(permissions.include_dirs),
+        "source": source,
+        "server_mode": server_mode,
+    }
+
+
+def write_user_permissions(payload: dict) -> Path:
+    """Merge the permission settings into the user level configuration file.
+
+    The rules are not touched: they are edited by the approvals of the chat
+    page, not here.
+    """
+    path = user_config_path()
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
+    if not isinstance(data, dict):
+        data = {}
+    permissions = data.get("permissions")
+    if not isinstance(permissions, dict):
+        permissions = {}
+
+    mode = payload.get("mode")
+    if isinstance(mode, str) and mode.strip():
+        if mode.strip() not in PERMISSION_MODES:
+            raise ValueError(f"unknown permission mode '{mode}'")
+        permissions["mode"] = mode.strip()
+    for field in ("deny_paths", "include_dirs"):
+        values = payload.get(field)
+        if isinstance(values, list):
+            permissions[field] = [str(value).strip() for value in values if str(value).strip()]
+
+    data["permissions"] = permissions
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return path
 
 
 def write_user_model(payload: dict) -> Path:
