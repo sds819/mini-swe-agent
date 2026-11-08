@@ -139,6 +139,28 @@ def main(
 
 
 @app.command()
+def web(
+    cwd: Path = typer.Option(Path("."), "--cwd", help="The directory the agent works in"),
+    host: str = typer.Option("127.0.0.1", "--host", help="The address to listen on"),
+    port: int = typer.Option(8765, "--port", help="The port to listen on"),
+    config_spec: list[str] = typer.Option([], "-c", "--config", help="Config file or key=value overrides"),
+    model_name: str = typer.Option("", "-m", "--model", help="Model to use"),
+    permission_mode: str = typer.Option("", "--permission-mode", help="default|acceptEdits|plan|bypass|readonly"),
+) -> None:
+    """Run the agent in the browser.
+
+    There is no authentication: everybody who can reach the address can drive the
+    agent in the working directory, so keep it on 127.0.0.1.
+    """
+    from coderagent.web.server import serve
+
+    spec = list(config_spec)
+    if model_name:
+        spec.append(f"model.model_name={model_name}")
+    serve(cwd=cwd, host=host, port=port, config_spec=spec, permission_mode=permission_mode or None)
+
+
+@app.command()
 def export(
     session: str = typer.Option("", "--session", help="The id of the session. The last one when empty."),
     output_format: str = typer.Option("json", "--format", help="json|otel"),

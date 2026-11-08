@@ -162,6 +162,23 @@ class GrepTool:
         return ToolResult(output, metadata={"matches": total, "files": files})
 
 
+def list_entries(target: Path, depth: int = 1) -> list[tuple[Path, str]]:
+    """The entries below a directory: the absolute path and `d` or `f`."""
+    entries = []
+    for dirpath, dirnames, filenames in os.walk(target):
+        level = len(Path(dirpath).relative_to(target).parts)
+        if depth >= 0 and level >= depth:
+            dirnames[:] = []
+            filenames = []
+        dirnames[:] = sorted(d for d in dirnames if d not in IGNORED_DIRS)
+        for name in sorted(dirnames):
+            entries.append((Path(dirpath) / name, "d"))
+        for name in sorted(filenames):
+            entries.append((Path(dirpath) / name, "f"))
+    entries.sort()
+    return entries
+
+
 class LsTool:
     name = "ls"
     description = (
@@ -189,18 +206,7 @@ class LsTool:
 
         depth = params.get("depth", 1)
         depth = int(depth) if isinstance(depth, int) else 1
-        entries = []
-        for dirpath, dirnames, filenames in os.walk(target):
-            level = len(Path(dirpath).relative_to(target).parts)
-            if depth >= 0 and level >= depth:
-                dirnames[:] = []
-                filenames = []
-            dirnames[:] = sorted(d for d in dirnames if d not in IGNORED_DIRS)
-            for name in sorted(dirnames):
-                entries.append((Path(dirpath) / name, "d"))
-            for name in sorted(filenames):
-                entries.append((Path(dirpath) / name, "f"))
-        entries.sort()
+        entries = list_entries(target, depth)
         if not entries:
             return ToolResult(f"Directory {target} is empty.")
         lines = []

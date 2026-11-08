@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}coder — settings{% endblock %}
+{% block content %}
+<main class="page">
+  <h1>Model</h1>
+  <p class="note">
+    The settings are written to the user level configuration file
+    (<code id="config-path">~/.coderagent/config.yaml</code>). The project level file is never written.
+    A new session picks the new settings up; the running session keeps the model it has.
+  </p>
+
+  <form id="model-form">
+    <label>Model name
+      <input id="model-name" placeholder="deepseek/deepseek-flash">
+      <small id="source-model-name" class="source"></small>
+    </label>
+    <label>API base
+      <input id="api-base" placeholder="https://api.deepseek.com">
+      <small id="source-api_base" class="source"></small>
+    </label>
+    <label>API key
+      <input id="api-key" type="password" placeholder="leave empty to keep the current one">
+      <small id="source-api_key" class="source"></small>
+    </label>
+    <label>Max retries
+      <input id="max-retries" type="number" min="0" max="20">
+      <small id="source-max_retries" class="source"></small>
+    </label>
+    <label>Cache control
+      <select id="set-cache-control">
+        <option value="">none</option>
+        <option value="ephemeral">ephemeral</option>
+      </select>
+      <small id="source-set_cache_control" class="source"></small>
+    </label>
+    <label>Routing
+      <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
+      <small class="source">one purpose per line: <code>purpose: model</code></small>
+    </label>
+    <label>Routing rules
+      <textarea id="routing-rules" rows="3" placeholder="tokens &gt; 50000: strong"></textarea>
+      <small class="source">one rule per line: <code>when: purpose</code></small>
+    </label>
+    <label>Extra parameters
+      <textarea id="model-kwargs" rows="5" placeholder="temperature: 0.2"></textarea>
+      <small class="source">YAML, passed to the provider as it is</small>
+    </label>
+    <div class="row">
+      <button type="submit" class="primary">Save</button>
+      <button type="button" id="test-connection">Test the connection</button>
+      <span id="config-message" class="note"></span>
+    </div>
+  </form>
+
+  <h2>Where the settings come from</h2>
+  <table id="layers">
+    <thead><tr><th>Layer</th><th>Model</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</main>
+{% endblock %}

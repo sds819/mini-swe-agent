@@ -52,6 +52,11 @@ COMMANDS: list[Command] = []
 
 
 def register(command: Command) -> Command:
+    """Add a command. A command with the same name replaces the one that is there."""
+    for index, existing in enumerate(COMMANDS):
+        if existing.name == command.name:
+            COMMANDS[index] = command
+            return command
     COMMANDS.append(command)
     return command
 

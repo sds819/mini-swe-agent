@@ -111,7 +111,7 @@ class PermissionPolicy:
                 matched = rule
         if tool in PATH_TOOLS:
             path = str(params.get("path", ""))
-            if path and not self._within_bounds(path):
+            if path and not self.within_bounds(path):
                 if matched and matched.decision == "allow":
                     return Decision("allow", matched, matched.reason)
                 return Decision("deny", matched, f"'{path}' is outside the working directory {self.cwd}")
@@ -150,7 +150,12 @@ class PermissionPolicy:
             return resolved.relative_to(self.cwd).as_posix()
         return resolved.as_posix()
 
-    def _within_bounds(self, path: str) -> bool:
+    def within_bounds(self, path: str) -> bool:
+        """Whether a path is inside the working directory or one of the extra directories.
+
+        The rules of the user cannot widen this: an `allow` rule for a path outside
+        the bounds is still a path the agent must not touch.
+        """
         target = Path(path)
         resolved = (target if target.is_absolute() else self.cwd / target).resolve()
         if resolved.is_relative_to(self.cwd):

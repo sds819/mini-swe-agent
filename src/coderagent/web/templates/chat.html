@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}coder — chat{% endblock %}
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <section>
+      <h2>Sessions</h2>
+      <button id="new-session" class="primary">New session</button>
+      <ul id="sessions" class="list"></ul>
+    </section>
+    <section>
+      <h2>Files</h2>
+      <div class="row">
+        <input id="file-path" placeholder="path" value=".">
+        <button id="list-files">List</button>
+      </div>
+      <ul id="files" class="list"></ul>
+    </section>
+  </aside>
+
+  <main class="conversation">
+    <div id="messages" class="messages"></div>
+    <form id="composer" class="composer">
+      <textarea id="input" rows="2" placeholder="Message the agent, or a command like /help"></textarea>
+      <button type="submit" class="primary">Send</button>
+    </form>
+    <div class="row commands">
+      <select id="command-list"></select>
+      <button id="run-command">Run</button>
+      <button id="interrupt">Interrupt</button>
+    </div>
+  </main>
+
+  <aside class="inspector">
+    <h2>Status</h2>
+    <dl id="status-fields"></dl>
+    <h2>Changes</h2>
+    <div id="changes"></div>
+    <h2>File</h2>
+    <pre id="file-view"></pre>
+  </aside>
+</div>
+{% endblock %}
