@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 {% block title %}coder — settings{% endblock %}
 {% block content %}
 <main class="page">
@@ -50,6 +51,33 @@
       <button type="button" id="test-connection">Test the connection</button>
       <span id="config-message" class="note"></span>
     </div>
+  </form>
+
+  <h2>Permissions</h2>
+  <p class="note">
+    The permissions go to the same user level configuration file. A new session
+    picks the mode up; the running session keeps the mode it has. The mode of a
+    running session is in the chat page.
+  </p>
+
+  <form id="permissions-form">
+    <label>Mode
+      {{ macros.permission_modes("permission-mode") }}
+      <small id="source-mode" class="source"></small>
+    </label>
+    <label>Denied paths
+      <textarea id="deny-paths" rows="3" placeholder="secrets/"></textarea>
+      <small class="source">one path per line: the agent may not touch them</small>
+    </label>
+    <label>Extra directories
+      <textarea id="include-dirs" rows="3" placeholder="/path/to/other/project"></textarea>
+      <small class="source">one path per line: directories outside the working directory the agent may still touch</small>
+    </label>
+    <div class="row">
+      <button type="submit" class="primary">Save</button>
+      <span id="permissions-message" class="note"></span>
+    </div>
+    <p class="note" id="server-mode-note"></p>
   </form>
 
   <h2>Where the settings come from</h2>

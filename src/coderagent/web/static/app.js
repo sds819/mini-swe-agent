@@ -2,6 +2,14 @@
 
 const CLIENT = { "X-Coder-Client": "1" };
 
+const MODE_NOTES = {
+  default: "Every tool that changes something asks for approval.",
+  acceptEdits: "The writes go through, everything else asks for approval.",
+  plan: "Read only: the agent looks around and writes down the plan.",
+  readonly: "Read only: the agent looks around and answers.",
+  bypass: "Nothing is asked: every tool call is allowed. For unattended runs.",
+};
+
 const state = {
   sessionId: null,
   seq: 0,
@@ -10,6 +18,7 @@ const state = {
   assistant: null,
   current: null,
   stick: true,
+  mode: "",
 };
 
 function el(tag, className, text) {
@@ -226,6 +235,9 @@ function render(item) {
     case "session_switched":
       state.sessionId = item.session_id;
       break;
+    case "mode_changed":
+      refreshStatus();
+      break;
     default:
       break;
   }
@@ -274,9 +286,21 @@ async function refreshStatus() {
         fields.appendChild(el("dd", "", String(value)));
       }
     }
+    showMode(status.mode);
   } catch (error) {
     /* the session is gone; the next poll will say so */
   }
+}
+
+/* The mode of the session, in the inspector of the chat page. */
+function showMode(mode) {
+  if (!mode) return;
+  state.mode = mode;
+  const select = document.getElementById("permission-mode");
+  /* The user may be picking a mode: the poll must not pull the box away. */
+  if (select && select.value !== mode && document.activeElement !== select) select.value = mode;
+  const note = document.getElementById("mode-note");
+  if (note) note.textContent = MODE_NOTES[mode] || "";
 }
 
 async function loadChanges() {
@@ -435,6 +459,25 @@ function wire() {
       listFiles(path).catch((error) => bubble("error", error.message));
     };
   }
+
+  const modeSelect = document.getElementById("permission-mode");
+  if (modeSelect) {
+    modeSelect.onchange = async () => {
+      const mode = modeSelect.value;
+      const previous = state.mode;
+      if (!state.sessionId) {
+        modeSelect.value = previous || "default";
+        return;
+      }
+      try {
+        await api(`/api/sessions/${state.sessionId}/mode`, { method: "POST", body: { mode } });
+        showMode(mode);
+      } catch (error) {
+        modeSelect.value = previous || "default";
+        bubble("error", error.message);
+      }
+    };
+  }
 }
 
 // -- the settings ----------------------------------------------------------
@@ -470,9 +513,17 @@ function formatKeyValues(object) {
     .join("\n");
 }
 
+function splitLines(text) {
+  return (text || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 async function startSettings() {
   const data = await api("/api/config");
   const model = data.model;
+  const permissions = data.permissions || {};
   document.getElementById("config-path").textContent = data.user_config_path;
   document.getElementById("model-name").value = model.model_name || "";
   document.getElementById("api-base").value = model.api_base || "";
@@ -486,6 +537,20 @@ async function startSettings() {
     .map((rule) => `${rule.when}: ${rule.purpose}`)
     .join("\n");
   document.getElementById("model-kwargs").value = formatKeyValues(model.model_kwargs);
+
+  document.getElementById("permission-mode").value = permissions.mode || "default";
+  document.getElementById("deny-paths").value = (permissions.deny_paths || []).join("\n");
+  document.getElementById("include-dirs").value = (permissions.include_dirs || []).join("\n");
+  const permissionSource = document.getElementById("source-mode");
+  if (permissionSource) {
+    permissionSource.textContent = `from: ${(permissions.source || {}).mode || "defaults"}`;
+  }
+  const serverNote = document.getElementById("server-mode-note");
+  if (serverNote) {
+    serverNote.textContent = permissions.server_mode
+      ? `The server was started with --permission-mode ${permissions.server_mode}: the mode of the file does not decide anything.`
+      : "";
+  }
 
   for (const [field, source] of Object.entries(data.sources || {})) {
     const node = document.getElementById(`source-${field}`);
@@ -540,6 +605,25 @@ async function startSettings() {
         : `error: ${answer.error}`;
     } catch (error) {
       message.textContent = `error: ${error.message}`;
+    }
+  };
+
+  document.getElementById("permissions-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const note = document.getElementById("permissions-message");
+    try {
+      const answer = await api("/api/config/permissions", {
+        method: "PUT",
+        body: {
+          mode: document.getElementById("permission-mode").value,
+          deny_paths: splitLines(document.getElementById("deny-paths").value),
+          include_dirs: splitLines(document.getElementById("include-dirs").value),
+        },
+      });
+      note.textContent = `saved to ${answer.path}`;
+      startSettings();
+    } catch (error) {
+      note.textContent = `error: ${error.message}`;
     }
   };
 }

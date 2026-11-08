@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 {% block title %}coder — chat{% endblock %}
 {% block content %}
 <div class="layout">
@@ -32,6 +33,9 @@
   </main>
 
   <aside class="inspector">
+    <h2>Permissions</h2>
+    <label>Mode {{ macros.permission_modes("permission-mode") }}</label>
+    <p class="note" id="mode-note"></p>
     <h2>Status</h2>
     <dl id="status-fields"></dl>
     <h2>Changes</h2>

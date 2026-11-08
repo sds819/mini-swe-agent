@@ -154,3 +154,15 @@ def test_the_server_mode_is_reported_as_pinned(make_client):
     assert permissions["mode"] == "bypass"
     assert permissions["source"]["mode"] == "server"
     """The file does not decide the mode when the server was started with one."""
+
+
+def test_the_pages_carry_the_mode_control(make_client):
+    client = make_client()
+
+    chat = client.get("/").text
+    settings = client.get("/settings").text
+
+    assert 'id="permission-mode"' in chat
+    assert 'id="permission-mode"' in settings
+    assert 'value="bypass"' in settings
+    """The pages have to render: the control is a template macro."""

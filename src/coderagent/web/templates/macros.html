@@ -1,0 +1,9 @@
+{% macro permission_modes(element_id) %}
+<select id="{{ element_id }}">
+  <option value="default" title="Every tool that changes something asks for approval.">default</option>
+  <option value="acceptEdits" title="The writes go through, everything else asks for approval.">acceptEdits</option>
+  <option value="plan" title="Read only: the agent looks around and writes down the plan.">plan</option>
+  <option value="readonly" title="Read only: the agent looks around and answers.">readonly</option>
+  <option value="bypass" title="Nothing is asked: every tool call is allowed. For unattended runs.">bypass</option>
+</select>
+{% endmacro %}
