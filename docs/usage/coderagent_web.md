@@ -50,6 +50,11 @@ Everything the agent does arrives over a server-sent event stream, so the
 output appears while it happens. Reconnecting to the page picks up where it
 left off.
 
+The pieces of a streamed answer are only for the moment: they are pushed to the
+browser while they arrive but not kept, so a long answer cannot push the
+history of the session out of the buffer. A browser that comes late reads the
+whole answer as one message.
+
 At the end of a turn the session is settled in the memory (see
 [The memory](coderagent_memory.md)), which shows up as a thin separator with
 what it cost.

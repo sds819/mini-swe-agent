@@ -76,6 +76,7 @@ loop.run_turn()                   SSE 生成器 await queue.get()
                             ▼
                      runtime.emit(item)
                        ├─ 环形缓冲 deque(maxlen=1000) 追加 {"seq":n, ...}
+                       │    （瞬时条目例外：流式的增量只推给订阅者，不留）
                        └─ 每个订阅者：loop.call_soon_threadsafe(queue.put_nowait, item)
 ```
 
@@ -95,6 +96,8 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 
 - 浏览器打开页面 → 拉 `/items?since=0`（拿到历史）→ 打开 `/stream?since=<seq>`（拿增量）。
 - 断线重连 → 带 `since=<seq>` → `attach()` 把缓冲里 `seq > since` 的塞进队列。
+- **流式的增量（`text_delta` / `reasoning_delta`）是瞬时的**：它们有 `seq`（顺序不变），
+  但**不进缓冲**。晚到的浏览器看不到它们，但能看到随后那条完整的 `assistant_message`。
 
 ### 3.3 一个会话一次只有一个 turn
 
@@ -125,7 +128,7 @@ def rekey(self, runtime, old_id, new_id):
 |---|---|---|
 | `USER_MESSAGE` | `user_message` | |
 | `ASSISTANT_MESSAGE` | `assistant_message` | `reasoning` 可折叠，受 `config.ui.show_reasoning` 控制 |
-| `TEXT_DELTA` | `text_delta` | **不入日志**，只在事件总线上（`core/events.py:16`） |
+| `TEXT_DELTA` | `text_delta` | **不入日志**，只在事件总线上（`core/events.py:16`）；也**不进环形缓冲**（瞬时，见 §17.1） |
 | `REASONING` | `reasoning_delta` | 同上 |
 | `TOOL_CALL` | `tool_call` | 一条动作一个条目；标题用 `ui/widgets/tool_card.py:11` 的 `summarize(args)` |
 | `TOOL_RESULT` | `tool_result` | **两种 payload，见下** |
@@ -461,7 +464,9 @@ fixture 用 `load_config([], cwd=tmp_path)` + `ScriptedModel` 建 app，`TestCli
 
 - **`text_delta` 是逐 token 的**，一轮「say hi」就有 14 条 `text_delta`。前端按 `seq`
   追加到当前气泡是对的，但**缓冲区会被 token 吃满**：1000 条的环形缓冲，一轮长回答就
-  够把前面的历史挤掉。**待办**：流式的增量不该占缓冲（或者缓冲该按「条目」而不是「token」计）。
+  够把前面的历史挤掉。→ **已修（Q7）**：流式的增量是**瞬时条目**，只推给正在听的浏览器，
+  **不进环形缓冲**（`web/events.py` 的 `TRANSIENT_KINDS`）；整段答案随后以一条
+  `assistant_message` 进缓冲。
 - **环境的 API key 在设置页看不到**：`api_key_set` 是 `false`，因为页面读的是配置文件，
   而 `DEEPSEEK_API_KEY` 在环境里。这是正常的（页面是给配置里的 key 用的），但要在
   文档里写明，否则用户会以为 key 没生效。
@@ -471,5 +476,7 @@ fixture 用 `load_config([], cwd=tmp_path)` + `ScriptedModel` 建 app，`TestCli
   `session_cost`（实测一轮 0.00032，会话总额 0.00050）。
 - **`/help` 的输出很长**，一条 `command_output` 里塞了 25 行命令。前端要能折叠长输出。
 
-> **待办（Q7）**：`text_delta` 逐 token 进缓冲，长回答会把历史挤出缓冲。要么流式增量不进
-> 缓冲，要么缓冲按条目计。
+> **待办（Q7）**：~~`text_delta` 逐 token 进缓冲，长回答会把历史挤出缓冲。~~
+> **已修**：瞬时条目（`text_delta` / `reasoning_delta`）不进环形缓冲，只推给正在听的浏览器；
+> 整段答案以 `assistant_message` 进缓冲。前端收到 `assistant_message` 时**替换**流式气泡
+> 的内容，而不是再画一个气泡（原来会重复显示两遍）。

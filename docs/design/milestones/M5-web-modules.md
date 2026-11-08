@@ -56,8 +56,8 @@ from coderagent.web.server import serve   # 写在函数体里，不在模块顶
 |---|---|---|
 | `USER_MESSAGE` | `user_message` | `content` |
 | `ASSISTANT_MESSAGE` | `assistant_message` | `content`、`reasoning`（取自 `message["extra"]["reasoning"]`） |
-| `TEXT_DELTA` | `text_delta` | `content` |
-| `REASONING` | `reasoning_delta` | `content` |
+| `TEXT_DELTA` | `text_delta` | `content`（**瞬时**：不进缓冲） |
+| `REASONING` | `reasoning_delta` | `content`（**瞬时**：不进缓冲） |
 | `TOOL_CALL` | `tool_call` | `tool`、`args`、`summary`、`tool_call_id` |
 | `TOOL_RESULT` | `tool_result`（可能多条）+ `todos` | 见 §3.2 |
 | `APPROVAL_REQUEST` | `approval_request` | `id`、`tool`、`params`、`reason` |
@@ -72,6 +72,9 @@ from coderagent.web.server import serve   # 写在函数体里，不在模块顶
 **要点**
 
 - `TEXT_DELTA` / `REASONING` **不入事件日志**（`core/events.py` 的设计），所以**回放没有流式过程，只有最终消息**。
+- 这两种条目还是**瞬时的**（`web/events.py` 的 `TRANSIENT_KINDS`）：它们**不进环形缓冲**，
+  只推给正在听的浏览器。模型逐 token 流式输出，一轮长回答能有几百条增量，进缓冲会把
+  历史挤掉。整段答案随后以一条 `assistant_message` 进缓冲。
 - `tool_call` 是**一条动作一个条目**：一次 `TOOL_CALL` 事件里带 `actions` 列表，多个并行工具调用
   会翻译成多条条目。`tool_call_id` 是前端把「工具卡」和「工具结果」配对的唯一依据。
 - `summary` 用 `ui/widgets/tool_card.py` 的 `summarize(args)`，与 TUI 的卡片标题**同一份逻辑**，
@@ -135,8 +138,8 @@ class SessionRuntime:
 |---|---|
 | `bus` | 自己的事件总线，与核心的 loop 共用 |
 | `approver` | 自己的审批器，`session_id` 随会话切换而更新 |
-| `buffer: deque[dict]` | 环形缓冲，`maxlen=BUFFER_SIZE`（1000） |
-| `_seq` | 自增序号，**缓冲与 SSE 共用同一个 seq 空间** |
+| `buffer: deque[dict]` | 环形缓冲，`maxlen=BUFFER_SIZE`（1000）；**瞬时条目不进这里** |
+| `_seq` | 自增序号，**缓冲与 SSE 共用同一个 seq 空间**（瞬时条目也占号，只是不留） |
 | `_subscribers: list[(loop, asyncio.Queue)]` | 正在听 SSE 的浏览器 |
 | `_queue: queue.Queue[str]` | 喂给 worker 线程的任务 |
 | `busy: threading.Event` | 一轮或一条命令正在跑 |
@@ -150,7 +153,7 @@ class SessionRuntime:
 | `_subscribe()` | 逐个 `EventType` 注册（`EventBus` 没有通配订阅） |
 | `_on_event(event)` | → `normalize` → 逐条 `emit` |
 | `_replay()` | 构造时把事件日志过一遍 `normalize` 灌进缓冲，让迟到的浏览器看得到历史 |
-| `emit(item) -> dict` | 分配 `seq` → 追加进缓冲 → 用 `loop.call_soon_threadsafe` 推给每个订阅者 → 返回带 `seq` 的条目 |
+| `emit(item) -> dict` | 分配 `seq` → 追加进缓冲（**瞬时条目除外**）→ 用 `loop.call_soon_threadsafe` 推给每个订阅者 → 返回带 `seq` 的条目 |
 | `items(since: int) -> list[dict]` | 缓冲里 `seq > since` 的条目 |
 | `attach(loop, subscriber, since)` | 先把漏掉的塞进队列，再登记为订阅者 |
 | `detach(subscriber)` | 摘掉订阅者 |
@@ -460,7 +463,8 @@ state = { sessionId, seq, stream, cards, assistant }
 
 | `kind` | 渲染 |
 |---|---|
-| `user_message` / `assistant_message` | 气泡（`reasoning` 可折叠） |
+| `user_message` | 气泡 |
+| `assistant_message` | 气泡；**若正在流式输出，则替换那个气泡的内容**（否则同一段话会显示两遍） |
 | `text_delta` | 追加到当前气泡 |
 | `reasoning_delta` | 折叠框 |
 | `tool_call` | 工具卡（标题用 `summary`） |
@@ -502,6 +506,7 @@ state = { sessionId, seq, stream, cards, assistant }
 | I10 | 路径越界 → **403**，且边界检查不被规则放宽 |
 | I11 | 审批**没有回答就是拒绝**（超时自动 DENY），从不静默放行 |
 | I12 | 会话的钱 = 事件日志里所有模型调用之和（live / metrics / trace 同一个数） |
+| I13 | 流式的增量（`text_delta` / `reasoning_delta`）**不进缓冲**：整段答案以一条 `assistant_message` 进缓冲 |
 
 ---
 
@@ -542,3 +547,5 @@ state = { sessionId, seq, stream, cards, assistant }
 | Q4 | `model_view` 的 `model_kwargs` 过滤掉了密钥，所以前端**看不到** `api_base` 之外的额外密钥 | 有意的，但要在设置页说明 |
 | Q5 | 每个会话一个 `AgentLoop` → 每个会话一套 MCP server 线程 | loop 已懒建；会话多了仍会涨 |
 | Q6 | **命令换了会话 id 之后，旧 id 的 `/items` 拿不到命令输出**：环形缓冲跟着 runtime 走（re-key 之后旧 id 下是一个从日志重建的新 runtime），而命令输出**不入日志** | 浏览器走 SSE 不受影响（它收到 `session_switched` 后改订新 id）；但**轮询 `/items` 的客户端会丢命令输出**。要么把命令输出写进日志，要么让 registry 在 re-key 时把旧 id 指向同一个 runtime |
+| ~~Q7~~ | ~~`text_delta` 逐 token 进缓冲，长回答把历史挤出缓冲~~ → **已修**：流式增量是瞬时条目，不进缓冲；整段答案以 `assistant_message` 进缓冲 | — |
+| Q8 | 前端「流式气泡被 `assistant_message` 替换」这层逻辑只在浏览器里，仓库里没有 JS 测试设施 | 已用 node 假 DOM 手验过（重复气泡消失）；将来加 JS 测试时补一条 |
