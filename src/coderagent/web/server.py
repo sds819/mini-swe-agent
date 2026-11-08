@@ -2,6 +2,8 @@
 
 import logging
 import os
+import socket
+import sys
 from pathlib import Path
 
 import litellm
@@ -13,6 +15,24 @@ logger = logging.getLogger("coderagent.web")
 
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 """The addresses that only the user of the machine can reach."""
+
+
+def check_address(host: str, port: int) -> None:
+    """Make sure the address is free before the server says it is listening.
+
+    A port that is already taken is the most common way for the server to fail,
+    and the error of uvicorn does not say what to do about it.
+    """
+    with socket.socket() as probe:
+        try:
+            probe.bind((host, port))
+        except OSError as error:
+            print(
+                f"coder web: cannot listen on {host}:{port} ({error.strerror}).\n"
+                f"         Another program is using that port. Try another one: --port {port + 1}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1) from error
 
 
 def serve(
@@ -45,5 +65,6 @@ def serve(
             "The web interface listens on %s: everybody who can reach that address can drive the agent.",
             host,
         )
-    print(f"coder web: http://{host}:{port}")
+    check_address(host, port)
+    print(f"coder web: http://{host}:{port}", flush=True)
     uvicorn.run(app, host=host, port=port, log_level="warning")

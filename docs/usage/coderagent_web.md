@@ -203,3 +203,6 @@ browser shows everything.
 - Each session gets its own MCP server threads. The servers are only started
   when a session runs its first turn, but a lot of sessions means a lot of
   threads.
+
+If the port is taken, the server says so and stops; start it on another one
+with `--port`.
