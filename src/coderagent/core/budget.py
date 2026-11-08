@@ -10,6 +10,8 @@ MODEL_CONTEXT_WINDOWS = {
     "llama": 8192,
     "gemini": 1000000,
     "mistral": 32768,
+    "kimi": 262144,
+    "minimax": 204800,
 }
 """Context windows of the model families we know. Matched as a prefix of the
 model name or of the part after the provider."""

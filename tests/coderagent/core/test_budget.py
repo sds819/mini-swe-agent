@@ -9,6 +9,8 @@ def test_the_window_is_looked_up_by_the_model_name():
     assert context_window_for("deepseek/deepseek-flash") == 64000
     assert context_window_for("anthropic/claude-sonnet-4-5") == 200000
     assert context_window_for("openai/gpt-4o") == 128000
+    assert context_window_for("moonshot/kimi-k2.5") == 262144
+    assert context_window_for("minimax/minimax-m2") == 204800
 
 
 def test_an_unknown_model_gets_the_default_window():
