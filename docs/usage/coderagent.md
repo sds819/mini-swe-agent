@@ -296,10 +296,15 @@ The mode decides what the agent may do without asking:
 | `default` | Reading is free, writing and commands are asked for |
 | `acceptEdits` | Writing is free, commands are asked for |
 | `plan` | Nothing is changed. The agent only reads and answers. |
-| `readonly` | Like `plan`, but the agent knows it may not write |
+| `readonly` | Like `plan`, but the agent is told to describe the change instead of making it |
 | `bypass` | Everything is allowed. For a container or a throwaway checkout. |
 
 The mode can be changed while the session runs, with `/mode` or `/plan`.
+
+`plan` and `readonly` take the writing tools away from the model, so the model
+is told about it: a `<permission_mode mode="...">` block goes into the
+conversation, saying what it may do and what it should answer instead. The
+block follows the mode, so it changes as soon as the mode changes.
 
 The rules are more precise than a mode. A rule has a tool, a pattern and a
 decision:

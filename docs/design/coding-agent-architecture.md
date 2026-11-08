@@ -246,7 +246,7 @@ class PermissionMode(str, Enum):
     ACCEPT_EDITS = "acceptEdits"  # 文件编辑自动通过，bash 需审批
     PLAN = "plan"              # 只读，禁止一切写操作
     BYPASS = "bypass"          # 全自动（等同 mini 的 yolo）
-    READONLY = "readonly"
+    READONLY = "readonly"      # 只读，且要求模型只描述改动而不动手
 
 
 @dataclass

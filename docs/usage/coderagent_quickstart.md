@@ -180,7 +180,11 @@ coder --task "..." --permission-mode bypass
 | `default` | 读随便读，写文件和跑命令要问你 |
 | `acceptEdits` | 写文件不问，跑命令要问你 |
 | `plan` | 只读不改，agent 只看不碰 |
-| `readonly` | 同 plan，但 agent 知道自己不能写 |
+| `readonly` | 同 plan，但 agent 被告知只描述改动、不动手 |
+
+`plan` 和 `readonly` 把写文件的工具收走了，所以模型会被告知这件事：一段
+`<permission_mode mode="...">` 的说明会进到对话里，说清楚它现在能做什么、
+应该改成回答什么。模式一变，这段说明也跟着变。
 | `bypass` | 全放行。只在容器或一次性 checkout 里用 |
 
 界面里被问到的时候：`y` 允许这一次，`n` 拒绝，`a` 本次会话都允许。

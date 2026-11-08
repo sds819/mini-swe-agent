@@ -426,10 +426,10 @@ rules:
 | `tools/test_fs.py` | read/write/edit/multi_edit 全部失败分支（不存在、0 次、多次、二进制、CRLF） |
 | `tools/test_search.py` | glob `**` 语义、grep 三模式、上限截断 |
 | `tools/test_shell.py` | 正常、超时、后台任务 |
-| `tools/test_permissions.py` | 五 mode × 工具矩阵、规则覆盖顺序、路径越界 |
+| `tools/test_permissions.py` | 五 mode × 工具矩阵、规则覆盖顺序、路径越界、模式提示 |
 | `tools/test_executor.py` | 并行顺序、未知工具、参数错误、deny 不执行 |
 | `tools/test_rules.py` | 规则文件解析、非法规则报错 |
-| `test_loop_tools.py` | 端到端多工具任务 |
+| `test_loop_tools.py` | 端到端多工具任务、模式提示随模式切换 |
 
 ---
 
@@ -452,6 +452,7 @@ rules:
 - [x] headless 模式遇到 ask 不挂起
 - [x] `edit` 的唯一匹配约束有测试锁定
 - [x] 并行执行结果顺序与 tool_call 输入一致
+- [x] `plan` / `readonly` 模式下模型被告知当前限制，提示随模式切换而变
 - [x] ruff / pre-commit 通过
 
 ---
@@ -465,6 +466,7 @@ rules:
 | `todo_write` / `bash_output` / `bash_kill` | 未在默认规则表中 | 归入 `INFO_TOOLS`，任何模式都 allow | 它们只动 agent 自己的记账，不碰仓库，无需审批 |
 | `update_plan` | 与 `todo_write` 二选一 | 只做 `todo_write` | 两者语义重合，M2 再决定是否需要单独的 plan 视图 |
 | 审批 | M3 才有 TUI | M1 就是 `HeadlessApprover`（ask → DENY） | headless 不能阻塞；交互式审批留给 M3 |
+| 模式提示 | 未提及 | `plan` / `readonly` 往上下文里插一段 `<permission_mode>` 说明 | 模式把工具收走了，模型得知道，否则只会反复撞墙；`readonly` 与 `plan` 权限完全相同，全靠这段提示区分 |
 
 **实测**（DeepSeek，`coder --print --permission-mode acceptEdits`）：
 模型连续调用 `read` → `edit` → `grep`，文件真实被改写；默认权限模式下 `edit` 被拒并把原因回传给模型，模型据此改口而不是硬改。
