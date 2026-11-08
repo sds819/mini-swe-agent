@@ -20,7 +20,7 @@ from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.run import build_loop, settle
 from coderagent.web.approver import WebApprover
-from coderagent.web.events import normalize
+from coderagent.web.events import TRANSIENT_KINDS, normalize
 
 BUFFER_SIZE = 1000
 """How many items a session keeps for the browsers that come late."""
@@ -86,11 +86,17 @@ class SessionRuntime:
             self.emit(item)
 
     def emit(self, item: dict) -> dict:
-        """Put an item into the buffer and push it to the subscribers."""
+        """Put an item into the buffer and push it to the subscribers.
+
+        The streaming increments are transient: the browser sees them while they
+        arrive, but they are not kept, so a long answer cannot push the history
+        of the session out of the buffer.
+        """
         with self._lock:
             self._seq += 1
             item = {"seq": self._seq, **item}
-            self.buffer.append(item)
+            if item["kind"] not in TRANSIENT_KINDS:
+                self.buffer.append(item)
             subscribers = list(self._subscribers)
         for loop, subscriber in subscribers:
             try:

@@ -7,6 +7,14 @@ call is one item per action, and a tool result is one item per observation.
 from coderagent.core.events import Event, EventType
 from coderagent.ui.widgets.tool_card import summarize
 
+TRANSIENT_KINDS = frozenset({"text_delta", "reasoning_delta"})
+"""The items that are only for the moment.
+
+The model streams its answer in pieces. The browser sees them while they arrive,
+but they are not kept: a long answer would push the history of the session out of
+the buffer. The whole answer comes later as one `assistant_message`.
+"""
+
 
 def normalize(event: Event) -> list[dict]:
     """The items of one event. An event that says nothing renders nothing."""

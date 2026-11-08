@@ -6,6 +6,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
+from coderagent.web.events import TRANSIENT_KINDS  # noqa: E402
 from tests.coderagent.web.conftest import assistant, bash_call  # noqa: E402
 
 
@@ -41,7 +42,22 @@ def test_the_stream_says_the_same_as_the_buffer(make_client, send, wait_for):
         streamed = frames(response)
     buffered = client.get(f"/api/sessions/{session_id}/items").json()["items"]
 
-    assert streamed == buffered
+    assert [item for item in streamed if item["kind"] not in TRANSIENT_KINDS] == buffered
+
+
+def test_the_streaming_pieces_are_not_kept(make_client, send, wait_for):
+    """A long answer must not push the history out of the buffer."""
+    client = make_client(responses=[assistant("hi", cost=0.1)], permission_mode="bypass")
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "hello")
+    wait_for(client, session_id, "turn_end")
+
+    buffered = client.get(f"/api/sessions/{session_id}/items").json()["items"]
+    kinds = [item["kind"] for item in buffered]
+
+    assert "text_delta" not in kinds
+    assert "assistant_message" in kinds
+    assert [item["content"] for item in buffered if item["kind"] == "assistant_message"] == ["hi"]
 
 
 def test_the_stream_skips_what_the_browser_has_seen(make_client, send, wait_for):

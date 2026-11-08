@@ -124,14 +124,21 @@ function render(item) {
       bubble("user", item.content);
       state.assistant = null;
       break;
-    case "assistant_message":
-      bubble("assistant", item.content);
+    case "assistant_message": {
+      const content = item.content || "";
+      if (state.assistant) {
+        /* the answer was streamed into this bubble; the message is the whole of it */
+        state.assistant.textContent = content;
+        state.assistant = null;
+        break;
+      }
+      bubble("assistant", content);
       state.assistant = null;
       break;
+    }
     case "text_delta": {
       if (!state.assistant) {
         state.assistant = bubble("assistant", "");
-        state.assistant.dataset.streaming = "1";
       }
       state.assistant.textContent += item.content;
       state.assistant.scrollIntoView({ block: "end" });
