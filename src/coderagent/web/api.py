@@ -278,7 +278,7 @@ def put_config(body: dict, request: Request, _: None = Depends(require_client)) 
 
 
 @router.post("/config/model/test")
-def test_config(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
+def check_model(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Try the model out, to see whether the settings work."""
     name, kwargs = config_api.effective_model(request.app.state.cwd, body)
     return config_api.test_connection(name, kwargs)

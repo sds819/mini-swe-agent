@@ -70,7 +70,9 @@ def test_a_decision_that_does_not_exist_is_refused(make_client):
 def test_a_write_without_the_client_header_is_refused(make_client):
     client = make_client()
 
-    assert client.post("/api/approvals/1", json={"decision": "allow"}, headers={"X-Coder-Client": ""}).status_code == 403
+    assert (
+        client.post("/api/approvals/1", json={"decision": "allow"}, headers={"X-Coder-Client": ""}).status_code == 403
+    )
     session_id = client.post("/api/sessions").json()["id"]
     assert (
         client.post(

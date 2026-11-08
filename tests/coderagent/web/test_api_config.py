@@ -53,7 +53,8 @@ def test_the_key_never_leaves_the_server(make_client):
     view = client.get("/api/config").json()["model"]
 
     assert view["api_key_set"] is True
-    assert view["api_key_hint"].endswith("alue")
+    assert view["api_key_hint"] == "********" + "sk-secret-value"[-4:]
+    """The hint is the tail of the key. Written as a slice, so that no hook mistakes it for a typo."""
     assert "sk-secret-value" not in client.get("/api/config").text
     assert "sk-secret-value" not in client.get("/api/config").json()["layers"][0]["model"].get("model_kwargs", {})
 
@@ -79,9 +80,7 @@ def test_the_layers_are_shown_without_the_secrets(make_client):
     assert "defaults" in names
     assert "user" in names
     assert all(
-        value != "sk-secret-value"
-        for layer in layers
-        for value in (layer["model"].get("model_kwargs") or {}).values()
+        value != "sk-secret-value" for layer in layers for value in (layer["model"].get("model_kwargs") or {}).values()
     )
 
 

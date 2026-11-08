@@ -76,9 +76,7 @@ def read(cwd: Path, path: str, policy: PermissionPolicy, config: Config) -> dict
 def diff(cwd: Path, path: str, policy: PermissionPolicy) -> str:
     """The changes of the working tree for a path."""
     target = resolve(cwd, path, policy)
-    result = subprocess.run(
-        ["git", "diff", "--", str(target)], cwd=cwd, capture_output=True, text=True, check=False
-    )
+    result = subprocess.run(["git", "diff", "--", str(target)], cwd=cwd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         return result.stderr.strip() or f"git diff failed with code {result.returncode}"
     return result.stdout

@@ -27,9 +27,7 @@ def _loop(tmp_path, responses, **kwargs):
     session = store.create(tmp_path)
     bus = EventBus()
     model = ModelGateway(ScriptedModel(responses))
-    executor = build_executor(
-        tmp_path, store=store, context=build_context(tmp_path, session=session, bus=bus)
-    )
+    executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session, bus=bus))
     loop = AgentLoop(
         model,
         executor,
