@@ -179,6 +179,7 @@ def build_loop(
         on_path=context.note_path,
         before_write=before_write,
         hooks=hooks,
+        store=store,
     )
     return AgentLoop(
         gateway,

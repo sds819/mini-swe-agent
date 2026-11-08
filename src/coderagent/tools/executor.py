@@ -30,6 +30,7 @@ class ToolExecutor:
         on_path=None,
         before_write=None,
         hooks=None,
+        store=None,
     ) -> None:
         self.registry = registry
         self.policy = policy
@@ -42,6 +43,8 @@ class ToolExecutor:
         """Called with (tool, params) before a write tool runs, e.g. to take a checkpoint."""
         self.hooks = hooks
         """The hook runner, when the session has hooks."""
+        self.store = store
+        """The event log. The result of a tool is written to it, with its diff."""
 
     def plan(self, actions: list[dict]) -> list[dict]:
         """Parse raw tool calls into normalized actions."""
@@ -162,17 +165,19 @@ class ToolExecutor:
         return {"role": "tool", "tool_call_id": tool_call_id, "content": content}
 
     def _publish(self, action: dict, result: ToolResult, ctx: ToolContext) -> None:
-        ctx.bus.publish(
-            Event(
-                type=EventType.TOOL_RESULT,
-                session_id=ctx.session.id,
-                timestamp=time.time(),
-                payload={
-                    "tool": action["tool"],
-                    "tool_call_id": action["tool_call_id"],
-                    "content": result.content,
-                    "is_error": result.is_error,
-                    "diff": result.metadata.get("diff", ""),
-                },
-            )
+        event = Event(
+            type=EventType.TOOL_RESULT,
+            session_id=ctx.session.id,
+            timestamp=time.time(),
+            payload={
+                "tool": action["tool"],
+                "tool_call_id": action["tool_call_id"],
+                "content": result.content,
+                "is_error": result.is_error,
+                "diff": result.metadata.get("diff", ""),
+            },
         )
+        ctx.bus.publish(event)
+        if self.store is not None:
+            """The log keeps the result, so that the replay shows the diff of the change."""
+            self.store.append(ctx.session.id, event)

@@ -44,6 +44,7 @@ def build_executor(
     context: ToolContext | None = None,
     rules_home=None,
     hooks=None,
+    store=None,
 ) -> ToolExecutor:
     registry = build_registry(config.enabled if config else None, config.disabled if config else None)
     ctx = context or build_context(cwd, policy=PermissionPolicy(mode, [], cwd=Path(cwd)), config=config)
@@ -54,4 +55,5 @@ def build_executor(
         approver or HeadlessApprover(allow=False),
         rules_home=rules_home,
         hooks=hooks,
+        store=store,
     )

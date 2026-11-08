@@ -6,7 +6,7 @@ from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway
-from coderagent.testing.factory import build_executor
+from coderagent.testing.factory import build_context, build_executor
 from coderagent.testing.scripted_model import ScriptedModel
 
 
@@ -27,7 +27,9 @@ def _loop(tmp_path, responses, **kwargs):
     session = store.create(tmp_path)
     bus = EventBus()
     model = ModelGateway(ScriptedModel(responses))
-    executor = build_executor(tmp_path)
+    executor = build_executor(
+        tmp_path, store=store, context=build_context(tmp_path, session=session, bus=bus)
+    )
     loop = AgentLoop(
         model,
         executor,
@@ -65,10 +67,12 @@ def test_turn_executes_tool_call_and_finishes(tmp_path):
         EventType.STATE_CHANGE,
         EventType.TOOL_CALL,
         EventType.TOOL_RESULT,
+        EventType.TOOL_RESULT,
         EventType.STATE_CHANGE,
         EventType.ASSISTANT_MESSAGE,
         EventType.STATE_CHANGE,
     ]
+    """The result of the tool is in the log twice: once with the tool and the diff, once with the message."""
     assert store.rebuild(session.id).state == SessionState.DONE
 
 
