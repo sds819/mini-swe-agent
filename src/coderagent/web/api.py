@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.telemetry import collect
-from coderagent.tools.permissions import ApprovalDecision
+from coderagent.tools.permissions import ApprovalDecision, PermissionMode
 from coderagent.ui.commands import COMMANDS, load_builtins
 from coderagent.ui.widgets.diff_view import make_diff
 from coderagent.web import config_api, files
@@ -64,6 +64,11 @@ def _runtime(request: Request, session_id: str) -> SessionRuntime:
 def _config(request: Request):
     """The configuration as it is now."""
     return request.app.state.config_of()
+
+
+def _server_mode(request: Request) -> str:
+    """The mode the server was started with, empty when it was not pinned."""
+    return request.app.state.registry.permission_mode or ""
 
 
 # -- the sessions --------------------------------------------------------
@@ -223,6 +228,19 @@ def interrupt(session_id: str, request: Request, _: None = Depends(require_clien
     return {"ok": True}
 
 
+@router.post("/sessions/{session_id}/mode")
+def set_mode(session_id: str, body: dict, request: Request, _: None = Depends(require_client)) -> dict:
+    """Change the permission mode of a session while it runs."""
+    runtime = _runtime(request, session_id)
+    value = str(body.get("mode") or "")
+    try:
+        mode = PermissionMode(value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"unknown permission mode '{value}'")
+    runtime.set_mode(mode)
+    return {"ok": True, "mode": mode.value}
+
+
 # -- the approvals --------------------------------------------------------
 
 
@@ -264,6 +282,7 @@ def get_config(request: Request) -> dict[str, Any]:
     cwd = request.app.state.cwd
     return {
         "model": config_api.model_view(cwd),
+        "permissions": config_api.permissions_view(cwd, server_mode=_server_mode(request)),
         "sources": config_api.sources(cwd),
         "layers": config_api.layers_preview(cwd),
         "user_config_path": str(config_api.user_config_path()),
@@ -275,6 +294,20 @@ def put_config(body: dict, request: Request, _: None = Depends(require_client)) 
     """Write the model settings to the user level configuration file."""
     path = config_api.write_user_model(body)
     return {"ok": True, "path": str(path), "model": config_api.model_view(request.app.state.cwd)}
+
+
+@router.put("/config/permissions")
+def put_permissions(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
+    """Write the permission settings to the user level configuration file."""
+    try:
+        path = config_api.write_user_permissions(body)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    return {
+        "ok": True,
+        "path": str(path),
+        "permissions": config_api.permissions_view(request.app.state.cwd, server_mode=_server_mode(request)),
+    }
 
 
 @router.post("/config/model/test")

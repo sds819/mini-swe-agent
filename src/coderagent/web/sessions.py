@@ -19,6 +19,7 @@ from coderagent.core.loop import AgentLoop
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import Session, SessionStore
 from coderagent.run import build_loop, settle
+from coderagent.tools.permissions import PermissionMode
 from coderagent.web.approver import WebApprover
 from coderagent.web.events import TRANSIENT_KINDS, normalize
 
@@ -246,11 +247,30 @@ class SessionRuntime:
             "window": loop.context.config.context_window if loop else self.config.context.context_window,
             "cost": session.total_cost,
             "cwd": str(self.cwd),
-            "mode": loop.executor.policy.mode.value if loop else self.config.permissions.mode,
+            "mode": loop.executor.policy.mode.value if loop else self.mode(),
             "state": session.state.value,
             "sandbox": self.config.sandbox.type,
             "busy": self.busy.is_set(),
         }
+
+    def mode(self) -> str:
+        """The mode of the session, the one of the loop when it is running."""
+        if self._loop is not None:
+            return self._loop.executor.policy.mode.value
+        return self._permission_mode or self.config.permissions.mode
+
+    def set_mode(self, mode: PermissionMode) -> None:
+        """Change the mode of the session while it runs.
+
+        The policy is the object the executor asks, so the change is in place
+        right away: the next tool call sees it, and the model is told about it
+        the next time the context is put together.
+        """
+        self._permission_mode = mode.value
+        if self._loop is not None:
+            self._loop.executor.policy.mode = mode
+            self._loop.session.permission_mode = mode.value
+        self.emit({"kind": "mode_changed", "mode": mode.value})
 
 
 class SessionRegistry:
@@ -270,7 +290,8 @@ class SessionRegistry:
         self.cwd = Path(cwd)
         self.store = store or SessionStore()
         self._model = model
-        self._permission_mode = permission_mode
+        self.permission_mode = permission_mode
+        """The mode the server was started with. It wins over the files."""
         self.config_spec = list(config_spec or [])
         """The command line overrides. The files are read again for every session."""
         self._runtimes: dict[str, SessionRuntime] = {}
@@ -284,7 +305,7 @@ class SessionRegistry:
             store=self.store,
             session=session,
             model=self._model,
-            permission_mode=self._permission_mode,
+            permission_mode=self.permission_mode,
             registry=self,
         )
         self._runtimes[runtime.session.id] = runtime
