@@ -5,6 +5,7 @@
 - [安装](#install)
 - [配置模型和 API key](#model)
 - [第一次会话](#first-session)
+- [也可以在浏览器里跑](#web)
 - [不用终端的用法](#headless)
 - [权限：agent 改文件前要问你](#permissions)
 - [常用命令](#commands)
@@ -64,6 +65,48 @@ coder -m deepseek/deepseek-flash --task "..."
 模型的优先级是：**配置文件里的 `model.model_name` > 环境变量 `MSWEA_MODEL_NAME` > 内置默认值**。
 没配置时默认用 `anthropic/claude-sonnet-4-5`。
 
+### 换别的厂商 {#providers}
+
+litellm 支持的模型都能用，模型名里带厂商前缀，key 从同名环境变量读：
+
+| 模型名 | 厂商 | 环境变量 |
+|---|---|---|
+| `anthropic/claude-sonnet-4-5` | Anthropic | `ANTHROPIC_API_KEY` |
+| `openai/gpt-4o` | OpenAI | `OPENAI_API_KEY` |
+| `deepseek/deepseek-flash` | DeepSeek | `DEEPSEEK_API_KEY` |
+| `dashscope/qwen3-coder-plus` | 阿里（DashScope） | `DASHSCOPE_API_KEY` |
+| `moonshot/kimi-k2.5` | 月之暗面 | `MOONSHOT_API_KEY` |
+| `minimax/minimax-m2` | MiniMax | `MINIMAX_API_KEY`（外加 `MINIMAX_API_BASE`） |
+| `openrouter/qwen/qwen3-coder` | OpenRouter | `OPENROUTER_API_KEY` |
+
+```bash
+export DASHSCOPE_API_KEY=sk-...
+coder -m dashscope/qwen3-coder-plus --task "..."
+
+export MOONSHOT_API_KEY=sk-...
+coder -m moonshot/kimi-k2.5 --task "..."
+
+export MINIMAX_API_KEY=...
+export MINIMAX_API_BASE=https://api.minimax.io/v1
+coder -m minimax/minimax-m2 --task "..."
+```
+
+三个坑：
+
+- **`qwen/` 不是厂商。** 千问在 `dashscope/` 下（`qwen_ai_platform/` 是它的旧名）。`qwen/` 是模型系列的名字，不是路由。
+- **上下文窗口按模型名查表**：`qwen` 32k、`deepseek` 64k、`kimi` 256k、`minimax` 200k、`claude` 200k、`gpt-` 128k、`gemini` 1M。遇到新模型或表里没有的系列，自己写：`context.context_window: 262144`。
+- **模型必须支持工具调用（tool calling）**，否则用不了。系列里的小模型常常不支持，只在 `model.routing.cheap` 里用它们。
+
+混用厂商时用路由分层：主力模型干活，便宜模型做杂活。
+
+```yaml
+model:
+  model_name: dashscope/qwen3-coder-plus
+  routing:
+    cheap: moonshot/kimi-k2.5
+    summarize: moonshot/kimi-k2.5
+```
+
 ## 第一次会话 {#first-session}
 
 ```bash
@@ -80,6 +123,17 @@ fix the failing test in tests/test_parser.py
 ```
 
 agent 会自己读代码、改文件、跑测试。写入文件前它会先存一个 checkpoint，可以用 `/rewind` 退回去。
+
+## 也可以在浏览器里跑 {#web}
+
+```bash
+pip install -e ".[web]"
+coder web
+```
+
+同一个 agent，在浏览器里跑：聊天页是终端界面的窗口版，设置页可以把模型和 API key 配好（API key 只写进用户级的 `~/.coderagent/config.yaml`，永远不明文回浏览器）。
+
+注意**没有认证**：能访问端口的人就能驱动 agent 在当前目录里跑命令，所以默认只听 `127.0.0.1`。详见[网页版](coderagent_web.md)。
 
 ## 不用终端的用法 {#headless}
 

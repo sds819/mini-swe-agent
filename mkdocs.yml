@@ -72,6 +72,7 @@ nav:
     - "Coding agent":
       - "Quick start": usage/coderagent_quickstart.md
       - "Overview": usage/coderagent.md
+      - "Web interface": usage/coderagent_web.md
       - "Commands": usage/coderagent_commands.md
       - "Sub agents": usage/coderagent_subagents.md
       - "Skills": usage/coderagent_skills.md
@@ -138,6 +139,8 @@ nav:
     - "M2 — Context & sessions": design/milestones/M2-context-session.md
     - "M3 — UI & extensions": design/milestones/M3-ui-extensions.md
     - "M4 — Advanced": design/milestones/M4-advanced.md
+    - "M5 — Web interface": design/milestones/M5-web-interface.md
+    - "M5 — Web modules": design/milestones/M5-web-modules.md
   - Blog: https://www.swebench.com/blog.html
   - Leaderboard: https://swebench.com
 plugins:

@@ -122,6 +122,20 @@ The box of the picked answer is starred in red, the others have a grey dash.
 The arrow keys (`←`/`→` or `↑`/`↓`) move the pick, the numbers jump to an
 answer, and `enter` confirms it.
 
+## The web interface
+
+The same agent, in the browser:
+
+```bash
+pip install -e ".[web]"
+coder web
+```
+
+The chat page is the terminal interface with a window around it, and the
+settings page writes the model configuration — including the API key — for
+you. The pages, the API and the security model are in
+[The web interface](coderagent_web.md).
+
 ## The configuration
 
 Four layers, the later ones win:
@@ -200,6 +214,57 @@ model:
 The rules compare numbers only, they are parsed and not evaluated, so a
 configuration file cannot run code. The interface says in the event stream when
 the model changes and why. See [Model routing](coderagent_routing.md).
+
+#### Other providers
+
+The model goes through [litellm](https://github.com/BerriAI/litellm), so every
+model litellm knows works. The name carries the provider in front of it, and
+the key of the provider comes from the environment:
+
+| Model name | Provider | Environment variable |
+|---|---|---|
+| `anthropic/claude-sonnet-4-5` | Anthropic | `ANTHROPIC_API_KEY` |
+| `openai/gpt-4o` | OpenAI | `OPENAI_API_KEY` |
+| `deepseek/deepseek-flash` | DeepSeek | `DEEPSEEK_API_KEY` |
+| `dashscope/qwen3-coder-plus` | Alibaba (DashScope) | `DASHSCOPE_API_KEY` |
+| `moonshot/kimi-k2.5` | Moonshot | `MOONSHOT_API_KEY` |
+| `minimax/minimax-m2` | MiniMax | `MINIMAX_API_KEY` (and `MINIMAX_API_BASE`) |
+| `openrouter/qwen/qwen3-coder` | OpenRouter | `OPENROUTER_API_KEY` |
+
+```bash
+export DASHSCOPE_API_KEY=sk-...
+coder -m dashscope/qwen3-coder-plus --task "..."
+export MOONSHOT_API_KEY=sk-...
+coder -m moonshot/kimi-k2.5 --task "..."
+export MINIMAX_API_KEY=...
+export MINIMAX_API_BASE=https://api.minimax.io/v1
+coder -m minimax/minimax-m2 --task "..."
+```
+
+Three things to know:
+
+- **`qwen/` is not a provider.** The Alibaba models live under `dashscope/`
+  (or `qwen_ai_platform/`, the same thing under its old name). `qwen/` is the
+  name of a model family, not of a route.
+- **The window comes from the model name.** The context window is looked up by
+  the part after the provider: `qwen` 32k, `deepseek` 64k, `kimi` 256k,
+  `minimax` 200k, `claude` 200k, `gpt-` 128k, `gemini` 1M. When the model is
+  new or the family is not in the table, set it yourself:
+  `context.context_window: 262144`.
+- **The model has to call tools.** The agent only works with a model that
+  supports tool calling. The cheap models of a family usually do not, so keep
+  them for `model.routing.cheap` only if they do.
+
+The routing is what makes a mixed setup work: the main model does the work,
+the cheap one does the looking around.
+
+```yaml
+model:
+  model_name: dashscope/qwen3-coder-plus
+  routing:
+    cheap: moonshot/kimi-k2.5
+    summarize: moonshot/kimi-k2.5
+```
 
 ### The tools
 

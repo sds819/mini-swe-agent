@@ -12,6 +12,7 @@
 | M2 | 上下文治理与会话管理 | ✅ 已完成 | `src/coderagent/core/{context,summarize,checkpoint,tokens,budget,history,instructions,memory}.py`、`src/coderagent/ui/commands/` |
 | M3 | 交互体验与扩展 | ✅ 已完成 | `src/coderagent/ui/{tui.py,cli.py,commands/,widgets/}`、`src/coderagent/{extensions/hooks.py,tools/mcp.py}` |
 | M4 | 进阶能力 | ✅ 已完成 | `src/coderagent/core/{subagent,sandbox,telemetry}.py`、`src/coderagent/extensions/{skills,plugins,reflect}.py`、`src/coderagent/models/router.py`、`src/coderagent/tools/builtin/{task,skill}.py` |
+| M5 | Web 版 | 🚧 实现中 | `src/coderagent/web/` |
 
 ## 文档索引
 
@@ -23,6 +24,8 @@
 | [milestones/M2-context-session.md](milestones/M2-context-session.md) | M2 上下文治理与会话管理：结构化压缩 / 恢复 / 检查点 |
 | [milestones/M3-ui-extensions.md](milestones/M3-ui-extensions.md) | M3 交互体验与扩展：TUI / MCP / Hooks / slash 命令 |
 | [milestones/M4-advanced.md](milestones/M4-advanced.md) | M4 进阶能力：子 Agent / 模型路由 / 记忆 / 插件 / 可观测性 |
+| [milestones/M5-web-interface.md](milestones/M5-web-interface.md) | M5 Web 版：FastAPI 应用 / SSE 事件流 / 审批 / 配置页 / 文件浏览 |
+| [milestones/M5-web-modules.md](milestones/M5-web-modules.md) | M5 Web 版**模块与函数**设计：逐模块的接口签名 / 数据契约 / 不变量 |
 
 ## 一句话设计哲学
 
