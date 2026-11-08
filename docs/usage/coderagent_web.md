@@ -154,6 +154,10 @@ because the policy is built with `permission_mode or config.permissions.mode`.
 The settings page says so when the server was started with one, instead of
 letting you believe that a change in the file took effect.
 
+The pin is the mode the sessions **start** with, not a lock: the chat page
+can still switch the mode of a session, because that is a decision you take
+in front of the session, not a setting of the file.
+
 ## The API
 
 Everything the pages do is a plain HTTP call, so you can drive the agent from

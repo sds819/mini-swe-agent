@@ -140,6 +140,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 `permission_mode or config.permissions.mode` 建的。服务端是带模式启动的，设置页会明说，
 不会让你以为改了文件就生效了。
 
+钉死的是会话**开始时**的模式，不是锁：聊天页照样能换当前会话的模式——那是你当着会话的面
+做的决定，不是文件里的一个设置。
+
 ## 审批 {#approvals}
 
 agent 要跑命令、写文件时会问。卡片上有三个按钮：
