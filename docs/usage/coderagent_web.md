@@ -4,6 +4,8 @@
 interface with a window around it, and the settings page writes the model
 configuration for you — which is the part that is tedious in a text editor.
 
+> 中文版：[网页版](coderagent_web_zh.md)
+
 ```bash
 pip install -e ".[web]"      # fastapi, uvicorn and jinja2
 cd my-project

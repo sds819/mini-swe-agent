@@ -73,6 +73,7 @@ nav:
       - "Quick start": usage/coderagent_quickstart.md
       - "Overview": usage/coderagent.md
       - "Web interface": usage/coderagent_web.md
+      - "Web interface (zh)": usage/coderagent_web_zh.md
       - "Commands": usage/coderagent_commands.md
       - "Sub agents": usage/coderagent_subagents.md
       - "Skills": usage/coderagent_skills.md

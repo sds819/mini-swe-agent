@@ -133,7 +133,7 @@ coder web
 
 同一个 agent，在浏览器里跑：聊天页是终端界面的窗口版，设置页可以把模型和 API key 配好（API key 只写进用户级的 `~/.coderagent/config.yaml`，永远不明文回浏览器）。
 
-注意**没有认证**：能访问端口的人就能驱动 agent 在当前目录里跑命令，所以默认只听 `127.0.0.1`。详见[网页版](coderagent_web.md)。
+注意**没有认证**：能访问端口的人就能驱动 agent 在当前目录里跑命令，所以默认只听 `127.0.0.1`。详见[网页版](coderagent_web_zh.md)（[English](coderagent_web.md)）。
 
 ## 不用终端的用法 {#headless}
 
