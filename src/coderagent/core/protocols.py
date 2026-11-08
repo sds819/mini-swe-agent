@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from typing import Any, Protocol
 
 from coderagent.models.streaming import ModelEvent
+from coderagent.tools.permissions import PermissionPolicy
 
 
 class ModelBackend(Protocol):
@@ -22,6 +23,9 @@ class ModelBackend(Protocol):
 
 class ToolExecutor(Protocol):
     """Turns model tool calls into normalized actions and observations."""
+
+    policy: PermissionPolicy
+    """The permission policy of the session. It changes while the session runs."""
 
     def plan(self, actions: list[dict]) -> list[dict]:
         """Parse tool calls into normalized actions (tool, tool_call_id, args, raw)."""

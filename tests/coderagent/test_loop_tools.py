@@ -90,6 +90,26 @@ def test_a_write_is_refused_in_readonly_mode(tmp_path):
     assert (tmp_path / "a.py").read_text(encoding="utf-8") == "original\n"
 
 
+def test_the_model_is_told_that_it_may_not_write_in_readonly_mode(tmp_path):
+    loop, _, _ = _loop(tmp_path, [_assistant(content="I only looked")], mode=PermissionMode.READONLY)
+    loop.run_turn("what does calc.py do")
+
+    contents = [message["content"] for message in loop.model.backend.calls[0]]
+    assert any('<permission_mode mode="readonly">' in content for content in contents)
+    assert any("read-only mode" in content for content in contents)
+
+
+def test_the_note_follows_the_mode_when_the_user_switches_it(tmp_path):
+    loop, _, _ = _loop(tmp_path, [_assistant(content="first"), _assistant(content="second")])
+    loop.run_turn("look around")
+    loop.policy.mode = PermissionMode.READONLY
+    loop.run_turn("now change it")
+
+    calls = loop.model.backend.calls
+    assert not any("permission_mode" in message["content"] for message in calls[0])
+    assert any('<permission_mode mode="readonly">' in message["content"] for message in calls[1])
+
+
 def test_the_task_list_survives_a_restart(tmp_path):
     loop, store, session = _loop(
         tmp_path,

@@ -25,6 +25,7 @@ import yaml
 from coderagent.core.events import EventBus
 from coderagent.paths import config_home
 from coderagent.tools.executor import ToolExecutor
+from coderagent.tools.permissions import mode_block
 from coderagent.tools.registry import ToolRegistry
 
 AGENTS_DIR = "agents"
@@ -134,8 +135,13 @@ class SubAgentRunner:
         executor = ToolExecutor(registry, self.policy, self.ctx_factory, self.approver)
         gateway = self._gateway(spec)
         before = gateway.total_cost
+        system = spec.system_prompt or spec.description
+        block = mode_block(self.policy.mode)
+        if block:
+            """The sub agent shares the permission mode, so it has to know about it too."""
+            system = f"{system}\n\n{block}"
         messages = [
-            {"role": "system", "content": spec.system_prompt or spec.description},
+            {"role": "system", "content": system},
             {"role": "user", "content": f"{description}\n\n{prompt}".strip()},
         ]
         schemas = registry.schemas()

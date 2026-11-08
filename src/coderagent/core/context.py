@@ -20,6 +20,7 @@ from coderagent.core.memory import load_project_memory, load_user_memory
 from coderagent.core.session import Session, SessionStore
 from coderagent.core.summarize import Summary, conservative_summary, parse_summary, recent_errors, summarize_prompt
 from coderagent.core.tokens import estimate_tokens
+from coderagent.tools.permissions import PermissionPolicy, mode_block
 
 
 class ContextEngine:
@@ -37,6 +38,7 @@ class ContextEngine:
         summary_model=None,
         cwd: Path | None = None,
         user_home: Path | None = None,
+        policy: PermissionPolicy | None = None,
     ) -> None:
         self.session = session
         self.store = store
@@ -47,6 +49,8 @@ class ContextEngine:
         self.system_prompt = system_prompt
         self.cwd = Path(cwd) if cwd else session.cwd
         self.user_home = user_home
+        self.policy = policy
+        """The permission policy. It is shared, so the mode can change under us."""
         self.history = History()
         self.summaries: list[Summary] = []
         self.instruction_blocks: list[InstructionBlock] = (
@@ -122,6 +126,9 @@ class ContextEngine:
         messages = []
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
+        mode = self._mode_text()
+        if mode:
+            messages.append({"role": "user", "content": mode})
         instructions = self._instruction_text()
         if instructions:
             messages.append({"role": "user", "content": instructions})
@@ -130,6 +137,14 @@ class ContextEngine:
             messages.append({"role": "user", "content": summary})
         messages.extend(self.history.messages)
         return messages
+
+    def _mode_text(self) -> str:
+        """What the model is told when the permission mode takes tools away from it.
+
+        The mode changes while the session runs, so this is read every time the
+        messages are built and never baked into the system prompt.
+        """
+        return mode_block(self.policy.mode) if self.policy is not None else ""
 
     def estimated_tokens(self, tools: list[dict] | None = None) -> int:
         """The size of the whole context. This is what the budget is checked against."""

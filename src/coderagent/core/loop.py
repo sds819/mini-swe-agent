@@ -54,6 +54,8 @@ class AgentLoop:
     ) -> None:
         self.model = model
         self.executor = executor
+        self.policy = executor.policy
+        """The permission policy of the session. `/mode` changes it under us."""
         self.session = session
         self.store = store
         self.bus = bus
@@ -77,7 +79,14 @@ class AgentLoop:
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(
-            session, store, bus, ContextConfig(), model, system_prompt=system_prompt, cwd=session.cwd
+            session,
+            store,
+            bus,
+            ContextConfig(),
+            model,
+            system_prompt=system_prompt,
+            cwd=session.cwd,
+            policy=self.policy,
         )
         self.context.system_prompt = system_prompt or self.context.system_prompt
         self.context.restore()
@@ -100,6 +109,7 @@ class AgentLoop:
             memory_config=self.context.memory_config,
             summary_model=self.context.summary_model,
             cwd=session.cwd,
+            policy=self.policy,
         )
         self.context.restore()
         self._session_start()

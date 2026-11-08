@@ -6,6 +6,7 @@ from coderagent.config.schema import ContextConfig, MemoryConfig
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus
 from coderagent.core.session import SessionStore
+from coderagent.tools.permissions import PermissionMode, PermissionPolicy
 
 
 class FakeModel:
@@ -149,3 +150,18 @@ def test_estimated_tokens_grows_with_the_history(tmp_path):
     before = engine.estimated_tokens()
     engine.append({"role": "user", "content": "x" * 1000})
     assert engine.estimated_tokens() > before
+
+
+def test_the_model_is_told_about_the_permission_mode(tmp_path):
+    policy = PermissionPolicy(PermissionMode.READONLY, [], cwd=tmp_path)
+    engine = make_engine(tmp_path, policy=policy)
+    contents = [message["content"] for message in engine.build_messages()]
+    assert any('<permission_mode mode="readonly">' in content for content in contents)
+
+
+def test_the_note_follows_the_mode_when_it_changes(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    engine = make_engine(tmp_path, policy=policy)
+    assert not any("permission_mode" in message["content"] for message in engine.build_messages())
+    policy.mode = PermissionMode.PLAN
+    assert any('<permission_mode mode="plan">' in message["content"] for message in engine.build_messages())

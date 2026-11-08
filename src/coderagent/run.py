@@ -144,6 +144,7 @@ def build_loop(
         summary_model=ModelGateway(build_model(config, config.context.summarize_model))
         if config.context.summarize_model
         else purpose_gateway(config, gateway, "summarize"),
+        policy=policy,
     )
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools, env=environment)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
