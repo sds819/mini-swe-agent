@@ -8,6 +8,8 @@ const state = {
   stream: null,
   cards: {},
   assistant: null,
+  current: null,
+  stick: true,
 };
 
 function el(tag, className, text) {
@@ -33,10 +35,46 @@ async function api(path, options = {}) {
 
 // -- the conversation ------------------------------------------------------
 
+function messages() {
+  return document.getElementById("messages");
+}
+
+/* The items of the turn that is running. The turns before it are folded away. */
+function target() {
+  if (!state.current) {
+    state.current = el("div", "turn");
+    messages().appendChild(state.current);
+  }
+  return state.current;
+}
+
+function foldTurn() {
+  const done = state.current;
+  state.current = null;
+  if (!done) return;
+  let history = document.getElementById("history");
+  if (!history) {
+    history = el("details", "history");
+    history.id = "history";
+    history.appendChild(el("summary", "", "earlier turns"));
+    history.appendChild(el("div", "history-body"));
+    messages().insertBefore(history, messages().firstChild);
+  }
+  history.querySelector(".history-body").appendChild(done);
+  const count = history.querySelectorAll(".turn").length;
+  history.querySelector("summary").textContent = `${count} earlier turn${count === 1 ? "" : "s"}`;
+}
+
+/* The conversation follows the newest content, unless the user scrolled up. */
+function scrollToBottom(force) {
+  const box = messages();
+  if (force || state.stick) box.scrollTop = box.scrollHeight;
+}
+
 function bubble(className, text) {
   const node = el("div", `bubble ${className}`, text || "");
-  document.getElementById("messages").appendChild(node);
-  node.scrollIntoView({ block: "end" });
+  target().appendChild(node);
+  scrollToBottom();
   return node;
 }
 
@@ -48,8 +86,8 @@ function toolCard(item) {
   card.appendChild(header);
   const body = el("div", "body", "running…");
   card.appendChild(body);
-  document.getElementById("messages").appendChild(card);
-  card.scrollIntoView({ block: "end" });
+  target().appendChild(card);
+  scrollToBottom();
   return card;
 }
 
@@ -100,17 +138,17 @@ function renderApproval(item) {
     buttons.appendChild(button);
   }
   card.appendChild(buttons);
-  document.getElementById("messages").appendChild(card);
-  card.scrollIntoView({ block: "end" });
+  target().appendChild(card);
+  scrollToBottom();
   return card;
 }
 
 function renderTodos(todos) {
-  let panel = document.getElementById("todo-panel");
+  const turn = target();
+  let panel = turn.querySelector(".todos");
   if (!panel) {
     panel = el("div", "todos");
-    panel.id = "todo-panel";
-    document.getElementById("messages").appendChild(panel);
+    turn.appendChild(panel);
   }
   panel.innerHTML = "";
   for (const todo of todos || []) {
@@ -121,6 +159,7 @@ function renderTodos(todos) {
 function render(item) {
   switch (item.kind) {
     case "user_message":
+      foldTurn();
       bubble("user", item.content);
       state.assistant = null;
       break;
@@ -141,7 +180,7 @@ function render(item) {
         state.assistant = bubble("assistant", "");
       }
       state.assistant.textContent += item.content;
-      state.assistant.scrollIntoView({ block: "end" });
+      scrollToBottom();
       break;
     }
     case "reasoning_delta":
@@ -276,9 +315,11 @@ async function openSession(id) {
   state.seq = 0;
   state.cards = {};
   state.assistant = null;
-  document.getElementById("messages").innerHTML = "";
+  state.current = null;
+  messages().innerHTML = "";
   const data = await api(`/api/sessions/${id}/items`);
   for (const item of data.items) render(item);
+  scrollToBottom(true);
   openStream();
   refreshStatus();
   loadSessions();
@@ -338,6 +379,14 @@ async function loadCommands() {
 // -- the wiring ------------------------------------------------------------
 
 function wire() {
+  const box = messages();
+  if (box) {
+    box.addEventListener("scroll", () => {
+      const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
+      state.stick = gap < 40;
+    });
+  }
+
   const newSession = document.getElementById("new-session");
   if (newSession) {
     newSession.onclick = async () => {

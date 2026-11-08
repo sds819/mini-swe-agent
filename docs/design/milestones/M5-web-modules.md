@@ -429,7 +429,7 @@ Path.resolve()  →  policy.within_bounds(path)  →  工具自己的 resolve_pa
 ### 11.1 状态
 
 ```javascript
-state = { sessionId, seq, stream, cards, assistant }
+state = { sessionId, seq, stream, cards, assistant, current, stick }
 ```
 
 | 字段 | 用途 |
@@ -439,6 +439,8 @@ state = { sessionId, seq, stream, cards, assistant }
 | `stream` | 当前的 `EventSource` |
 | `cards` | `tool_call_id` → 工具卡 DOM 节点 |
 | `assistant` | 当前正在流式输出的气泡 |
+| `current` | 当前这一轮的容器节点；之前的轮次折进 `#history` |
+| `stick` | 对话区是否跟着新内容滚到底（用户往上翻就置 false） |
 
 ### 11.2 函数
 
@@ -447,8 +449,11 @@ state = { sessionId, seq, stream, cards, assistant }
 | `api(path, options)` | 发请求：带客户端头、JSON 编码 body、错误抛异常 |
 | `render(item)` | **唯一的渲染入口**：按 `item.kind` 分派；顺带更新 `state.seq` |
 | `bubble(role, text)` / `toolCard(item)` / `fillTool(item)` / `diffView(text)` | 各种片段的 DOM 构造 |
+| `target()` | 当前这一轮的容器节点（没有就建一个 `.turn`） |
+| `foldTurn()` | 把上一轮折进 `#history`（`<details>`，默认收起） |
+| `scrollToBottom(force)` | 对话区滚到底；`state.stick` 为 false 时不动（用户往上翻了） |
 | `renderApproval(item)` | 审批卡 + Allow / Deny / Always 三个按钮 |
-| `renderTodos(item)` | 待办面板 |
+| `renderTodos(item)` | 待办面板（在当前这一轮里） |
 | `openStream()` | 开 `EventSource('/api/sessions/{id}/stream?since={seq}')`；遇 `turn_end`/`command_end` 关闭并重开；出错 1 秒后重试 |
 | `refreshStatus()` | 拉 `/status` 填顶栏与状态栏 |
 | `loadChanges()` | 拉 `/changes` 渲染 diff 列表 |
@@ -473,6 +478,18 @@ state = { sessionId, seq, stream, cards, assistant }
 | `approval_request` | 审批卡 |
 | `command_output` | 命令输出块 |
 | `state` / `error` / `compaction` / `reflection` / `reverted` | 状态条 / 红条 / 分隔线 |
+
+### 11.4 版面：页面不滚，对话区滚，历史折起来
+
+三条要求，各有各的做法：
+
+| 要求 | 做法 |
+|---|---|
+| **页面本身不滚动** | `body` 是 `height:100vh` 的纵向 flex，`overflow:hidden`；`.layout` 是 `flex:1; min-height:0` 的 grid，三栏各自 `overflow:auto`。设置页的 `.page` 自己滚。 |
+| **对话区及时滚到底** | `scrollToBottom()` 直接改 `#messages` 的 `scrollTop`（**不用 `scrollIntoView`** —— 它会把整页也滚一遍）。`#messages` 的 `scroll` 事件维护 `state.stick`：用户离底部 40px 以内才算「在底部」，否则新内容不再自动跟随。 |
+| **历史对话折叠** | 一轮 = 一个 `.turn` 容器（`user_message` 开新一轮）。`foldTurn()` 把上一轮挪进 `#history`（`<details>`，默认收起，标题写着几轮）。当前这轮永远展开。 |
+
+> 三栏的高度是 `flex` + `min-height:0` 算出来的，不写死像素；顶栏高度一变也不会错位。
 
 ---
 
@@ -507,6 +524,7 @@ state = { sessionId, seq, stream, cards, assistant }
 | I11 | 审批**没有回答就是拒绝**（超时自动 DENY），从不静默放行 |
 | I12 | 会话的钱 = 事件日志里所有模型调用之和（live / metrics / trace 同一个数） |
 | I13 | 流式的增量（`text_delta` / `reasoning_delta`）**不进缓冲**：整段答案以一条 `assistant_message` 进缓冲 |
+| I14 | 页面**不整体滚动**：每栏自己滚；对话区只滚自己的 `scrollTop`，不动页面 |
 
 ---
 

@@ -44,6 +44,11 @@ Three columns:
   buttons. The box under the conversation takes a message or a slash command
   (`/help`, `/clear`, `/cost`, … — the same commands as the terminal
   interface). `Interrupt` stops the turn that is running.
+
+  The page itself does not scroll: every column has its own scrollbar. The
+  conversation follows the newest output, unless you scroll up to read
+  something. The turns before the current one are folded into a block at the
+  top — click it to look at them.
 - **Right**: the status bar of the session (model, context size, cost, mode),
   the files the session changed with their diff, and the file you are looking
   at.

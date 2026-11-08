@@ -14,6 +14,10 @@
 
 body {
   margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -22,6 +26,7 @@ body {
 a { color: var(--accent); text-decoration: none; }
 
 .topbar {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -35,15 +40,17 @@ a { color: var(--accent); text-decoration: none; }
 .status { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
 
 .layout {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 300px;
-  height: calc(100vh - 45px);
 }
 
 .sidebar, .inspector {
   border-right: 1px solid var(--border);
   padding: 12px;
   overflow: auto;
+  min-height: 0;
   background: var(--panel);
 }
 
@@ -67,8 +74,24 @@ h1 { font-size: 20px; }
 .list li.active { background: #2b3348; }
 .list li.dir { color: var(--accent); }
 
-.conversation { display: flex; flex-direction: column; min-width: 0; }
-.messages { flex: 1; overflow: auto; padding: 16px; }
+.conversation { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.messages { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
+
+.history {
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #171a22;
+}
+.history > summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  user-select: none;
+}
+.history > summary:hover { color: var(--text); }
+.history-body { padding: 0 10px 10px; border-top: 1px solid var(--border); }
 
 .bubble {
   margin: 8px 0;
@@ -127,7 +150,7 @@ button { cursor: pointer; }
 button:hover { border-color: var(--accent); }
 button.primary { background: #24406e; border-color: #35578f; }
 
-.page { max-width: 780px; margin: 0 auto; padding: 24px; }
+.page { flex: 1; min-height: 0; overflow: auto; max-width: 780px; margin: 0 auto; padding: 24px; }
 .page label { display: block; margin: 12px 0; }
 .page label input, .page label textarea, .page label select { display: block; width: 100%; margin-top: 4px; }
 .source { color: var(--muted); font-size: 12px; }
