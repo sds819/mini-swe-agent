@@ -4,7 +4,7 @@ import json
 import sys
 
 from coderagent.config.schema import HookCommand, HookConfig, HookMatcher
-from coderagent.core.events import EventBus
+from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
 from coderagent.extensions.hooks import HookResult, HookRunner, merge_results
@@ -161,6 +161,56 @@ def test_the_prompt_hook_can_add_context(tmp_path):
     loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
     loop.run_turn("what is the answer")
     assert "the answer is 42" in model.calls[0][-1]["content"]
+
+
+def test_the_prompt_hook_can_rewrite_the_prompt(tmp_path):
+    hooks = _runner(
+        tmp_path,
+        "UserPromptSubmit",
+        "import json, sys\n"
+        "data = json.load(sys.stdin)\n"
+        "print(json.dumps({'updatedInput': data['prompt'] + ' (in English)'}))",
+    )
+    loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
+    loop.run_turn("translate this")
+    assert model.calls[0][-1]["content"] == "translate this (in English)"
+
+
+def test_the_rewritten_prompt_is_what_the_model_sees_and_the_log_keeps_both(tmp_path):
+    """The log keeps the prompt the model saw, so a replay says the same thing."""
+    hooks = _runner(
+        tmp_path, "UserPromptSubmit", "import json\nprint(json.dumps({'updatedInput': 'the rewritten prompt'}))"
+    )
+    loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
+    loop.run_turn("what the user typed")
+    events = loop.store.events(loop.session.id)
+    message = next(event for event in events if event.type == EventType.USER_MESSAGE)
+    assert message.payload["content"] == "the rewritten prompt"
+    assert message.payload["original"] == "what the user typed"
+
+
+def test_the_context_of_the_hook_goes_to_the_rewritten_prompt(tmp_path):
+    hooks = _runner(
+        tmp_path,
+        "UserPromptSubmit",
+        "import json\n"
+        "print(json.dumps({'updatedInput': 'the rewritten prompt', 'additionalContext': 'and this'}))",
+    )
+    loop, model = _loop(tmp_path, [_assistant("done")], hooks=hooks)
+    loop.run_turn("what the user typed")
+    content = model.calls[0][-1]["content"]
+    assert content.startswith("the rewritten prompt")
+    assert "and this" in content
+
+
+def test_a_prompt_is_not_the_arguments_of_a_tool(tmp_path):
+    """A string `updatedInput` of a tool hook does not replace the arguments."""
+    hooks = _runner(
+        tmp_path, "PreToolUse", "import json\nprint(json.dumps({'updatedInput': 'not arguments'}))"
+    )
+    executor = build_executor(tmp_path, hooks=hooks)
+    executor.execute(executor.plan([_write_call("a.py")]))
+    assert (tmp_path / "a.py").read_text(encoding="utf-8") == "new"
 
 
 def test_the_stop_hook_keeps_the_agent_going(tmp_path):

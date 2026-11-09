@@ -173,11 +173,19 @@ function renderTodos(todos) {
 
 function render(item) {
   switch (item.kind) {
-    case "user_message":
+    case "user_message": {
       foldTurn();
-      bubble("user", item.content);
+      const original = item.original || "";
+      bubble("user", original || item.content);
+      if (original && original !== item.content) {
+        /* a hook rewrote the prompt: the browser shows what the user typed, and what the model got */
+        const note = el("div", "rewritten", t("rewritten", { text: item.content }));
+        target().appendChild(note);
+        scrollToBottom();
+      }
       state.assistant = null;
       break;
+    }
     case "assistant_message": {
       const content = item.content || "";
       if (state.assistant) {

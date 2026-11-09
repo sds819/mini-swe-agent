@@ -631,7 +631,9 @@ The hook reads JSON on stdin and answers JSON on stdout:
 ```
 
 `decision` is `allow`, `deny` or `block`; the hook may also add
-`additionalContext` or rewrite the call with `updatedInput`.
+`additionalContext` or rewrite the call with `updatedInput`. For a tool the
+new input is a mapping of arguments; the `UserPromptSubmit` hook rewrites the
+prompt of the user with a string.
 
 A custom command, `.coderagent/commands/commit.md`:
 

@@ -41,7 +41,7 @@ events.
 | Hook | When | What it can do |
 |---|---|---|
 | `SessionStart` | The session starts | Nothing. It is a notification |
-| `UserPromptSubmit` | After the prompt, before the model | Add context, or block the prompt |
+| `UserPromptSubmit` | After the prompt, before the model | Add context, rewrite the prompt, or block it |
 | `PreToolUse` | Before the tool runs | Allow, deny, or rewrite the arguments |
 | `PostToolUse` | After the tool ran | Add context, or block the result |
 | `Stop` | The agent wants to stop | Send it back to work |
@@ -78,7 +78,9 @@ The keys are:
 - `decision`: `allow`, `deny` or `block`.
 - `reason`: why. It goes back to the model as the error of the tool.
 - `additionalContext`: something for the model to read.
-- `updatedInput`: the arguments the tool gets instead of the ones of the model.
+- `updatedInput`: the new input of the moment. For `PreToolUse` and
+  `PostToolUse` it is a mapping and it replaces the arguments of the tool. For
+  `UserPromptSubmit` it is a string and it replaces the prompt.
 
 Nothing on the standard output means the hook has no opinion. The output of
 several hooks is put together: a `deny` wins over everything, the contexts are
@@ -94,10 +96,31 @@ concatenated and the last `updatedInput` wins.
 | `PostToolUse` adds context | The context is appended to the result of the tool |
 | `UserPromptSubmit` denies | The turn ends with an error, the model is not called |
 | `UserPromptSubmit` adds context | The context is appended to the prompt |
+| `UserPromptSubmit` rewrites the prompt | The model sees the new prompt, the log keeps both |
 | `Stop` denies | The agent goes on, the reason is a new message for it |
 
 The `PreToolUse` hook runs **before** the permission check, so the command
 that is approved is the command that was rewritten.
+
+## A hook that rewrites the prompt
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+payload = json.load(sys.stdin)
+print(json.dumps({"updatedInput": payload["prompt"] + "\n\nAnswer in English."}))
+```
+
+The model never sees the text the user typed, only the rewritten one. The
+event log keeps the prompt of the model, so a replay of the session says the
+same thing, and the text of the user beside it under `original`. In the web
+interface the bubble shows what the user typed, with a line below it that
+says what the agent was given.
+
+A hook that answers with a string `updatedInput` at `PreToolUse` changes
+nothing: only a mapping replaces the arguments of a tool.
 
 ## When a hook fails
 

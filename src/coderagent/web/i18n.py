@@ -68,6 +68,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "en": {
         "history": "earlier turns",
         "earlier_turns": "{count} earlier turns",
+        "rewritten": "the agent was given: {text}",
         "tool": "tool",
         "running": "running…",
         "approval": "approval: {tool}",
@@ -119,6 +120,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "zh": {
         "history": "之前的几轮",
         "earlier_turns": "之前的 {count} 轮",
+        "rewritten": "给 agent 的是：{text}",
         "tool": "工具",
         "running": "运行中…",
         "approval": "审批：{tool}",

@@ -599,7 +599,8 @@ hook 从 stdin 读 JSON，往 stdout 写 JSON：
 ```
 
 `decision` 是 `allow`、`deny` 或 `block`；hook 还可以带 `additionalContext`，
-或者用 `updatedInput` 改写这次调用。
+或者用 `updatedInput` 改写这次调用。工具的 `updatedInput` 是一份参数映射；
+`UserPromptSubmit` 的 `updatedInput` 是一个字符串，用来改写用户的提问。
 
 一个自己的命令，`.coderagent/commands/commit.md`：
 

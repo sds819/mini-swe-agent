@@ -122,6 +122,7 @@ class AgentLoop:
         """Run one turn: query the model, execute its tool calls, repeat until it stops."""
         turn_messages: list[dict] = []
         prompt = user_input
+        original = ""
         if self.hooks:
             hook = self.hooks.apply("UserPromptSubmit", {"prompt": user_input})
             if hook.blocked:
@@ -133,9 +134,13 @@ class AgentLoop:
                     stop_reason="error",
                     error=hook.reason or "the prompt was blocked",
                 )
+            if isinstance(hook.updated_input, str):
+                """The hook rewrote the prompt. What the user typed is kept aside."""
+                prompt = hook.updated_input
+                original = user_input
             if hook.additional_context:
-                prompt = f"{user_input}\n\n[hook] {hook.additional_context}"
-        self.context.append({"role": "user", "content": prompt})
+                prompt = f"{prompt}\n\n[hook] {hook.additional_context}"
+        self.context.append({"role": "user", "content": prompt}, original=original)
         turn_messages.append({"role": "user", "content": prompt})
         self.session.turn_count += 1
         self._set_state(SessionState.THINKING)

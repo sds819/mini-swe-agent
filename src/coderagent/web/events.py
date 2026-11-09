@@ -20,7 +20,13 @@ def normalize(event: Event) -> list[dict]:
     """The items of one event. An event that says nothing renders nothing."""
     payload = event.payload
     if event.type == EventType.USER_MESSAGE:
-        return [{"kind": "user_message", "content": payload.get("content", "")}]
+        return [
+            {
+                "kind": "user_message",
+                "content": payload.get("content", ""),
+                "original": payload.get("original", ""),
+            }
+        ]
     if event.type == EventType.ASSISTANT_MESSAGE:
         message = payload.get("message") or {}
         return [

@@ -103,7 +103,8 @@ class ToolExecutor:
             if hook.blocked:
                 action["error"] = f"Error: the hook blocked '{action['tool']}'. {hook.reason}".strip()
                 return action
-            if hook.updated_input is not None:
+            if isinstance(hook.updated_input, dict):
+                """Only the arguments of a tool are a mapping. A prompt is not."""
                 action["args"] = hook.updated_input
         decision = self.policy.evaluate(action["tool"], action["args"])
         action["decision"] = decision

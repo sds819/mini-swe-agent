@@ -1,5 +1,7 @@
 """A turn that runs in the browser: the items, the tool output and the cost."""
 
+import sys
+
 import pytest
 
 pytest.importorskip("fastapi")
@@ -75,6 +77,36 @@ def test_the_turn_reports_what_it_cost(make_client, send, wait_for):
     assert end["stop_reason"] == "end_turn"
     assert end["cost"] == pytest.approx(0.5)
     assert end["session_cost"] == pytest.approx(0.5)
+
+
+def test_a_rewritten_prompt_keeps_what_the_user_typed(make_client, send, wait_for, tmp_path):
+    """The browser shows the prompt of the model, and what the user wrote."""
+    script = tmp_path / "rewrite.py"
+    script.write_text(
+        "import json, sys\n"
+        "data = json.load(sys.stdin)\n"
+        "print(json.dumps({'updatedInput': data['prompt'] + ' (rewritten)'}))\n",
+        encoding="utf-8",
+    )
+    client = make_client(
+        responses=[assistant("all done")],
+        project_config=(
+            "hooks:\n"
+            "  events:\n"
+            "    UserPromptSubmit:\n"
+            "      - hooks:\n"
+            "          - type: command\n"
+            f'            command: "{sys.executable} {script}"\n'
+        ),
+    )
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "say hello")
+
+    items = wait_for(client, session_id, "turn_end")
+    message = [item for item in items if item["kind"] == "user_message"][0]
+
+    assert message["content"] == "say hello (rewritten)"
+    assert message["original"] == "say hello"
 
 
 def test_an_empty_message_is_refused(make_client):

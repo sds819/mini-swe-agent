@@ -91,10 +91,15 @@ class ContextEngine:
         self.history = History(messages)
         self.summaries = summaries
 
-    def append(self, message: dict) -> None:
-        """Add a message to the history and record it in the event log."""
+    def append(self, message: dict, original: str = "") -> None:
+        """Add a message to the history and record it in the event log.
+
+        `original` is what the user typed, when a hook rewrote the prompt. The
+        log keeps the prompt the model saw, so that a replay says the same
+        thing, and the original beside it.
+        """
         self.history.append(message)
-        self._record(message)
+        self._record(message, original)
 
     def extend(self, messages: list[dict]) -> None:
         """Add tool results to the history and record them in the event log."""
@@ -102,11 +107,14 @@ class ContextEngine:
         for message in messages:
             self._record(message)
 
-    def _record(self, message: dict) -> None:
+    def _record(self, message: dict, original: str = "") -> None:
         """The event log is the source of truth, so every message goes into it."""
         role = message.get("role")
         if role == "user":
-            event_type, payload = EventType.USER_MESSAGE, {"content": message.get("content", "")}
+            event_type = EventType.USER_MESSAGE
+            payload = {"content": message.get("content", "")}
+            if original:
+                payload["original"] = original
         elif role == "assistant":
             event_type = EventType.ASSISTANT_MESSAGE
             payload = {"message": message, "cost": message.get("extra", {}).get("cost", 0.0)}

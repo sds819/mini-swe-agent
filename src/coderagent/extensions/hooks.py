@@ -18,7 +18,8 @@ class HookResult:
     """One of allow, deny, block. Empty means the hook has no opinion."""
     reason: str = ""
     additional_context: str = ""
-    updated_input: dict | None = None
+    updated_input: dict | str | None = None
+    """The new input of the event: the arguments of the tool, or the prompt."""
 
 
 @dataclass
@@ -28,7 +29,7 @@ class MergedHookResult:
     decision: str = ""
     reason: str = ""
     additional_context: str = ""
-    updated_input: dict | None = None
+    updated_input: dict | str | None = None
 
     @property
     def blocked(self) -> bool:
@@ -116,5 +117,5 @@ class HookRunner:
             decision=str(data.get("decision", "")),
             reason=str(data.get("reason", "")),
             additional_context=str(data.get("additionalContext", data.get("additional_context", ""))),
-            updated_input=updated if isinstance(updated, dict) else None,
+            updated_input=updated if isinstance(updated, (dict, str)) else None,
         )
