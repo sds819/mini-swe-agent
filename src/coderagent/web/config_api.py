@@ -25,7 +25,7 @@ PERMISSION_MODES = [mode.value for mode in PermissionMode]
 PERMISSION_FIELDS = ("mode", "deny_paths", "include_dirs")
 """The permission settings that live directly under `permissions:`."""
 
-DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules")
+DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")
 """The settings of the model that live directly under `model:`."""
 
 MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")
@@ -92,6 +92,7 @@ def model_view(cwd: Path) -> dict[str, Any]:
     api_key = str(kwargs.get("api_key") or "")
     return {
         "model_name": model.model_name,
+        "litellm_config": model.litellm_config,
         "api_base": str(kwargs.get("api_base") or ""),
         "api_key_set": bool(api_key),
         "api_key_hint": hint(api_key),
@@ -197,6 +198,12 @@ def write_user_model(payload: dict) -> Path:
     name = payload.get("model_name")
     if isinstance(name, str) and name.strip():
         model["model_name"] = name.strip()
+    aliases = payload.get("litellm_config")
+    if isinstance(aliases, str):
+        if aliases.strip():
+            model["litellm_config"] = aliases.strip()
+        else:
+            model.pop("litellm_config", None)
     base = payload.get("api_base")
     if isinstance(base, str):
         if base.strip():
@@ -235,13 +242,20 @@ def write_user_model(payload: dict) -> Path:
     return path
 
 
-def effective_model(cwd: Path, overrides: dict) -> tuple[str, dict]:
-    """The model to talk to and the kwargs to talk with, with the overrides applied."""
+def effective_model(cwd: Path, overrides: dict) -> dict:
+    """The model to talk to and the kwargs to talk with, with the overrides applied.
+
+    An alias of a litellm config file is resolved here: the name becomes the
+    model of the provider and the parameters of the alias are the kwargs.
+    """
     config = load_config([], cwd=cwd)
     kwargs = dict(config.model.model_kwargs)
     name = config.model.model_name
+    aliases = config.model.litellm_config
     if isinstance(overrides.get("model_name"), str) and overrides["model_name"].strip():
         name = overrides["model_name"].strip()
+    if isinstance(overrides.get("litellm_config"), str) and overrides["litellm_config"].strip():
+        aliases = overrides["litellm_config"].strip()
     for key in ("api_base", "api_key"):
         value = overrides.get(key)
         if isinstance(value, str):
@@ -252,15 +266,85 @@ def effective_model(cwd: Path, overrides: dict) -> tuple[str, dict]:
     extra = overrides.get("model_kwargs")
     if isinstance(extra, dict):
         kwargs.update({key: value for key, value in extra.items() if key not in ("api_key", "api_base")})
-    name, alias = resolve_alias(config.model.litellm_config, name)
-    return name, alias | kwargs
+    resolved, params = resolve_alias(aliases, name)
+    return {
+        "model_name": resolved,
+        "requested": name,
+        "alias": name if resolved != name else "",
+        "litellm_config": aliases,
+        "model_kwargs": params | kwargs,
+    }
 
 
-def test_connection(model_name: str, model_kwargs: dict) -> dict[str, Any]:
-    """One cheap call to the model, to see whether the settings work."""
+def check_litellm_config(path: str, name: str = "") -> dict[str, Any]:
+    """The file of the aliases: does it exist, does it parse, what is in it."""
+    if not path:
+        return {"ok": True, "path": "", "aliases": [], "error": ""}
+    file = Path(path).expanduser()
+    if not file.is_file():
+        return {"ok": False, "path": str(file), "aliases": [], "error": "the file does not exist"}
+    try:
+        data = yaml.safe_load(file.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as error:
+        return {"ok": False, "path": str(file), "aliases": [], "error": f"the file is not valid YAML: {error}"}
+    if not isinstance(data, dict) or not isinstance(data.get("model_list"), list):
+        return {"ok": False, "path": str(file), "aliases": [], "error": "the file has no model_list"}
+    aliases = [
+        entry.get("model_name") for entry in data["model_list"] if isinstance(entry, dict) and entry.get("model_name")
+    ]
+    if name and name not in aliases:
+        return {
+            "ok": False,
+            "path": str(file),
+            "aliases": aliases,
+            "error": f"'{name}' is not one of the aliases of this file",
+        }
+    return {"ok": True, "path": str(file), "aliases": aliases, "error": ""}
+
+
+def check_tools(backend) -> dict[str, Any]:
+    """The model has to call the tools, or the agent cannot work at all."""
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "ping",
+                "description": "Answer with a ping.",
+                "parameters": {"type": "object", "properties": {}},
+            },
+        }
+    ]
+    try:
+        message = backend.query([{"role": "user", "content": "Call the ping tool."}], tools=tools, max_tokens=64)
+    except Exception as error:
+        return {"ok": False, "error": f"{type(error).__name__}: {error}"}
+    calls = message.get("tool_calls") or []
+    return {
+        "ok": bool(calls),
+        "error": "" if calls else "the model did not call the tool",
+        "calls": len(calls),
+    }
+
+
+def test_connection(effective: dict) -> dict[str, Any]:
+    """See whether the settings work: the file, the call and the tools."""
     from coderagent.models.backends import LiteLLMBackend
 
-    backend = LiteLLMBackend(model_name, model_kwargs=model_kwargs)
+    name = effective["model_name"]
+    kwargs = effective["model_kwargs"]
+    key = str(kwargs.get("api_key") or "")
+    report: dict[str, Any] = {
+        "ok": False,
+        "resolved": {
+            "model_name": name,
+            "alias": effective.get("alias", ""),
+            "api_base": str(kwargs.get("api_base") or ""),
+            "api_key_set": bool(key),
+            "api_key_hint": hint(key),
+        },
+        "file": check_litellm_config(effective.get("litellm_config", ""), effective.get("requested", "")),
+    }
+    backend = LiteLLMBackend(name, model_kwargs=kwargs)
     previous = os.environ.get("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT")
     os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = "1"
     """A wrong key should fail right away, not after ten tries."""
@@ -268,16 +352,21 @@ def test_connection(model_name: str, model_kwargs: dict) -> dict[str, Any]:
     try:
         message = backend.query([{"role": "user", "content": "ping"}], max_tokens=1)
     except Exception as error:
-        return {"ok": False, "error": f"{type(error).__name__}: {error}"}
+        report["error"] = f"{type(error).__name__}: {error}"
+        return report
     finally:
         if previous is None:
             os.environ.pop("MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT", None)
         else:
             os.environ["MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT"] = previous
     extra = message.get("extra") or {}
-    return {
-        "ok": True,
-        "content": str(message.get("content", ""))[:200],
-        "cost": float(extra.get("cost") or 0.0),
-        "latency_ms": int((time.time() - started) * 1000),
-    }
+    report.update(
+        {
+            "ok": True,
+            "content": str(message.get("content", ""))[:200],
+            "cost": float(extra.get("cost") or 0.0),
+            "latency_ms": int((time.time() - started) * 1000),
+            "tools": check_tools(backend),
+        }
+    )
+    return report

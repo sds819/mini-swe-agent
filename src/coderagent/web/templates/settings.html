@@ -13,7 +13,11 @@
   <form id="model-form">
     <label>Model name
       <input id="model-name" placeholder="deepseek/deepseek-flash">
-      <small id="source-model-name" class="source"></small>
+      <small id="source-model_name" class="source"></small>
+    </label>
+    <label>Litellm config file
+      <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
+      <small id="source-litellm_config" class="source"></small>
     </label>
     <label>API base
       <input id="api-base" placeholder="https://api.deepseek.com">
@@ -46,11 +50,37 @@
       <textarea id="model-kwargs" rows="5" placeholder="temperature: 0.2"></textarea>
       <small class="source">YAML, passed to the provider as it is</small>
     </label>
+    <details class="history">
+      <summary>Example: a third party endpoint</summary>
+      <div class="history-body">
+        <p class="note">
+          The model name can be an alias of the model list of a litellm config file.
+          The key of the endpoint then stays in that file, not here.
+        </p>
+        <pre># ~/.coderagent/litellm_config.yaml
+model_list:
+  - model_name: nengpa/minimax-m2.7
+    litellm_params:
+      model: openai/MiniMax-M2.7
+      api_base: https://api.nengpa.com/v1
+      api_key: sk-cp-...</pre>
+        <p class="note">
+          The <code>model</code> is the model litellm calls, with the provider in
+          front of it. The <code>api_base</code> stops at <code>/v1</code>:
+          litellm appends <code>/chat/completions</code> to it.
+        </p>
+        <pre># ~/.coderagent/config.yaml
+model:
+  model_name: nengpa/minimax-m2.7
+  litellm_config: ~/.coderagent/litellm_config.yaml</pre>
+      </div>
+    </details>
     <div class="row">
       <button type="submit" class="primary">Save</button>
       <button type="button" id="test-connection">Test the connection</button>
       <span id="config-message" class="note"></span>
     </div>
+    <div id="model-test"></div>
   </form>
 
   <h2>Permissions</h2>

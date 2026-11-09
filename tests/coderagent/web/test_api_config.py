@@ -92,3 +92,67 @@ def test_a_model_that_does_not_work_is_reported_not_raised(make_client):
     assert response.status_code == 200
     assert response.json()["ok"] is False
     assert response.json()["error"]
+
+
+def test_the_aliases_file_is_written_and_read_back(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"litellm_config": "~/.coderagent/litellm_config.yaml"})
+
+    view = client.get("/api/config").json()
+    assert view["model"]["litellm_config"] == "~/.coderagent/litellm_config.yaml"
+    assert view["sources"]["litellm_config"] == "user"
+
+
+def _aliases_file(tmp_path, alias: str = "my-alias", model: str = "not-a-real-provider/nope") -> str:
+    path = tmp_path / "litellm_config.yaml"
+    path.write_text(
+        f"model_list:\n  - model_name: {alias}\n    litellm_params:\n      model: {model}\n      api_base: https://x/v1\n",
+        encoding="utf-8",
+    )
+    return str(path)
+
+
+def test_the_test_says_which_model_the_alias_stands_for(make_client, tmp_path):
+    client = make_client()
+    path = _aliases_file(tmp_path)
+
+    answer = client.post("/api/config/model/test", json={"model_name": "my-alias", "litellm_config": path}).json()
+
+    assert answer["resolved"]["model_name"] == "not-a-real-provider/nope"
+    assert answer["resolved"]["alias"] == "my-alias"
+    assert answer["resolved"]["api_base"] == "https://x/v1"
+    assert answer["file"]["ok"] is True
+    assert answer["file"]["aliases"] == ["my-alias"]
+
+
+def test_a_file_that_is_not_there_is_reported(make_client, tmp_path):
+    client = make_client()
+
+    answer = client.post(
+        "/api/config/model/test", json={"model_name": "my-alias", "litellm_config": str(tmp_path / "nope.yaml")}
+    ).json()
+
+    assert answer["file"]["ok"] is False
+    assert "does not exist" in answer["file"]["error"]
+
+
+def test_a_name_that_is_not_an_alias_is_reported(make_client, tmp_path):
+    client = make_client()
+    path = _aliases_file(tmp_path)
+
+    answer = client.post("/api/config/model/test", json={"model_name": "other", "litellm_config": path}).json()
+
+    assert answer["file"]["ok"] is False
+    assert "not one of the aliases" in answer["file"]["error"]
+
+
+def test_the_model_has_to_call_the_tools():
+    from coderagent.testing.scripted_model import ScriptedModel
+    from coderagent.web.config_api import check_tools
+
+    call = {"id": "c1", "type": "function", "function": {"name": "ping", "arguments": "{}"}}
+    assert check_tools(ScriptedModel([{"role": "assistant", "content": "", "tool_calls": [call]}]))["ok"] is True
+    assert check_tools(ScriptedModel([{"role": "assistant", "content": "no tool"}]))["error"] == (
+        "the model did not call the tool"
+    )

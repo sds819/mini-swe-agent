@@ -313,8 +313,7 @@ def put_permissions(body: dict, request: Request, _: None = Depends(require_clie
 @router.post("/config/model/test")
 def check_model(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Try the model out, to see whether the settings work."""
-    name, kwargs = config_api.effective_model(request.app.state.cwd, body)
-    return config_api.test_connection(name, kwargs)
+    return config_api.test_connection(config_api.effective_model(request.app.state.cwd, body))
 
 
 # -- the files -------------------------------------------------------------

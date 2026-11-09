@@ -520,12 +520,40 @@ function splitLines(text) {
     .filter(Boolean);
 }
 
+function renderTest(answer) {
+  // What the test found out: the settings, the file, the call and the tools.
+  const box = document.getElementById("model-test");
+  box.innerHTML = "";
+  const resolved = answer.resolved || {};
+  const file = answer.file || {};
+  const tools = answer.tools || {};
+  const rows = [
+    ["model", `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
+    ["api base", resolved.api_base || "not set"],
+    ["api key", resolved.api_key_set ? `set (${resolved.api_key_hint})` : "not set"],
+    [
+      "aliases file",
+      file.ok
+        ? `${file.path || "none"}${file.aliases && file.aliases.length ? ` — ${file.aliases.join(", ")}` : ""}`
+        : `${file.path || "none"} — ${file.error}`,
+    ],
+    ["tools", tools.ok ? "ok, the model calls the tools" : tools.error || "not tried"],
+  ];
+  const list = el("dl");
+  for (const [key, value] of rows) {
+    list.appendChild(el("dt", "", key));
+    list.appendChild(el("dd", "", value));
+  }
+  box.appendChild(list);
+}
+
 async function startSettings() {
   const data = await api("/api/config");
   const model = data.model;
   const permissions = data.permissions || {};
   document.getElementById("config-path").textContent = data.user_config_path;
   document.getElementById("model-name").value = model.model_name || "";
+  document.getElementById("litellm-config").value = model.litellm_config || "";
   document.getElementById("api-base").value = model.api_base || "";
   document.getElementById("api-key").placeholder = model.api_key_set
     ? `set (${model.api_key_hint}) — type to replace`
@@ -573,6 +601,7 @@ async function startSettings() {
   const message = document.getElementById("config-message");
   const payload = () => ({
     model_name: document.getElementById("model-name").value.trim(),
+    litellm_config: document.getElementById("litellm-config").value.trim(),
     api_base: document.getElementById("api-base").value.trim(),
     api_key: document.getElementById("api-key").value,
     max_retries: Number(document.getElementById("max-retries").value || 0),
@@ -603,6 +632,7 @@ async function startSettings() {
       message.textContent = answer.ok
         ? `ok: ${answer.latency_ms}ms, $${(answer.cost || 0).toFixed(6)}`
         : `error: ${answer.error}`;
+      renderTest(answer);
     } catch (error) {
       message.textContent = `error: ${error.message}`;
     }

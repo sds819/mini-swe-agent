@@ -73,6 +73,7 @@ The model configuration, in a form:
 | Field | What it is |
 |---|---|
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash` |
+| Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.model_kwargs.api_base` — the address of the provider |
 | API key | `model.model_kwargs.api_key`. Write-only: it is never sent back to the browser |
 | Retries | `model.max_retries` |
@@ -84,8 +85,21 @@ The model configuration, in a form:
 Under every field is the layer it comes from: `defaults`, `project`, `user` or
 `env`. The table at the bottom shows every layer, with the secrets taken out.
 
+The **Example** block under the fields shows how a third party endpoint is
+written: the model name is then an alias of the model list of a litellm config
+file, and the key of the endpoint stays in that file instead of the settings of
+the agent.
+
 `Test connection` sends one cheap call to the model with the settings of the
-form, so you can see whether the key and the address work before you save.
+form, so you can see whether the key and the address work before you save. It
+reports four things:
+
+| What | What it tells you |
+|---|---|
+| The model | The model the call goes to, and the alias it comes from |
+| The API base and the key | The address and whether a key is set (only its tail) |
+| The aliases file | Whether the file exists, whether it parses, and which aliases it has |
+| The tools | Whether the model calls the tools — without that the agent cannot work |
 
 **What is written where**: only the user level file, `~/.coderagent/config.yaml`
 (or `$MSWEA_CODER_HOME/config.yaml`). The project level file
