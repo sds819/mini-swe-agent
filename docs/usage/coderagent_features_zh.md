@@ -936,7 +936,7 @@ mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \
 | [网页版](coderagent_web_zh.md) | 聊天页、设置页、API |
 | [子 agent](coderagent_subagents_zh.md) | 怎么写一个子 agent |
 | [技能](coderagent_skills.md) | 怎么写一个技能 |
-| [hook](coderagent_hooks.md) | 六个时机和 hook 的回答 |
+| [hook](coderagent_hooks_zh.md) | 六个时机和 hook 的回答 |
 | [插件](coderagent_plugins.md) | 怎么写一个插件 |
 | [MCP 服务器](coderagent_mcp.md) | 服务器怎么配 |
 | [记忆](coderagent_memory.md) | 那些文件和确认 |
