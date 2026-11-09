@@ -100,21 +100,34 @@ def load_rules(project_dir: Path, user_home: Path | None = None) -> list[Rule]:
     return rules
 
 
+def _document_of(path: Path) -> dict[str, Any]:
+    """The rule file as a mapping. A file that does not exist is an empty mapping."""
+    if not path.exists():
+        return {}
+    try:
+        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as error:
+        raise RuleError(f"{path}: invalid YAML: {error}") from error
+    if document is None:
+        return {}
+    if not isinstance(document, dict):
+        raise RuleError(f"{path}: the rule file must be a mapping with a `rules` key")
+    return document
+
+
 def add_rule(tool: str, pattern: str, decision: str = "allow", reason: str = "", user_home: Path | None = None) -> Path:
     """Append a rule to the user-level rule file and read it back to confirm it landed."""
     home = Path(user_home) if user_home else config_home()
     home.mkdir(parents=True, exist_ok=True)
     path = home / "rules.yaml"
-    existing = path.read_text(encoding="utf-8") if path.exists() else "rules:\n"
-    if not existing.lstrip().startswith("rules:"):
-        existing = "rules:\n" + existing
-    entry = yaml.safe_dump(
-        {"tool": tool, "pattern": pattern, "decision": decision, "reason": reason},
-        sort_keys=False,
-        default_flow_style=False,
-    ).rstrip()
-    lines = entry.splitlines()
-    block = "\n".join([f"  - {lines[0]}"] + [f"    {line}" for line in lines[1:]])
-    path.write_text(f"{existing.rstrip()}\n{block}\n", encoding="utf-8")
+    document = _document_of(path)
+    rules = document.get("rules") or []
+    if not isinstance(rules, list):
+        raise RuleError(f"{path}: `rules` must be a list")
+    document["rules"] = rules + [{"tool": tool, "pattern": pattern, "decision": decision, "reason": reason}]
+    path.write_text(
+        yaml.safe_dump(document, sort_keys=False, default_flow_style=False, allow_unicode=True),
+        encoding="utf-8",
+    )
     load_rules_file(path)
     return path

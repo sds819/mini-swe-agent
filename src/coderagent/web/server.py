@@ -24,6 +24,8 @@ def check_address(host: str, port: int) -> None:
     and the error of uvicorn does not say what to do about it.
     """
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        """A server that was stopped leaves the port in `TIME_WAIT`: the port is free."""
         try:
             probe.bind((host, port))
         except OSError as error:

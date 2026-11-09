@@ -1,4 +1,5 @@
 import pytest
+import yaml
 
 from coderagent.tools.permissions import Rule
 from coderagent.tools.rules import RuleError, add_rule, load_rules, load_rules_file
@@ -84,3 +85,26 @@ def test_add_rule_keeps_the_rules_that_are_already_there(tmp_path):
     add_rule("bash", "ls", "allow", "", home)
     add_rule("bash", "pwd", "allow", "", home)
     assert len(load_rules_file(home / "rules.yaml")) == 2
+
+
+def test_add_rule_to_a_file_with_an_empty_list_keeps_it_valid(tmp_path):
+    home = tmp_path / "home"
+    _write(home / "rules.yaml", "rules: []\n")
+    add_rule("bash", "ls", "allow", "", home)
+    assert [(rule.tool, rule.pattern) for rule in load_rules_file(home / "rules.yaml")] == [("bash", "ls")]
+
+
+def test_add_rule_keeps_the_other_sections_of_the_file(tmp_path):
+    home = tmp_path / "home"
+    _write(home / "rules.yaml", "rules: []\nversion: 2\n")
+    add_rule("bash", "ls", "allow", "", home)
+    document = yaml.safe_load((home / "rules.yaml").read_text(encoding="utf-8"))
+    assert document["version"] == 2
+    assert len(document["rules"]) == 1
+
+
+def test_add_rule_to_a_file_that_does_not_parse_says_so(tmp_path):
+    home = tmp_path / "home"
+    _write(home / "rules.yaml", "rules: []\n  - tool: bash\n")
+    with pytest.raises(RuleError, match="invalid YAML"):
+        add_rule("bash", "ls", "allow", "", home)
