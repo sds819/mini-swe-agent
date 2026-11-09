@@ -115,3 +115,43 @@ def test_the_loop_switches_the_model_and_says_so(tmp_path):
     assert changes[0].payload["model"] == "cheap/model"
     assert changes[0].payload["previous"] == "scripted"
     assert changes[0].payload["reason"]
+
+
+def _alias_file(tmp_path, alias: str, model: str) -> str:
+    path = tmp_path / "litellm_config.yaml"
+    path.write_text(
+        f"model_list:\n  - model_name: {alias}\n    litellm_params:\n      model: {model}\n", encoding="utf-8"
+    )
+    return str(path)
+
+
+def test_the_router_resolves_an_alias(tmp_path):
+    config = _config(model_name="alias/model", litellm_config=_alias_file(tmp_path, "alias/model", "real/model"))
+    assert ModelRouter(config).backend_for("alias/model").model_name == "real/model"
+
+
+def test_the_loop_keeps_the_model_when_the_alias_is_the_same_one(tmp_path):
+    """The alias of the model that is already in use is not a change."""
+    config = _config(model_name="alias/scripted", litellm_config=_alias_file(tmp_path, "alias/scripted", "scripted"))
+    store = SessionStore(tmp_path)
+    session = store.create(tmp_path)
+    bus = EventBus()
+    model = ScriptedModel([{"role": "assistant", "content": "ok"}])
+    gateway = ModelGateway(model)
+    executor = build_executor(tmp_path)
+    loop = AgentLoop(
+        gateway,
+        executor,
+        session,
+        store,
+        bus,
+        tools=executor.registry.schemas(),
+        router=ModelRouter(config, gateway),
+    )
+    loop.run_turn("hello")
+    assert loop.model.backend is model
+    assert not [
+        event
+        for event in store.events(session.id)
+        if event.type == EventType.STATE_CHANGE and event.payload.get("model")
+    ]

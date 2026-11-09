@@ -124,7 +124,11 @@ def run_custom(context, command: CustomCommand, arguments: str) -> None:
             loop.executor.registry = restricted_registry(original_registry, command.allowed_tools)
             loop.tools = loop.executor.registry.schemas()
         if command.model:
-            loop.model.backend = LiteLLMBackend(command.model, model_kwargs=context.config.model.model_kwargs)
+            loop.model.backend = LiteLLMBackend(
+                command.model,
+                model_kwargs=context.config.model.model_kwargs,
+                litellm_config=context.config.model.litellm_config,
+            )
         result = loop.run_turn(command.render(arguments))
     finally:
         loop.executor.registry = original_registry

@@ -101,7 +101,11 @@ class ModelRouter:
 
     def backend_for(self, name: str):
         """The backend of a model name."""
-        return LiteLLMBackend(name, model_kwargs=self.config.model_kwargs)
+        return LiteLLMBackend(
+            name,
+            model_kwargs=self.config.model_kwargs,
+            litellm_config=self.config.litellm_config,
+        )
 
     def _purpose(self, purpose: str, context: dict) -> str:
         """The purpose tier this call belongs to."""

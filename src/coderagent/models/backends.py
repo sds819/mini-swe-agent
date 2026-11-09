@@ -6,6 +6,7 @@ from typing import Any
 
 import litellm
 
+from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.models.streaming import ModelEvent, ToolCallAccumulator, message_from_events
 from minisweagent.models.utils.cache_control import set_cache_control
 from minisweagent.models.utils.retry import retry
@@ -32,9 +33,12 @@ class LiteLLMBackend:
         *,
         model_kwargs: dict[str, Any] | None = None,
         set_cache_control: str | None = None,
+        litellm_config: str = "",
     ) -> None:
-        self.model_name = model_name
-        self.model_kwargs = model_kwargs or {}
+        """The name may be an alias of the model list of a litellm config file."""
+        name, params = resolve_alias(litellm_config, model_name) if litellm_config else (model_name, {})
+        self.model_name = name
+        self.model_kwargs = params | (model_kwargs or {})
         self.set_cache_control = set_cache_control
 
     def query(self, messages: list[dict], tools: list[dict] | None = None, **kwargs) -> dict:

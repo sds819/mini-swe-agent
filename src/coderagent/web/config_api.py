@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from coderagent.config.loader import config_layers, load_config
+from coderagent.models.litellm_config import resolve as resolve_alias
 from coderagent.paths import config_home
 from coderagent.tools.permissions import PermissionMode
 
@@ -251,7 +252,8 @@ def effective_model(cwd: Path, overrides: dict) -> tuple[str, dict]:
     extra = overrides.get("model_kwargs")
     if isinstance(extra, dict):
         kwargs.update({key: value for key, value in extra.items() if key not in ("api_key", "api_base")})
-    return name, kwargs
+    name, alias = resolve_alias(config.model.litellm_config, name)
+    return name, alias | kwargs
 
 
 def test_connection(model_name: str, model_kwargs: dict) -> dict[str, Any]:

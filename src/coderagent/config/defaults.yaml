@@ -1,6 +1,7 @@
 model:
   model_kwargs: {}
   max_retries: 3
+  litellm_config: ""
   routing: {}
   routing_rules: []
   set_cache_control: null

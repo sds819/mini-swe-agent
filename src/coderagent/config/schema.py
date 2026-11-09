@@ -40,6 +40,8 @@ class ModelConfig(BaseModel):
     """Model name. Falls back to $MSWEA_MODEL_NAME and then to a built-in default."""
     model_kwargs: dict = Field(default_factory=dict)
     max_retries: int = 3
+    litellm_config: str = ""
+    """A litellm config file with the model list. Its aliases name the models."""
     routing: dict[str, str] = Field(default_factory=dict)
     """The model of a purpose: `main`, `cheap`, `summarize`, `reflect`, `strong`."""
     routing_rules: list[RoutingRuleConfig] = Field(default_factory=list)

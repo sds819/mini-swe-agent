@@ -214,10 +214,14 @@ class AgentLoop:
         if self.router is None:
             return
         name = self.router.resolve("main", self._routing_context())
-        current = getattr(self.model.backend, "model_name", "")
-        if not name or name == current:
+        if not name:
             return
-        self.model.backend = self.router.backend_for(name)
+        backend = self.router.backend_for(name)
+        current = getattr(self.model.backend, "model_name", "")
+        if backend.model_name == current:
+            """The same model behind another name. There is nothing to change."""
+            return
+        self.model.backend = backend
         self._publish(
             EventType.STATE_CHANGE,
             {

@@ -154,6 +154,7 @@ model:
   model_name: deepseek/deepseek-flash
   model_kwargs:
     temperature: 0.0
+  litellm_config: ~/.coderagent/litellm_config.yaml
   routing:
     cheap: deepseek/deepseek-flash
     summarize: deepseek/deepseek-flash
@@ -267,6 +268,38 @@ model:
     cheap: moonshot/kimi-k2.5
     summarize: moonshot/kimi-k2.5
 ```
+
+#### The aliases of a litellm config file
+
+An endpoint that is not in the table above can have an alias. `model.litellm_config`
+names a litellm config file, and the `model_list` of that file names the models:
+
+```yaml
+# ~/.coderagent/litellm_config.yaml
+model_list:
+  - model_name: nengpa/minimax-m2.7
+    litellm_params:
+      model: openai/MiniMax-M2.7
+      api_base: https://api.nengpa.com/v1
+      api_key: sk-cp-...
+```
+
+```yaml
+# ~/.coderagent/config.yaml
+model:
+  model_name: nengpa/minimax-m2.7
+  litellm_config: ~/.coderagent/litellm_config.yaml
+```
+
+The alias `nengpa/minimax-m2.7` is then a model like any other: `coder -m
+nengpa/minimax-m2.7 --task "..."` works, and so does the routing.
+
+The `model` of an entry is the model litellm calls, with the provider in front of
+it. The other parameters of the entry go to litellm as they are, so the key of a
+third party endpoint stays in that one file instead of the configuration of the
+agent. The settings of `model.model_kwargs` win over the ones of the alias.
+
+The `api_base` stops at `/v1`: litellm appends `/chat/completions` to it.
 
 ### The tools
 
@@ -590,6 +623,7 @@ the `session_cost` of the command line.
 | `.coderagent/pending-memory.md` | The preferences that wait for a confirmation |
 | `AGENTS.md`, `CLAUDE.md` | The instructions of the project |
 | `~/.coderagent/config.yaml` | The configuration of the user |
+| `~/.coderagent/litellm_config.yaml` | The aliases of the models |
 | `~/.coderagent/rules.yaml` | The permission rules of the user |
 | `~/.coderagent/CLAUDE.md` | The instructions and the preferences of the user |
 | `~/.coderagent/agents/`, `~/.coderagent/skills/`, `~/.coderagent/plugins/` | The extensions of the user |
