@@ -1,5 +1,7 @@
 # Sub agents
 
+> 中文版：[子 agent](coderagent_subagents_zh.md)
+
 A sub agent is a job that runs in its own context and returns a conclusion.
 
 The main agent reads the code, but a job like "find every place this pattern

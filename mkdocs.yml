@@ -74,6 +74,8 @@ nav:
       - "中文":
         - "功能": usage/coderagent_features_zh.md
         - "网页版": usage/coderagent_web_zh.md
+        - "命令": usage/coderagent_commands_zh.md
+        - "子 agent": usage/coderagent_subagents_zh.md
       - "Overview": usage/coderagent.md
       - "Features": usage/coderagent_features.md
       - "Web interface": usage/coderagent_web.md

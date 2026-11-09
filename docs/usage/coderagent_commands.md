@@ -1,5 +1,7 @@
 # The commands of the coding agent
 
+> 中文版：[命令](coderagent_commands_zh.md)
+
 The `coder` command starts an interactive session. Everything that starts with a
 slash is a command, everything else is a message for the agent.
 
