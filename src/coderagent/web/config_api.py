@@ -207,7 +207,7 @@ def write_user_model(payload: dict) -> Path:
     base = payload.get("api_base")
     if isinstance(base, str):
         if base.strip():
-            kwargs["api_base"] = base.strip()
+            kwargs["api_base"] = api_base_of(base)
         else:
             kwargs.pop("api_base", None)
     key = payload.get("api_key")
@@ -242,6 +242,19 @@ def write_user_model(payload: dict) -> Path:
     return path
 
 
+def api_base_of(endpoint: str) -> str:
+    """The base of an endpoint: litellm adds the path of the chat completions itself.
+
+    The providers hand out the full address
+    (`https://api.example.com/v1/chat/completions`), the base stops at `/v1`.
+    """
+    base = endpoint.strip().rstrip("/")
+    for suffix in ("/chat/completions", "/completions"):
+        if base.endswith(suffix):
+            return base[: -len(suffix)]
+    return base
+
+
 def effective_model(cwd: Path, overrides: dict) -> dict:
     """The model to talk to and the kwargs to talk with, with the overrides applied.
 
@@ -260,7 +273,7 @@ def effective_model(cwd: Path, overrides: dict) -> dict:
         value = overrides.get(key)
         if isinstance(value, str):
             if value.strip():
-                kwargs[key] = value.strip()
+                kwargs[key] = api_base_of(value) if key == "api_base" else value.strip()
             else:
                 kwargs.pop(key, None)
     extra = overrides.get("model_kwargs")

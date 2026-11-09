@@ -101,6 +101,19 @@ reports four things:
 | The aliases file | Whether the file exists, whether it parses, and which aliases it has |
 | The tools | Whether the model calls the tools — without that the agent cannot work |
 
+**Test a model.** A second panel tries a model out without saving anything:
+the endpoint, the key and the name of the model, and a `Test connection`
+button. It is the shape a provider hands them out in.
+
+| Field | What it is |
+|---|---|
+| Endpoint | The address of the provider. The full address of the chat completions (`https://api.example.com/v1/chat/completions`) is fine — the part behind `/v1` is cut off, because litellm adds it itself |
+| API Key | The key of that endpoint. A click shows the key of the settings above, a second click hides it again |
+| Model Name | The name of the model. Without a provider in front (`openai/`) the provider `openai` is added, because the endpoint is an OpenAI compatible one |
+
+An empty endpoint or an empty key means the one of the settings above. The
+result is the same four lines as the test of the form.
+
 **What is written where**: only the user level file, `~/.coderagent/config.yaml`
 (or `$MSWEA_CODER_HOME/config.yaml`). The project level file
 (`.coderagent/config.yaml`) is **never** written — it is in the repository.

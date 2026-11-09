@@ -90,6 +90,19 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 
 `Test the connection` 用表单里的设置发一次最便宜的调用，测通了再 `Save`。
 
+### 测一个模型 {#test-a-model}
+
+还有一块独立的面板，不写任何文件，只管试：Endpoint、API Key、Model Name，
+右边一个 `Test connection` 按钮——就是厂商后台给你表单的那个样子。
+
+| 字段 | 意思 |
+|---|---|
+| Endpoint | 厂商的地址。可以直接粘完整的 `https://api.example.com/v1/chat/completions`：`/v1` 后面那段会被剪掉，因为 litellm 自己会加 |
+| API Key | 这个地址的 key。点一下显示上面设置里的 key，再点一下收起来 |
+| Model Name | 模型名。前面没写厂商（`openai/`）就补上 `openai/`——这个地址是 OpenAI 兼容的那种 |
+
+地址或 key 留空，就用上面设置里的。结果和表单那边的测试一样，也是那几行。
+
 三件要记住的事：
 
 - **只写用户级文件** `~/.coderagent/config.yaml`（或者 `$MSWEA_CODER_HOME/config.yaml`）。

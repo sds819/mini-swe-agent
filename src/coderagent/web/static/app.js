@@ -520,23 +520,26 @@ function splitLines(text) {
     .filter(Boolean);
 }
 
-function renderTest(answer) {
+function renderTest(answer, target = "model-test") {
   // What the test found out: the settings, the file, the call and the tools.
-  const box = document.getElementById("model-test");
+  const box = document.getElementById(target);
   box.innerHTML = "";
   const resolved = answer.resolved || {};
   const file = answer.file || {};
   const tools = answer.tools || {};
+  let fileText;
+  if (file.ok) {
+    fileText = `${file.path || "none"}${file.aliases && file.aliases.length ? ` — ${file.aliases.join(", ")}` : ""}`;
+  } else if ((file.error || "").includes("not one of the aliases")) {
+    fileText = `${file.path || "none"} — the model is not an alias of this file, it is called as it is`;
+  } else {
+    fileText = `${file.path || "none"} — ${file.error}`;
+  }
   const rows = [
     ["model", `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
     ["api base", resolved.api_base || "not set"],
     ["api key", resolved.api_key_set ? `set (${resolved.api_key_hint})` : "not set"],
-    [
-      "aliases file",
-      file.ok
-        ? `${file.path || "none"}${file.aliases && file.aliases.length ? ` — ${file.aliases.join(", ")}` : ""}`
-        : `${file.path || "none"} — ${file.error}`,
-    ],
+    ["aliases file", fileText],
     ["tools", tools.ok ? "ok, the model calls the tools" : tools.error || "not tried"],
   ];
   const list = el("dl");
@@ -545,6 +548,35 @@ function renderTest(answer) {
     list.appendChild(el("dd", "", value));
   }
   box.appendChild(list);
+}
+
+function wireApiKey(input, placeholder, note) {
+  // A click shows the key of the settings, a second click hides it again.
+  let revealed = false;
+  input.onclick = async () => {
+    if (revealed) {
+      revealed = false;
+      input.value = "";
+      input.type = "password";
+      input.placeholder = placeholder();
+      return;
+    }
+    if (input.value.trim()) return;
+    // A key that is being typed is left alone.
+    try {
+      const answer = await api("/api/config/model/key");
+      if (!answer.api_key) {
+        if (note) note.textContent = "no key is set";
+        return;
+      }
+      input.value = answer.api_key;
+      input.type = "text";
+      input.select();
+      revealed = true;
+    } catch (error) {
+      if (note) note.textContent = `error: ${error.message}`;
+    }
+  };
 }
 
 async function startSettings() {
@@ -621,31 +653,7 @@ async function startSettings() {
     return form;
   };
 
-  let revealed = false;
-  keyInput.onclick = async () => {
-    if (revealed) {
-      revealed = false;
-      keyInput.value = "";
-      keyInput.type = "password";
-      keyInput.placeholder = keyPlaceholder();
-      return;
-    }
-    if (keyInput.value.trim()) return;
-    // A key that is being typed is left alone.
-    try {
-      const answer = await api("/api/config/model/key");
-      if (!answer.api_key) {
-        message.textContent = "no key is set";
-        return;
-      }
-      keyInput.value = answer.api_key;
-      keyInput.type = "text";
-      keyInput.select();
-      revealed = true;
-    } catch (error) {
-      message.textContent = `error: ${error.message}`;
-    }
-  };
+  wireApiKey(keyInput, keyPlaceholder, message);
 
   document.getElementById("model-form").onsubmit = async (event) => {
     event.preventDefault();
@@ -669,6 +677,37 @@ async function startSettings() {
       renderTest(answer);
     } catch (error) {
       message.textContent = `error: ${error.message}`;
+    }
+  };
+
+  const testEndpoint = document.getElementById("test-endpoint");
+  const testKey = document.getElementById("test-api-key");
+  const testName = document.getElementById("test-model-name");
+  const testNote = document.getElementById("test-message");
+  testEndpoint.value = model.api_base || "";
+  testName.value = model.model_name || "";
+  testKey.type = "password";
+  testKey.value = "";
+  wireApiKey(testKey, () => "the key of the endpoint", testNote);
+
+  document.getElementById("test-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const body = { model_name: testName.value.trim() };
+    if (body.model_name && !body.model_name.includes("/")) {
+      // The endpoint is an OpenAI compatible one, so that is the provider.
+      body.model_name = `openai/${body.model_name}`;
+    }
+    const endpoint = testEndpoint.value.trim();
+    if (endpoint) body.api_base = endpoint;
+    const key = testKey.value.trim();
+    if (key) body.api_key = key;
+    testNote.textContent = "trying…";
+    try {
+      const answer = await api("/api/config/model/test", { method: "POST", body });
+      testNote.textContent = answer.ok ? `ok: ${answer.latency_ms}ms` : `error: ${answer.error}`;
+      renderTest(answer, "test-result");
+    } catch (error) {
+      testNote.textContent = `error: ${error.message}`;
     }
   };
 

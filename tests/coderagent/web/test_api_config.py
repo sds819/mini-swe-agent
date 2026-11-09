@@ -147,6 +147,34 @@ def test_a_name_that_is_not_an_alias_is_reported(make_client, tmp_path):
     assert "not one of the aliases" in answer["file"]["error"]
 
 
+def test_the_endpoint_is_cut_at_the_v1():
+    from coderagent.web.config_api import api_base_of
+
+    assert api_base_of("https://api.nengpa.com/v1/chat/completions") == "https://api.nengpa.com/v1"
+    assert api_base_of("https://api.nengpa.com/v1/completions") == "https://api.nengpa.com/v1"
+    assert api_base_of("https://api.nengpa.com/v1/") == "https://api.nengpa.com/v1"
+    assert api_base_of("https://api.nengpa.com/v1") == "https://api.nengpa.com/v1"
+
+
+def test_the_full_endpoint_is_written_cut(make_client):
+    client = make_client()
+
+    client.put("/api/config/model", json={"api_base": "https://api.nengpa.com/v1/chat/completions"})
+
+    assert client.get("/api/config").json()["model"]["api_base"] == "https://api.nengpa.com/v1"
+
+
+def test_the_test_panel_uses_the_key_of_the_settings_when_there_is_none(make_client, tmp_path):
+    from coderagent.web import config_api
+
+    client = make_client()
+    client.put("/api/config/model", json={"api_key": "sk-secret-value"})
+
+    effective = config_api.effective_model(tmp_path, {"model_name": "x/y"})
+
+    assert effective["model_kwargs"]["api_key"] == "sk-secret-value"
+
+
 def test_the_key_can_be_shown_in_the_page(make_client):
     client = make_client()
     client.put("/api/config/model", json={"api_key": "sk-secret-value"})

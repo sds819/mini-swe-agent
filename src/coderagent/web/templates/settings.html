@@ -84,6 +84,33 @@ model:
     <div id="model-test"></div>
   </form>
 
+  <h2>Test a model</h2>
+  <p class="note">
+    Try a model out without saving anything: the endpoint, the key and the name
+    of the model. The endpoint may be the full address of the chat completions
+    — the part behind <code>/v1</code> is cut off, because litellm adds it
+    itself. An empty key means the key of the settings above.
+  </p>
+
+  <form id="test-form">
+    <label>Endpoint
+      <input id="test-endpoint" placeholder="https://api.nengpa.com/v1/chat/completions">
+    </label>
+    <label>API Key
+      <input id="test-api-key" type="password" placeholder="the key of the endpoint">
+      <small class="source">a click shows the key of the settings, a second click hides it again</small>
+    </label>
+    <label>Model Name
+      <input id="test-model-name" placeholder="MiniMax-M2.7">
+      <small class="source">without a provider in front, <code>openai/</code> is added: the endpoint is an OpenAI compatible one</small>
+    </label>
+    <div class="row">
+      <button type="submit" class="primary">Test connection</button>
+      <span id="test-message" class="note"></span>
+    </div>
+    <div id="test-result"></div>
+  </form>
+
   <h2>Permissions</h2>
   <p class="note">
     The permissions go to the same user level configuration file. A new session
