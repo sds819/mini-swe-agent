@@ -61,6 +61,14 @@ def test_the_choice_of_the_visitor_wins_over_the_region(make_client):
     assert 'lang="en"' in answer.text
 
 
+def test_the_language_on_the_address_wins_over_the_region(make_client):
+    client = make_client()
+
+    answer = client.get("/?lang=en", headers={"CF-IPCountry": "CN"})
+
+    assert 'lang="en"' in answer.text
+
+
 def test_the_language_of_the_browser_is_the_last_thing(make_client):
     client = make_client()
 

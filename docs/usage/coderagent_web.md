@@ -207,6 +207,17 @@ is what decides.
 The visitor always wins: the box in the top bar switches the language and
 remembers it in a cookie, and `?lang=zh` (or `?lang=en`) works on every page.
 
+What decides, in this order:
+
+1. **The choice of the visitor** — the language in the box of the top bar (kept
+   in a cookie) or `?lang=zh` on the address. This one is the highest: a
+   visitor from a Chinese region who picks English gets the English pages.
+2. **The region of the address** — a visitor from a Chinese region gets the
+   Chinese pages, everybody else the English ones.
+3. **The language the browser asks for** — only when the region is not known,
+   which is the case when the server is reached directly, without a proxy in
+   front of it.
+
 ### Adding a language
 
 A language is added in three places:
