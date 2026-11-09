@@ -72,7 +72,7 @@ The model configuration, in a form:
 
 | Field | What it is |
 |---|---|
-| Model name | `model.model_name`, e.g. `deepseek/deepseek-flash` |
+| Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider in front of the name says who is called: `openai/MiniMax-M2.7` for a third party endpoint, `deepseek/deepseek-flash` for DeepSeek |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.model_kwargs.api_base` — the address of the provider |
 | API key | `model.model_kwargs.api_key`. A click shows it, a second click hides it again |
@@ -109,7 +109,7 @@ button. It is the shape a provider hands them out in.
 |---|---|
 | Endpoint | The address of the provider. The full address of the chat completions (`https://api.example.com/v1/chat/completions`) is fine — the part behind `/v1` is cut off, because litellm adds it itself |
 | API Key | The key of that endpoint. A click shows the key of the settings above, a second click hides it again |
-| Model Name | The name of the model. Without a provider in front (`openai/`) the provider `openai` is added, because the endpoint is an OpenAI compatible one |
+| Model Name | The name of the model. The provider in front of the name says who is called: `openai/MiniMax-M2.7`. Without one, the provider `openai` is added, because the endpoint is an OpenAI compatible one |
 
 An empty endpoint or an empty key means the one of the settings above. The
 result is the same four lines as the test of the form.

@@ -14,6 +14,7 @@
     <label>Model name
       <input id="model-name" placeholder="deepseek/deepseek-flash">
       <small id="source-model_name" class="source"></small>
+      <small class="source">the provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code> for a third party endpoint, <code>deepseek/deepseek-flash</code> for DeepSeek</small>
     </label>
     <label>Litellm config file
       <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
@@ -102,7 +103,7 @@ model:
     </label>
     <label>Model Name
       <input id="test-model-name" placeholder="MiniMax-M2.7">
-      <small class="source">without a provider in front, <code>openai/</code> is added: the endpoint is an OpenAI compatible one</small>
+      <small class="source">the provider in front of the name says who is called: <code>openai/MiniMax-M2.7</code>. Without one, <code>openai/</code> is added: the endpoint is an OpenAI compatible one</small>
     </label>
     <div class="row">
       <button type="submit" class="primary">Test connection</button>

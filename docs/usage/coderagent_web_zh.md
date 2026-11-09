@@ -75,7 +75,7 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 
 | 字段 | 落到哪 |
 |---|---|
-| Model name | `model.model_name`，比如 `deepseek/deepseek-flash` |
+| Model name | `model.model_name`，比如 `deepseek/deepseek-flash`。名字前面那个厂商决定调谁：第三方端点写 `openai/MiniMax-M2.7`，DeepSeek 写 `deepseek/deepseek-flash` |
 | Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
 | API base | `model.model_kwargs.api_base`——第三方模型的地址 |
 | API key | `model.model_kwargs.api_key`。点一下显示，再点一下收起 |
@@ -99,7 +99,7 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 |---|---|
 | Endpoint | 厂商的地址。可以直接粘完整的 `https://api.example.com/v1/chat/completions`：`/v1` 后面那段会被剪掉，因为 litellm 自己会加 |
 | API Key | 这个地址的 key。点一下显示上面设置里的 key，再点一下收起来 |
-| Model Name | 模型名。前面没写厂商（`openai/`）就补上 `openai/`——这个地址是 OpenAI 兼容的那种 |
+| Model Name | 模型名。前面那个厂商决定调谁：`openai/MiniMax-M2.7`。没写就补 `openai/`——这个地址是 OpenAI 兼容的那种 |
 
 地址或 key 留空，就用上面设置里的。结果和表单那边的测试一样，也是那几行。
 
