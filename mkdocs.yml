@@ -70,12 +70,13 @@ nav:
       - "Inspector": usage/inspector.md
       - "Output files": usage/output_files.md
     - "Coding agent":
-      - "Quick start": usage/coderagent_quickstart.md
+      - "快速开始": usage/coderagent_quickstart.md
+      - "中文":
+        - "功能": usage/coderagent_features_zh.md
+        - "网页版": usage/coderagent_web_zh.md
       - "Overview": usage/coderagent.md
       - "Features": usage/coderagent_features.md
-      - "Features (zh)": usage/coderagent_features_zh.md
       - "Web interface": usage/coderagent_web.md
-      - "Web interface (zh)": usage/coderagent_web_zh.md
       - "Commands": usage/coderagent_commands.md
       - "Sub agents": usage/coderagent_subagents.md
       - "Skills": usage/coderagent_skills.md
