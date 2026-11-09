@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+{% block title %}coder — 设置{% endblock %}
+{% block content %}
+<main class="page">
+  <h1>模型</h1>
+  <p class="note">
+    设置写到用户级配置文件（<code id="config-path">~/.coderagent/config.yaml</code>），项目级的那份永远不写。
+    新会话读新的设置；跑着的会话还是它原来那个模型。
+  </p>
+
+  <form id="model-form">
+    <label>模型名
+      <input id="model-name" placeholder="deepseek/deepseek-flash">
+      <small id="source-model_name" class="source"></small>
+      <small class="source">名字前面那个厂商决定调谁：第三方端点写 <code>openai/MiniMax-M2.7</code>，DeepSeek 写 <code>deepseek/deepseek-flash</code></small>
+    </label>
+    <label>Litellm 配置文件
+      <input id="litellm-config" placeholder="~/.coderagent/litellm_config.yaml">
+      <small id="source-litellm_config" class="source"></small>
+    </label>
+    <label>接口地址
+      <input id="api-base" placeholder="https://api.deepseek.com">
+      <small id="source-api_base" class="source"></small>
+    </label>
+    <label>API key
+      <input id="api-key" type="password" placeholder="点一下显示">
+      <small id="source-api_key" class="source"></small>
+      <small class="source">点一下显示 key，再点一下收起来</small>
+    </label>
+    <label>最多重试
+      <input id="max-retries" type="number" min="0" max="20">
+      <small id="source-max_retries" class="source"></small>
+    </label>
+    <label>缓存标记
+      <select id="set-cache-control">
+        <option value="">none</option>
+        <option value="ephemeral">ephemeral</option>
+      </select>
+      <small id="source-set_cache_control" class="source"></small>
+    </label>
+    <label>路由
+      <textarea id="routing" rows="3" placeholder="main: deepseek/deepseek-chat"></textarea>
+      <small class="source">一行一个用途：<code>用途: 模型</code></small>
+    </label>
+    <label>路由规则
+      <textarea id="routing-rules" rows="3" placeholder="tokens &gt; 50000: strong"></textarea>
+      <small class="source">一行一条规则：<code>when: 用途</code></small>
+    </label>
+    <label>附加参数
+      <textarea id="model-kwargs" rows="5" placeholder="temperature: 0.2"></textarea>
+      <small class="source">YAML，原样传给厂商</small>
+    </label>
+    <details class="history">
+      <summary>示例：第三方端点</summary>
+      <div class="history-body">
+        <p class="note">
+          模型名可以是 litellm 配置文件里模型列表的一条别名。
+          这样端点的 key 就留在那个文件里，不在这儿。
+        </p>
+        <pre># ~/.coderagent/litellm_config.yaml
+model_list:
+  - model_name: nengpa/minimax-m2.7
+    litellm_params:
+      model: openai/MiniMax-M2.7
+      api_base: https://api.nengpa.com/v1
+      api_key: sk-cp-...</pre>
+        <p class="note">
+          <code>model</code> 是 litellm 真正调的模型，前面带着厂商。
+          <code>api_base</code> 停在 <code>/v1</code>：后面那截
+          <code>/chat/completions</code> 是 litellm 自己加的。
+        </p>
+        <pre># ~/.coderagent/config.yaml
+model:
+  model_name: nengpa/minimax-m2.7
+  litellm_config: ~/.coderagent/litellm_config.yaml</pre>
+      </div>
+    </details>
+    <div class="row">
+      <button type="submit" class="primary">保存</button>
+      <button type="button" id="test-connection">测一下连接</button>
+      <span id="config-message" class="note"></span>
+    </div>
+    <div id="model-test"></div>
+  </form>
+
+  <h2>测一个模型</h2>
+  <p class="note">
+    不写任何文件，只管试：接口地址、key、模型名。地址可以写完整的
+    <code>/chat/completions</code>——<code>/v1</code> 后面那段会被剪掉，
+    因为 litellm 自己会加。key 留空就用上面设置里的。
+  </p>
+
+  <form id="test-form">
+    <label>接口地址
+      <input id="test-endpoint" placeholder="https://api.nengpa.com/v1/chat/completions">
+    </label>
+    <label>API key
+      <input id="test-api-key" type="password" placeholder="这个地址的 key">
+      <small class="source">点一下显示上面设置里的 key，再点一下收起来</small>
+    </label>
+    <label>模型名
+      <input id="test-model-name" placeholder="MiniMax-M2.7">
+      <small class="source">名字前面那个厂商决定调谁：<code>openai/MiniMax-M2.7</code>。没写就补上 <code>openai/</code>——这个地址是 OpenAI 兼容的那种</small>
+    </label>
+    <div class="row">
+      <button type="submit" class="primary">测一下连接</button>
+      <span id="test-message" class="note"></span>
+    </div>
+    <div id="test-result"></div>
+  </form>
+
+  <h2>权限</h2>
+  <p class="note">
+    权限写进同一个用户级配置文件。新会话读新的模式；跑着的会话还是它原来的模式。
+    跑着的会话在聊天页里切。
+  </p>
+
+  <form id="permissions-form">
+    <label>模式
+      {{ macros.permission_modes("permission-mode") }}
+      <small id="source-mode" class="source"></small>
+    </label>
+    <label>禁止的路径
+      <textarea id="deny-paths" rows="3" placeholder="secrets/"></textarea>
+      <small class="source">一行一个路径：agent 不许碰它们</small>
+    </label>
+    <label>额外的目录
+      <textarea id="include-dirs" rows="3" placeholder="/path/to/other/project"></textarea>
+      <small class="source">一行一个目录：工作目录以外、agent 仍然可以碰的目录</small>
+    </label>
+    <div class="row">
+      <button type="submit" class="primary">保存</button>
+      <span id="permissions-message" class="note"></span>
+    </div>
+    <p class="note" id="server-mode-note"></p>
+  </form>
+
+  <h2>设置来自哪一层</h2>
+  <table id="layers">
+    <thead><tr><th>层</th><th>模型</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</main>
+{% endblock %}

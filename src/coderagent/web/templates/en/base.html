@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}coder{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">coder</a>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/settings">Settings</a>
+    </nav>
+    <span class="spacer"></span>
+    <a class="language" href="/lang/zh?next={{ request.url.path }}" title="中文">中文</a>
+    <span class="status" id="status">no session</span>
+  </header>
+  {% block content %}{% endblock %}
+  <script>window.STRINGS = {{ strings | tojson }};</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

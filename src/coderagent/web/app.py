@@ -1,8 +1,10 @@
 """The FastAPI application: the pages, the API and the state they share."""
 
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -11,6 +13,7 @@ from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
 from coderagent.web.api import router
+from coderagent.web.i18n import COOKIE, LANGUAGES, STRINGS, locale_of
 from coderagent.web.sessions import SessionRegistry
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -42,17 +45,36 @@ def create_app(
     app.state.config_of = lambda: load_config(app.state.config_spec, cwd=cwd)
     app.include_router(router)
 
-    templates = Jinja2Templates(directory=str(TEMPLATES))
+    templates = {language: Jinja2Templates(directory=str(TEMPLATES / language)) for language in LANGUAGES}
     app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+
+    def page(request: Request, name: str) -> Any:
+        """A page in the language of the visitor."""
+        language = locale_of(request)
+        return templates[language].TemplateResponse(
+            request, name, {"cwd": str(cwd), "language": language, "strings": STRINGS[language]}
+        )
 
     @app.get("/")
     def chat(request: Request):
         """The chat page."""
-        return templates.TemplateResponse(request, "chat.html", {"cwd": str(cwd)})
+        return page(request, "chat.html")
 
     @app.get("/settings")
     def settings(request: Request):
         """The page where the model is configured."""
-        return templates.TemplateResponse(request, "settings.html", {"cwd": str(cwd)})
+        return page(request, "settings.html")
+
+    @app.get("/lang/{language}")
+    def set_language(language: str, request: Request):
+        """The language the visitor chose, remembered in a cookie."""
+        if language not in LANGUAGES:
+            language = "en"
+        target = request.query_params.get("next", "/")
+        if not target.startswith("/") or target.startswith("//"):
+            target = "/"
+        response = RedirectResponse(target, status_code=303)
+        response.set_cookie(COOKIE, language, max_age=31536000, samesite="lax")
+        return response
 
     return app

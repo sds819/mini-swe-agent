@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,13 +10,15 @@
   <header class="topbar">
     <a class="brand" href="/">coder</a>
     <nav>
-      <a href="/">Chat</a>
-      <a href="/settings">Settings</a>
+      <a href="/">聊天</a>
+      <a href="/settings">设置</a>
     </nav>
     <span class="spacer"></span>
-    <span class="status" id="status">no session</span>
+    <a class="language" href="/lang/en?next={{ request.url.path }}" title="English">EN</a>
+    <span class="status" id="status">没有会话</span>
   </header>
   {% block content %}{% endblock %}
+  <script>window.STRINGS = {{ strings | tojson }};</script>
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+{% block title %}coder — 聊天{% endblock %}
+{% block content %}
+<div class="layout">
+  <aside class="sidebar">
+    <section>
+      <h2>会话</h2>
+      <button id="new-session" class="primary">新会话</button>
+      <ul id="sessions" class="list"></ul>
+    </section>
+    <section>
+      <h2>文件</h2>
+      <div class="row">
+        <input id="file-path" placeholder="路径" value=".">
+        <button id="list-files">列出</button>
+      </div>
+      <ul id="files" class="list"></ul>
+    </section>
+  </aside>
+
+  <main class="conversation">
+    <div id="messages" class="messages"></div>
+    <form id="composer" class="composer">
+      <textarea id="input" rows="2" placeholder="跟 agent 说点什么，或者一条 /help 这样的命令"></textarea>
+      <button type="submit" class="primary">发送</button>
+    </form>
+    <div class="row commands">
+      <select id="command-list"></select>
+      <button id="run-command">运行</button>
+      <button id="interrupt">打断</button>
+    </div>
+  </main>
+
+  <aside class="inspector">
+    <h2>权限</h2>
+    <label>模式 {{ macros.permission_modes("permission-mode") }}</label>
+    <p class="note" id="mode-note"></p>
+    <h2>状态</h2>
+    <dl id="status-fields"></dl>
+    <h2>改动</h2>
+    <div id="changes"></div>
+    <h2>文件</h2>
+    <pre id="file-view"></pre>
+  </aside>
+</div>
+{% endblock %}

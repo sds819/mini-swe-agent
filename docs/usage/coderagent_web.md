@@ -192,6 +192,21 @@ The pin is the mode the sessions **start** with, not a lock: the chat page
 can still switch the mode of a session, because that is a decision you take
 in front of the session, not a setting of the file.
 
+## The language of the pages
+
+The pages are in Chinese for a visitor from a Chinese region (China, Hong
+Kong, Macau, Taiwan) and in English everywhere else. The region of the visitor
+is what decides.
+
+| Where the region comes from | How |
+|---|---|
+| The proxy in front of the server | The header it sets: `CF-IPCountry`, `X-AppEngine-Country`, `X-Vercel-IP-Country`, `X-Country-Code` |
+| The geoip database | `GeoLite2-Country.mmdb` in `~/.coderagent/` (or the path in `CODERAGENT_GEOIP_DB`). It needs the `geoip2` package, which is not a dependency of the agent |
+| The browser | The `accept-language` header, when the region is not known |
+
+The visitor always wins: the button in the top bar switches the language and
+remembers it in a cookie, and `?lang=zh` (or `?lang=en`) works on every page.
+
 ## The API
 
 Everything the pages do is a plain HTTP call, so you can drive the agent from
@@ -222,6 +237,7 @@ somewhere else cannot drive your agent. `curl` is not affected.
 | GET | `/api/commands` | The slash commands |
 | GET | `/api/config` | The model configuration, with the layer of every field |
 | GET | `/api/config/model/key` | The key of the model, in clear text |
+| GET | `/lang/{language}` | The language of the pages, remembered in a cookie |
 | PUT | `/api/config/model` | Write the model settings to the user file |
 | PUT | `/api/config/permissions` | Write the permission settings to the user file |
 | POST | `/api/config/model/test` | Try the settings out |

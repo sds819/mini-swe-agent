@@ -37,6 +37,7 @@ a { color: var(--accent); text-decoration: none; }
 
 .brand { font-weight: 700; letter-spacing: 0.04em; }
 .spacer { flex: 1; }
+.language { color: var(--muted); font-size: 12px; }
 .status { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
 
 .layout {

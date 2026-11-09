@@ -1,0 +1,9 @@
+{% macro permission_modes(element_id) %}
+<select id="{{ element_id }}">
+  <option value="default" title="凡是会改东西的工具都要审批。">default</option>
+  <option value="acceptEdits" title="写操作直接放行，其余的还是要问。">acceptEdits</option>
+  <option value="plan" title="只读：agent 只看不改，把计划写出来。">plan</option>
+  <option value="readonly" title="只读：agent 只看不改，把看到的说出来。">readonly</option>
+  <option value="bypass" title="一律不问，所有工具调用都放行——无人值守跑的时候用。">bypass</option>
+</select>
+{% endmacro %}

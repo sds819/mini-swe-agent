@@ -212,6 +212,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/commands` | 有哪些 slash 命令 |
 | GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
 | GET | `/api/config/model/key` | 模型的 key，明文 |
+| GET | `/lang/{language}` | 换个语言，记在 cookie 里 |
 | PUT | `/api/config/model` | 把模型设置写进用户级文件 |
 | PUT | `/api/config/permissions` | 把权限设置写进用户级文件 |
 | POST | `/api/config/model/test` | 拿设置试一下 |
@@ -221,6 +222,20 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 
 状态码：正忙着在跑一轮时再发消息 → `409`；审批 id 不认识 → `404`；路径越界 → `403`；
 空消息 → `400`；权限模式不认识 → `400`。
+
+## 页面的语言 {#language}
+
+页面给中文地区（大陆、香港、澳门、台湾）的人看是中文，其它地方是英文。
+决定的是访客所在的地方。
+
+| 地区从哪来 | 怎么来的 |
+|---|---|
+| 服务端前面的代理 | 代理写的那个头：`CF-IPCountry`、`X-AppEngine-Country`、`X-Vercel-IP-Country`、`X-Country-Code` |
+| geoip 数据库 | `~/.coderagent/GeoLite2-Country.mmdb`（或者 `CODERAGENT_GEOIP_DB` 指的那个路径）。要装 `geoip2` 这个包，agent 本身不依赖它 |
+| 浏览器 | 地区不知道的时候，看 `accept-language` |
+
+访客自己说了算：顶栏那个按钮换语言，换完记在 cookie 里；
+每个页面也都可以加 `?lang=zh`（或者 `?lang=en`）。
 
 ## 安全模型 {#security}
 

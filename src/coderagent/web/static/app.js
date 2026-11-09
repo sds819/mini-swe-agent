@@ -2,12 +2,18 @@
 
 const CLIENT = { "X-Coder-Client": "1" };
 
+/* The strings of the language of the page. The template hands them over. */
+function t(key, values = {}) {
+  const text = (window.STRINGS || {})[key] || key;
+  return text.replace(/\{(\w+)\}/g, (match, name) => (name in values ? values[name] : match));
+}
+
 const MODE_NOTES = {
-  default: "Every tool that changes something asks for approval.",
-  acceptEdits: "The writes go through, everything else asks for approval.",
-  plan: "Read only: the agent looks around and writes down the plan.",
-  readonly: "Read only: the agent looks around and answers.",
-  bypass: "Nothing is asked: every tool call is allowed. For unattended runs.",
+  default: "mode_default",
+  acceptEdits: "mode_acceptEdits",
+  plan: "mode_plan",
+  readonly: "mode_readonly",
+  bypass: "mode_bypass",
 };
 
 const state = {
@@ -65,13 +71,13 @@ function foldTurn() {
   if (!history) {
     history = el("details", "history");
     history.id = "history";
-    history.appendChild(el("summary", "", "earlier turns"));
+    history.appendChild(el("summary", "", t("history")));
     history.appendChild(el("div", "history-body"));
     messages().insertBefore(history, messages().firstChild);
   }
   history.querySelector(".history-body").appendChild(done);
   const count = history.querySelectorAll(".turn").length;
-  history.querySelector("summary").textContent = `${count} earlier turn${count === 1 ? "" : "s"}`;
+  history.querySelector("summary").textContent = t("earlier_turns", { count });
 }
 
 /* The conversation follows the newest content, unless the user scrolled up. */
@@ -90,10 +96,10 @@ function bubble(className, text) {
 function toolCard(item) {
   const card = el("div", "tool");
   const header = el("header");
-  header.appendChild(el("strong", "", item.tool || "tool"));
+  header.appendChild(el("strong", "", item.tool || t("tool")));
   if (item.summary) header.appendChild(el("span", "", item.summary));
   card.appendChild(header);
-  const body = el("div", "body", "running…");
+  const body = el("div", "body", t("running"));
   card.appendChild(body);
   target().appendChild(card);
   scrollToBottom();
@@ -127,21 +133,21 @@ function diffView(diff) {
 function renderApproval(item) {
   const card = el("div", "tool approval");
   const header = el("header");
-  header.appendChild(el("strong", "", `approval: ${item.tool}`));
+  header.appendChild(el("strong", "", t("approval", { tool: item.tool })));
   if (item.reason) header.appendChild(el("span", "", item.reason));
   card.appendChild(header);
   const body = el("div", "body", JSON.stringify(item.params || {}, null, 2));
   card.appendChild(body);
   const buttons = el("div", "buttons");
-  for (const [label, decision] of [["Allow", "allow"], ["Deny", "deny"], ["Always allow", "always"]]) {
+  for (const [label, decision] of [[t("allow"), "allow"], [t("deny"), "deny"], [t("always"), "always"]]) {
     const button = el("button", decision === "allow" ? "primary" : "", label);
     button.onclick = async () => {
       buttons.innerHTML = "";
-      buttons.appendChild(el("span", "", "answered…"));
+      buttons.appendChild(el("span", "", t("answered")));
       try {
         await api(`/api/approvals/${item.id}`, { method: "POST", body: { decision } });
       } catch (error) {
-        buttons.appendChild(el("span", "", `error: ${error.message}`));
+        buttons.appendChild(el("span", "", t("error", { message: error.message })));
       }
     };
     buttons.appendChild(button);
@@ -209,7 +215,7 @@ function render(item) {
       if (card) {
         card.querySelector(".buttons").innerHTML = "";
         card.querySelector(".buttons").appendChild(
-          el("span", "", item.timed_out ? "no answer: denied" : `answered: ${item.decision}`)
+          el("span", "", item.timed_out ? t("no_answer") : t("answered_decision", { decision: item.decision }))
         );
       }
       break;
@@ -224,13 +230,13 @@ function render(item) {
       bubble("error", item.error);
       break;
     case "compaction":
-      bubble("separator", `the context was compacted (${item.tokens} tokens)`);
+      bubble("separator", t("compacted", { tokens: item.tokens }));
       break;
     case "reflection":
-      bubble("separator", `the session was settled in the memory ($${(item.cost || 0).toFixed(5)})`);
+      bubble("separator", t("settled", { cost: (item.cost || 0).toFixed(5) }));
       break;
     case "reverted":
-      bubble("separator", `the conversation was rolled back to ${item.messages} messages`);
+      bubble("separator", t("rolled_back", { messages: item.messages }));
       break;
     case "session_switched":
       state.sessionId = item.session_id;
@@ -282,7 +288,7 @@ async function refreshStatus() {
     if (fields) {
       fields.innerHTML = "";
       for (const [key, value] of Object.entries(status)) {
-        fields.appendChild(el("dt", "", key));
+        fields.appendChild(el("dt", "", t(`field_${key}`)));
         fields.appendChild(el("dd", "", String(value)));
       }
     }
@@ -300,7 +306,7 @@ function showMode(mode) {
   /* The user may be picking a mode: the poll must not pull the box away. */
   if (select && select.value !== mode && document.activeElement !== select) select.value = mode;
   const note = document.getElementById("mode-note");
-  if (note) note.textContent = MODE_NOTES[mode] || "";
+  if (note) note.textContent = t(MODE_NOTES[mode] || "");
 }
 
 async function loadChanges() {
@@ -375,7 +381,7 @@ async function showFile(path) {
     const file = await api(`/api/file?path=${encodeURIComponent(path)}`);
     view.textContent = file.content;
   } catch (error) {
-    view.textContent = `error: ${error.message}`;
+    view.textContent = t("error", { message: error.message });
   }
   try {
     const data = await api(`/api/diff?path=${encodeURIComponent(path)}`);
@@ -531,16 +537,16 @@ function renderTest(answer, target = "model-test") {
   if (file.ok) {
     fileText = `${file.path || "none"}${file.aliases && file.aliases.length ? ` — ${file.aliases.join(", ")}` : ""}`;
   } else if ((file.error || "").includes("not one of the aliases")) {
-    fileText = `${file.path || "none"} — the model is not an alias of this file, it is called as it is`;
+    fileText = `${file.path || "none"} — ${t("not_an_alias")}`;
   } else {
     fileText = `${file.path || "none"} — ${file.error}`;
   }
   const rows = [
-    ["model", `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
-    ["api base", resolved.api_base || "not set"],
-    ["api key", resolved.api_key_set ? `set (${resolved.api_key_hint})` : "not set"],
-    ["aliases file", fileText],
-    ["tools", tools.ok ? "ok, the model calls the tools" : tools.error || "not tried"],
+    [t("row_model"), `${resolved.model_name || "?"}${resolved.alias ? ` (alias ${resolved.alias})` : ""}`],
+    [t("row_api_base"), resolved.api_base || t("not_set")],
+    [t("row_api_key"), resolved.api_key_set ? `set (${resolved.api_key_hint})` : t("not_set")],
+    [t("row_aliases"), fileText],
+    [t("row_tools"), tools.ok ? t("tools_ok") : tools.error || t("not_tried")],
   ];
   const list = el("dl");
   for (const [key, value] of rows) {
@@ -566,7 +572,7 @@ function wireApiKey(input, placeholder, note) {
     try {
       const answer = await api("/api/config/model/key");
       if (!answer.api_key) {
-        if (note) note.textContent = "no key is set";
+        if (note) note.textContent = t("no_key");
         return;
       }
       input.value = answer.api_key;
@@ -574,7 +580,7 @@ function wireApiKey(input, placeholder, note) {
       input.select();
       revealed = true;
     } catch (error) {
-      if (note) note.textContent = `error: ${error.message}`;
+      if (note) note.textContent = t("error", { message: error.message });
     }
   };
 }
@@ -600,18 +606,18 @@ async function startSettings() {
   document.getElementById("include-dirs").value = (permissions.include_dirs || []).join("\n");
   const permissionSource = document.getElementById("source-mode");
   if (permissionSource) {
-    permissionSource.textContent = `from: ${(permissions.source || {}).mode || "defaults"}`;
+    permissionSource.textContent = t("from", { source: (permissions.source || {}).mode || "defaults" });
   }
   const serverNote = document.getElementById("server-mode-note");
   if (serverNote) {
     serverNote.textContent = permissions.server_mode
-      ? `The server was started with --permission-mode ${permissions.server_mode}: the mode of the file does not decide anything.`
+      ? t("server_mode", { mode: permissions.server_mode })
       : "";
   }
 
   for (const [field, source] of Object.entries(data.sources || {})) {
     const node = document.getElementById(`source-${field}`);
-    if (node) node.textContent = `from: ${source}`;
+    if (node) node.textContent = t("from", { source });
   }
 
   const body = document.querySelector("#layers tbody");
@@ -631,7 +637,7 @@ async function startSettings() {
   keyInput.type = "password";
   keyInput.value = "";
   const keyPlaceholder = () =>
-    model.api_key_set ? `set (${model.api_key_hint}) — click to show it` : "not set — click to show it";
+    model.api_key_set ? t("key_set", { hint: model.api_key_hint }) : t("key_not_set");
   keyInput.placeholder = keyPlaceholder();
 
   const message = document.getElementById("config-message");
@@ -659,24 +665,24 @@ async function startSettings() {
     event.preventDefault();
     try {
       const answer = await api("/api/config/model", { method: "PUT", body: payload() });
-      message.textContent = `saved to ${answer.path}`;
+      message.textContent = t("saved", { path: answer.path });
       document.getElementById("api-key").value = "";
       startSettings();
     } catch (error) {
-      message.textContent = `error: ${error.message}`;
+      message.textContent = t("error", { message: error.message });
     }
   };
 
   document.getElementById("test-connection").onclick = async () => {
-    message.textContent = "trying…";
+    message.textContent = t("trying");
     try {
       const answer = await api("/api/config/model/test", { method: "POST", body: payload() });
       message.textContent = answer.ok
-        ? `ok: ${answer.latency_ms}ms, $${(answer.cost || 0).toFixed(6)}`
-        : `error: ${answer.error}`;
+        ? t("ok_ms", { ms: answer.latency_ms })
+        : t("error", { message: answer.error });
       renderTest(answer);
     } catch (error) {
-      message.textContent = `error: ${error.message}`;
+      message.textContent = t("error", { message: error.message });
     }
   };
 
@@ -688,7 +694,7 @@ async function startSettings() {
   testName.value = model.model_name || "";
   testKey.type = "password";
   testKey.value = "";
-  wireApiKey(testKey, () => "the key of the endpoint", testNote);
+  wireApiKey(testKey, () => t("key_of_endpoint"), testNote);
 
   document.getElementById("test-form").onsubmit = async (event) => {
     event.preventDefault();
@@ -701,13 +707,13 @@ async function startSettings() {
     if (endpoint) body.api_base = endpoint;
     const key = testKey.value.trim();
     if (key) body.api_key = key;
-    testNote.textContent = "trying…";
+    testNote.textContent = t("trying");
     try {
       const answer = await api("/api/config/model/test", { method: "POST", body });
-      testNote.textContent = answer.ok ? `ok: ${answer.latency_ms}ms` : `error: ${answer.error}`;
+      testNote.textContent = answer.ok ? t("ok_ms", { ms: answer.latency_ms }) : t("error", { message: answer.error });
       renderTest(answer, "test-result");
     } catch (error) {
-      testNote.textContent = `error: ${error.message}`;
+      testNote.textContent = t("error", { message: error.message });
     }
   };
 
@@ -723,10 +729,10 @@ async function startSettings() {
           include_dirs: splitLines(document.getElementById("include-dirs").value),
         },
       });
-      note.textContent = `saved to ${answer.path}`;
+      note.textContent = t("saved", { path: answer.path });
       startSettings();
     } catch (error) {
-      note.textContent = `error: ${error.message}`;
+      note.textContent = t("error", { message: error.message });
     }
   };
 }
