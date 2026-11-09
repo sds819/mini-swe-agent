@@ -13,10 +13,17 @@ from coderagent.config.schema import Config
 from coderagent.core.protocols import ModelBackend
 from coderagent.core.session import SessionStore
 from coderagent.web.api import router
-from coderagent.web.i18n import COOKIE, LANGUAGES, STRINGS, locale_of
+from coderagent.web.i18n import COOKIE, DEFAULT_LANGUAGE, LANGUAGES, STRINGS, Language, locale_of
 from coderagent.web.sessions import SessionRegistry
 
 TEMPLATES = Path(__file__).parent / "templates"
+
+
+def available_languages() -> tuple[Language, ...]:
+    """The languages that can be served: templates and strings are both there."""
+    return tuple(
+        language for language in LANGUAGES if (TEMPLATES / language.code).is_dir() and language.code in STRINGS
+    )
 
 
 def create_app(
@@ -45,14 +52,23 @@ def create_app(
     app.state.config_of = lambda: load_config(app.state.config_spec, cwd=cwd)
     app.include_router(router)
 
-    templates = {language: Jinja2Templates(directory=str(TEMPLATES / language)) for language in LANGUAGES}
+    languages = available_languages()
+    codes = [language.code for language in languages]
+    templates = {language.code: Jinja2Templates(directory=str(TEMPLATES / language.code)) for language in languages}
     app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
     def page(request: Request, name: str) -> Any:
         """A page in the language of the visitor."""
-        language = locale_of(request)
+        language = locale_of(request, codes)
         return templates[language].TemplateResponse(
-            request, name, {"cwd": str(cwd), "language": language, "strings": STRINGS[language]}
+            request,
+            name,
+            {
+                "cwd": str(cwd),
+                "language": language,
+                "languages": languages,
+                "strings": STRINGS[language],
+            },
         )
 
     @app.get("/")
@@ -68,8 +84,8 @@ def create_app(
     @app.get("/lang/{language}")
     def set_language(language: str, request: Request):
         """The language the visitor chose, remembered in a cookie."""
-        if language not in LANGUAGES:
-            language = "en"
+        if language not in codes:
+            language = DEFAULT_LANGUAGE if DEFAULT_LANGUAGE in codes else codes[0]
         target = request.query_params.get("next", "/")
         if not target.startswith("/") or target.startswith("//"):
             target = "/"

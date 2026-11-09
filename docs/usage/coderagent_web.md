@@ -204,8 +204,30 @@ is what decides.
 | The geoip database | `GeoLite2-Country.mmdb` in `~/.coderagent/` (or the path in `CODERAGENT_GEOIP_DB`). It needs the `geoip2` package, which is not a dependency of the agent |
 | The browser | The `accept-language` header, when the region is not known |
 
-The visitor always wins: the button in the top bar switches the language and
+The visitor always wins: the box in the top bar switches the language and
 remembers it in a cookie, and `?lang=zh` (or `?lang=en`) works on every page.
+
+### Adding a language
+
+A language is added in three places:
+
+1. `src/coderagent/web/templates/<code>/` — a copy of the directory of
+   `en/` with the text translated. `base.html`, `chat.html`, `settings.html`
+   and `macros.html` are the files.
+2. `src/coderagent/web/i18n.py` — an entry in `LANGUAGES` (the code, the name
+   of the language in that language, the name in English) and the strings of
+   the browser in `STRINGS`.
+3. `src/coderagent/web/i18n.py` — the regions of that language in
+   `REGION_LANGUAGES`, so that the visitors of those regions get it without
+   asking.
+
+A language whose templates are missing is not offered: the box in the top bar
+only lists the languages that can be served, and a language that is not
+served falls back to English.
+
+The strings of `STRINGS` are the ones the browser shows while it works (the
+text of the buttons, the labels of the status bar). The text of the pages
+themselves is in the templates.
 
 ## The API
 

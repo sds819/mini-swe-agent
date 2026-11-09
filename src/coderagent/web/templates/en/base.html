@@ -14,7 +14,12 @@
       <a href="/settings">Settings</a>
     </nav>
     <span class="spacer"></span>
-    <a class="language" href="/lang/zh?next={{ request.url.path }}" title="中文">中文</a>
+    <select class="language" title="the language of the pages"
+            onchange="location.href='/lang/' + this.value + '?next=' + encodeURIComponent({{ request.url.path | tojson }})">
+      {% for option in languages %}
+      <option value="{{ option.code }}"{% if option.code == language %} selected{% endif %}>{{ option.name }}</option>
+      {% endfor %}
+    </select>
     <span class="status" id="status">no session</span>
   </header>
   {% block content %}{% endblock %}

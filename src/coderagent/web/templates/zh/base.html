@@ -14,7 +14,12 @@
       <a href="/settings">设置</a>
     </nav>
     <span class="spacer"></span>
-    <a class="language" href="/lang/en?next={{ request.url.path }}" title="English">EN</a>
+    <select class="language" title="页面的语言"
+            onchange="location.href='/lang/' + this.value + '?next=' + encodeURIComponent({{ request.url.path | tojson }})">
+      {% for option in languages %}
+      <option value="{{ option.code }}"{% if option.code == language %} selected{% endif %}>{{ option.name }}</option>
+      {% endfor %}
+    </select>
     <span class="status" id="status">没有会话</span>
   </header>
   {% block content %}{% endblock %}

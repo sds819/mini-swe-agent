@@ -234,8 +234,24 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | geoip 数据库 | `~/.coderagent/GeoLite2-Country.mmdb`（或者 `CODERAGENT_GEOIP_DB` 指的那个路径）。要装 `geoip2` 这个包，agent 本身不依赖它 |
 | 浏览器 | 地区不知道的时候，看 `accept-language` |
 
-访客自己说了算：顶栏那个按钮换语言，换完记在 cookie 里；
+访客自己说了算：顶栏那个下拉框换语言，换完记在 cookie 里；
 每个页面也都可以加 `?lang=zh`（或者 `?lang=en`）。
+
+### 加一种语言
+
+加语言要动三个地方：
+
+1. `src/coderagent/web/templates/<代码>/`——把 `en/` 目录复制一份，翻译里面的文字。
+   一共四个文件：`base.html`、`chat.html`、`settings.html`、`macros.html`。
+2. `src/coderagent/web/i18n.py`——`LANGUAGES` 里加一条（代码、用该语言写的语言名、
+   用英文写的语言名），`STRINGS` 里加上浏览器要的文案。
+3. `src/coderagent/web/i18n.py`——`REGION_LANGUAGES` 里写上这个语言对应的地区，
+   那些地方的访客不用问就能拿到。
+
+没有模板的语言不会被提供：顶栏的下拉框只列能上的语言，上不了的语言退回英文。
+
+`STRINGS` 里是浏览器运行时才显示的文案（按钮上的字、状态栏的标签）。
+页面本身的文字在模板里。
 
 ## 安全模型 {#security}
 

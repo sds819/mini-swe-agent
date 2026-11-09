@@ -2,20 +2,52 @@
 
 The region of the visitor comes from the proxy in front of the server, or from
 a geoip database. The visitor can always say which language they want: with
-`?lang=zh` or with the button in the top bar, which remembers it in a cookie.
+`?lang=zh` or with the box in the top bar, which remembers it in a cookie.
+
+A language is added in three places: its templates in `templates/<code>/`, its
+strings in `STRINGS` and its entry in `LANGUAGES`. A language that has no
+templates is not offered.
 """
 
 import os
+from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from coderagent.paths import config_home
 
-LANGUAGES = ("en", "zh")
-"""The languages of the pages."""
 
-CHINESE_REGIONS = ("CN", "HK", "MO", "TW")
-"""The regions where the pages are in Chinese."""
+@dataclass(frozen=True)
+class Language:
+    """A language of the pages."""
+
+    code: str
+    """The code of the language: `en`, `zh`."""
+
+    name: str
+    """The name of the language in that language: `English`, `中文`."""
+
+    english: str
+    """The name of the language in English: `English`, `Chinese`."""
+
+
+LANGUAGES: tuple[Language, ...] = (
+    Language("en", "English", "English"),
+    Language("zh", "中文", "Chinese"),
+)
+"""The languages of the pages. One is only offered when its templates are there."""
+
+REGION_LANGUAGES = {
+    "CN": "zh",
+    "HK": "zh",
+    "MO": "zh",
+    "TW": "zh",
+    "JP": "ja",
+    "FR": "fr",
+    "DE": "de",
+}
+"""The language of a region. A region whose language is not offered falls back to the browser."""
 
 COUNTRY_HEADERS = ("CF-IPCountry", "X-AppEngine-Country", "X-Vercel-IP-Country", "X-Country-Code")
 """The headers a proxy in front of the server sets the country in."""
@@ -28,6 +60,9 @@ GEOIP_ENV = "CODERAGENT_GEOIP_DB"
 
 COOKIE = "coder_lang"
 """The cookie that holds the language the visitor chose."""
+
+DEFAULT_LANGUAGE = "en"
+"""The language of the pages when nothing else says which one."""
 
 STRINGS: dict[str, dict[str, str]] = {
     "en": {
@@ -168,7 +203,7 @@ def _geoip_country(address: str) -> str:
         return ""
 
 
-def _preferred_language(header: str) -> str:
+def _preferred_language(header: str, available: Sequence[str]) -> str:
     """The language of the `accept-language` header, the one with the best quality."""
     best, quality = "", 0.0
     for part in header.split(","):
@@ -178,25 +213,34 @@ def _preferred_language(header: str) -> str:
             key, _, value = parameter.strip().partition("=")
             if key == "q":
                 weight = float(value or 0)
-        if name.startswith("zh") and weight > quality:
-            best, quality = "zh", weight
+        code = name.strip().lower().split("-")[0]
+        if code in available and weight > quality:
+            best, quality = code, weight
     return best
 
 
-def locale_of(request: Any) -> str:
+def _fallback(available: Sequence[str]) -> str:
+    """The language of the pages when nothing else says which one."""
+    if DEFAULT_LANGUAGE in available:
+        return DEFAULT_LANGUAGE
+    return available[0] if available else DEFAULT_LANGUAGE
+
+
+def locale_of(request: Any, available: Sequence[str] = (DEFAULT_LANGUAGE,)) -> str:
     """The language of the pages.
 
     The choice of the visitor comes first (`?lang=` and the cookie of the
     button in the top bar), then the region of the address, then the language
-    the browser asks for.
+    the browser asks for. A language that is not offered is ignored.
     """
     choice = request.query_params.get("lang", "").strip().lower()
-    if choice in LANGUAGES:
+    if choice in available:
         return choice
     cookie = request.cookies.get(COOKIE, "")
-    if cookie in LANGUAGES:
+    if cookie in available:
         return cookie
     country = country_of(request)
     if country:
-        return "zh" if country in CHINESE_REGIONS else "en"
-    return _preferred_language(request.headers.get("accept-language", "")) or "en"
+        language = REGION_LANGUAGES.get(country, "")
+        return language if language in available else _fallback(available)
+    return _preferred_language(request.headers.get("accept-language", ""), available) or _fallback(available)
