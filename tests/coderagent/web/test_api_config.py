@@ -147,6 +147,46 @@ def test_a_name_that_is_not_an_alias_is_reported(make_client, tmp_path):
     assert "not one of the aliases" in answer["file"]["error"]
 
 
+def test_the_key_can_be_shown_in_the_page(make_client):
+    client = make_client()
+    client.put("/api/config/model", json={"api_key": "sk-secret-value"})
+
+    answer = client.get("/api/config/model/key")
+
+    assert answer.status_code == 200
+    assert answer.json()["api_key"] == "sk-secret-value"
+
+
+def test_the_key_needs_the_header_of_the_client(make_client):
+    client = make_client()
+    client.put("/api/config/model", json={"api_key": "sk-secret-value"})
+
+    response = client.get("/api/config/model/key", headers={"X-Coder-Client": ""})
+
+    assert response.status_code == 403
+
+
+def test_the_key_of_the_alias_file_is_the_key_of_the_agent(make_client, tmp_path):
+    path = tmp_path / "litellm_config.yaml"
+    path.write_text(
+        "model_list:\n  - model_name: my-alias\n    litellm_params:\n      model: x/y\n      api_key: sk-alias-value\n",
+        encoding="utf-8",
+    )
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "my-alias", "litellm_config": str(path)})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-alias-value"
+
+
+def test_a_payload_without_a_key_keeps_the_one_that_is_set(make_client):
+    client = make_client()
+    client.put("/api/config/model", json={"api_key": "sk-secret-value"})
+
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-secret-value"
+
+
 def test_the_model_has_to_call_the_tools():
     from coderagent.testing.scripted_model import ScriptedModel
     from coderagent.web.config_api import check_tools

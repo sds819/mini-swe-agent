@@ -555,9 +555,6 @@ async function startSettings() {
   document.getElementById("model-name").value = model.model_name || "";
   document.getElementById("litellm-config").value = model.litellm_config || "";
   document.getElementById("api-base").value = model.api_base || "";
-  document.getElementById("api-key").placeholder = model.api_key_set
-    ? `set (${model.api_key_hint}) — type to replace`
-    : "not set";
   document.getElementById("max-retries").value = model.max_retries;
   document.getElementById("set-cache-control").value = model.set_cache_control || "";
   document.getElementById("routing").value = formatKeyValues(model.routing);
@@ -598,20 +595,57 @@ async function startSettings() {
     }
   }
 
+  const keyInput = document.getElementById("api-key");
+  keyInput.type = "password";
+  keyInput.value = "";
+  const keyPlaceholder = () =>
+    model.api_key_set ? `set (${model.api_key_hint}) — click to show it` : "not set — click to show it";
+  keyInput.placeholder = keyPlaceholder();
+
   const message = document.getElementById("config-message");
-  const payload = () => ({
-    model_name: document.getElementById("model-name").value.trim(),
-    litellm_config: document.getElementById("litellm-config").value.trim(),
-    api_base: document.getElementById("api-base").value.trim(),
-    api_key: document.getElementById("api-key").value,
-    max_retries: Number(document.getElementById("max-retries").value || 0),
-    set_cache_control: document.getElementById("set-cache-control").value,
-    routing: parseKeyValues(document.getElementById("routing").value),
-    routing_rules: Object.entries(parseKeyValues(document.getElementById("routing-rules").value)).map(
-      ([when, purpose]) => ({ when, purpose })
-    ),
-    model_kwargs: parseKeyValues(document.getElementById("model-kwargs").value),
-  });
+  const payload = () => {
+    const form = {
+      model_name: document.getElementById("model-name").value.trim(),
+      litellm_config: document.getElementById("litellm-config").value.trim(),
+      api_base: document.getElementById("api-base").value.trim(),
+      max_retries: Number(document.getElementById("max-retries").value || 0),
+      set_cache_control: document.getElementById("set-cache-control").value,
+      routing: parseKeyValues(document.getElementById("routing").value),
+      routing_rules: Object.entries(parseKeyValues(document.getElementById("routing-rules").value)).map(
+        ([when, purpose]) => ({ when, purpose })
+      ),
+      model_kwargs: parseKeyValues(document.getElementById("model-kwargs").value),
+    };
+    const key = keyInput.value.trim();
+    if (key) form.api_key = key;
+    return form;
+  };
+
+  let revealed = false;
+  keyInput.onclick = async () => {
+    if (revealed) {
+      revealed = false;
+      keyInput.value = "";
+      keyInput.type = "password";
+      keyInput.placeholder = keyPlaceholder();
+      return;
+    }
+    if (keyInput.value.trim()) return;
+    // A key that is being typed is left alone.
+    try {
+      const answer = await api("/api/config/model/key");
+      if (!answer.api_key) {
+        message.textContent = "no key is set";
+        return;
+      }
+      keyInput.value = answer.api_key;
+      keyInput.type = "text";
+      keyInput.select();
+      revealed = true;
+    } catch (error) {
+      message.textContent = `error: ${error.message}`;
+    }
+  };
 
   document.getElementById("model-form").onsubmit = async (event) => {
     event.preventDefault();

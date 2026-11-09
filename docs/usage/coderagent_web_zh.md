@@ -76,8 +76,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 | 字段 | 落到哪 |
 |---|---|
 | Model name | `model.model_name`，比如 `deepseek/deepseek-flash` |
+| Litellm config file | `model.litellm_config`——别名文件，模型名可以是里面的一条别名 |
 | API base | `model.model_kwargs.api_base`——第三方模型的地址 |
-| API key | `model.model_kwargs.api_key`。**只写不读**，浏览器永远拿不到明文 |
+| API key | `model.model_kwargs.api_key`。点一下显示，再点一下收起 |
 | Max retries | `model.max_retries` |
 | Cache control | `model.set_cache_control`（`ephemeral` 或空） |
 | Routing | `model.routing`，一行一个 `用途: 模型` |
@@ -97,6 +98,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
   当前这个会话想立刻换模型，用 `/model <名字>`。
 - **环境变量里的 key 在页面上看不到**。页面读的是配置文件，而 `DEEPSEEK_API_KEY` 这类变量
   在环境里，所以 `api_key_set` 会是 false——这是正常的，页面管的是配置文件里的 key。
+- **key 那一栏**。平时只显示 `set (********1234)`，明文不露。点一下输入框，服务器
+  才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
+  配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。
 
 ## 权限 {#permissions}
 
@@ -194,6 +198,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | POST | `/api/approvals/{id}` | 允许、拒绝、或者永久允许一个工具 |
 | GET | `/api/commands` | 有哪些 slash 命令 |
 | GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
+| GET | `/api/config/model/key` | 模型的 key，明文 |
 | PUT | `/api/config/model` | 把模型设置写进用户级文件 |
 | PUT | `/api/config/permissions` | 把权限设置写进用户级文件 |
 | POST | `/api/config/model/test` | 拿设置试一下 |
@@ -215,7 +220,9 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 - **浏览器骗不到它**。写接口要一个跨站请求发不出来的头。
 - **浏览器看不到工作目录外面**。每个路径都先 `resolve()`，再跟工作目录和
   `permissions.include_dirs` 比对；用户写的规则放宽不了这个边界。
-- **API key 不出服务器**。设置页只拿到 `api_key_set` 和末四位；分层预览里所有密钥都被抹掉。
+- **key 只在你要的时候才露面**。设置页平时只拿到 `api_key_set` 和末四位；分层预览里所有密钥
+  都被抹掉。点一下 key 那一栏，服务器才把明文发过来；这个请求要带客户端那个头，所以
+  别的站点的页面问不到它。
 - **API key 只写用户级文件**，绝不写进会进 git 的项目级文件。
 
 ## 和终端的差别 {#differences}

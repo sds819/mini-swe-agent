@@ -75,7 +75,7 @@ The model configuration, in a form:
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash` |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.model_kwargs.api_base` — the address of the provider |
-| API key | `model.model_kwargs.api_key`. Write-only: it is never sent back to the browser |
+| API key | `model.model_kwargs.api_key`. A click shows it, a second click hides it again |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
 | Routing | `model.routing` |
@@ -112,6 +112,13 @@ configuration files, so a provider key that comes from the environment
 (`DEEPSEEK_API_KEY` and the like) is not shown and `api_key_set` stays false.
 That is the normal case; the page is for the keys that live in the
 configuration.
+
+**The key of the field.** The field of the key shows `set (********1234)` while
+the key itself stays hidden. A click on the field asks the server for the key
+and shows it; a second click hides it again. The key of the aliases file counts
+too: if the key lives in the litellm config file, that is the one that is shown.
+An empty field keeps the key that is set — the key is only sent when there is
+something in the field.
 
 **When it takes effect**: the server keeps the configuration it started with.
 A **new** session reads the files again, so the new settings apply from the
@@ -201,6 +208,7 @@ somewhere else cannot drive your agent. `curl` is not affected.
 | POST | `/api/approvals/{id}` | Allow, deny or always allow a tool |
 | GET | `/api/commands` | The slash commands |
 | GET | `/api/config` | The model configuration, with the layer of every field |
+| GET | `/api/config/model/key` | The key of the model, in clear text |
 | PUT | `/api/config/model` | Write the model settings to the user file |
 | PUT | `/api/config/permissions` | Write the permission settings to the user file |
 | POST | `/api/config/model/test` | Try the settings out |
@@ -243,9 +251,11 @@ Read this before you put it on a network.
 - **The browser cannot look outside the working directory.** Every path is
   resolved and checked against the working directory and the directories in
   `permissions.include_dirs`. The rules of the user cannot widen that.
-- **The API key never leaves the server.** The settings page only ever gets
+- **The key is only shown on request.** The settings page only gets
   `api_key_set` and the last four characters; the preview of the layers has
-  every secret replaced by `***`.
+  every secret replaced by `***`. The key itself is sent when you click the
+  field of the key, and that request needs the header of the client, so a page
+  somewhere else cannot ask for it.
 - **The api key is written to the user file only**, never to the project file
   that goes into the repository.
 

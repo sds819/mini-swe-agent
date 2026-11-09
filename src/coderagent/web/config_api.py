@@ -276,6 +276,13 @@ def effective_model(cwd: Path, overrides: dict) -> dict:
     }
 
 
+def effective_api_key(cwd: Path) -> str:
+    """The key the agent would use: the one of the settings or the one of the alias."""
+    config = load_config([], cwd=cwd)
+    _, params = resolve_alias(config.model.litellm_config, config.model.model_name)
+    return str(config.model.model_kwargs.get("api_key") or params.get("api_key") or "")
+
+
 def check_litellm_config(path: str, name: str = "") -> dict[str, Any]:
     """The file of the aliases: does it exist, does it parse, what is in it."""
     if not path:

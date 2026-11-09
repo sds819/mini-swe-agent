@@ -296,6 +296,12 @@ def put_config(body: dict, request: Request, _: None = Depends(require_client)) 
     return {"ok": True, "path": str(path), "model": config_api.model_view(request.app.state.cwd)}
 
 
+@router.get("/config/model/key")
+def get_config_key(request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
+    """The key of the model, so that it can be read in the settings page."""
+    return {"api_key": config_api.effective_api_key(request.app.state.cwd)}
+
+
 @router.put("/config/permissions")
 def put_permissions(body: dict, request: Request, _: None = Depends(require_client)) -> dict[str, Any]:
     """Write the permission settings to the user level configuration file."""
