@@ -141,3 +141,26 @@ def test_a_language_is_only_served_when_its_templates_are_there():
     for language in available_languages():
         assert (TEMPLATES / language.code).is_dir()
         assert language.code in STRINGS
+
+
+def test_the_strings_of_a_language_are_handed_to_the_browser(make_client):
+    client = make_client()
+
+    answer = client.get("/api/i18n/zh")
+
+    assert answer.json() == {"language": "zh", "strings": STRINGS["zh"]}
+
+
+def test_a_language_that_is_not_offered_has_no_strings(make_client):
+    client = make_client()
+
+    assert client.get("/api/i18n/ja").status_code == 404
+
+
+def test_the_page_switches_the_language_without_leaving_it(make_client):
+    client = make_client()
+
+    answer = client.get("/")
+
+    assert "chooseLanguage(this.value)" in answer.text
+    assert "location.href='/lang/'" not in answer.text

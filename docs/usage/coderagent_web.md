@@ -207,6 +207,11 @@ is what decides.
 The visitor always wins: the box in the top bar switches the language and
 remembers it in a cookie, and `?lang=zh` (or `?lang=en`) works on every page.
 
+The switch does not leave the page: the page of that language is fetched and
+put in place, so the whole page — the text of the templates and the text the
+browser writes — changes language right away. The choice is kept in the
+browser as well as in the cookie, so a refresh does not change it back.
+
 What decides, in this order:
 
 1. **The choice of the visitor** — the language in the box of the top bar (kept
@@ -271,6 +276,7 @@ somewhere else cannot drive your agent. `curl` is not affected.
 | GET | `/api/config` | The model configuration, with the layer of every field |
 | GET | `/api/config/model/key` | The key of the model, in clear text |
 | GET | `/lang/{language}` | The language of the pages, remembered in a cookie |
+| GET | `/api/i18n/{language}` | The strings of a language, for a browser that switches without a reload |
 | PUT | `/api/config/model` | Write the model settings to the user file |
 | PUT | `/api/config/permissions` | Write the permission settings to the user file |
 | POST | `/api/config/model/test` | Try the settings out |

@@ -15,7 +15,7 @@
     </nav>
     <span class="spacer"></span>
     <select class="language" title="the language you pick here wins over the region of your address"
-            onchange="location.href='/lang/' + this.value + '?next=' + encodeURIComponent({{ request.url.path | tojson }})">
+            onchange="chooseLanguage(this.value)">
       {% for option in languages %}
       <option value="{{ option.code }}"{% if option.code == language %} selected{% endif %}>{{ option.name }}</option>
       {% endfor %}

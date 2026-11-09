@@ -406,6 +406,70 @@ async function loadCommands() {
   }
 }
 
+// -- the language -----------------------------------------------------------
+
+const LANGUAGE_KEY = "coder_lang";
+
+/* The text of a language, without leaving the page: the page of that language
+   is fetched and put in place, and the strings of the browser are replaced. */
+async function switchLanguage(code) {
+  const data = await api(`/api/i18n/${encodeURIComponent(code)}`);
+  window.STRINGS = data.strings;
+  const answer = await fetch(`${location.pathname}?lang=${encodeURIComponent(code)}`);
+  const doc = new DOMParser().parseFromString(await answer.text(), "text/html");
+  document.title = doc.title;
+  document.documentElement.lang = doc.documentElement.lang;
+  const fresh = doc.body.cloneNode(true);
+  fresh.querySelectorAll("script").forEach((node) => node.remove());
+  document.body.replaceChildren(...fresh.childNodes);
+  /* The choice is kept in the browser and in the cookie: the server renders the
+     right language the next time, and the browser finds its choice again. */
+  document.cookie = `${LANGUAGE_KEY}=${code}; path=/; max-age=31536000; samesite=lax`;
+  localStorage.setItem(LANGUAGE_KEY, code);
+}
+
+/* The values of the form, so that a change of the language does not throw
+   away what was typed. */
+function formValues() {
+  const values = {};
+  for (const node of document.querySelectorAll("input, textarea, select")) {
+    if (node.type !== "password" && node.id) values[node.id] = node.value;
+  }
+  return values;
+}
+
+function restoreForm(values) {
+  for (const [id, value] of Object.entries(values)) {
+    const node = document.getElementById(id);
+    if (node) node.value = value;
+  }
+}
+
+/* The page is drawn again in the new language: the conversation is read from
+   the log, the settings are read from the configuration. The values of the
+   form are the ones of before the switch, so nothing that was typed is lost. */
+async function relocalize(values = {}) {
+  if (document.getElementById("messages")) {
+    wire();
+    await loadCommands().catch(() => {});
+    if (state.sessionId) await openSession(state.sessionId);
+    return;
+  }
+  if (!document.getElementById("model-form")) return;
+  await startSettings();
+  restoreForm(values);
+}
+
+async function chooseLanguage(code) {
+  try {
+    const values = formValues();
+    await switchLanguage(code);
+    await relocalize(values);
+  } catch (error) {
+    /* the page stays in the language it has */
+  }
+}
+
 // -- the wiring ------------------------------------------------------------
 
 function wire() {
@@ -746,7 +810,13 @@ async function start() {
   setInterval(refreshStatus, 2000);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  /* The language of the visitor is remembered in the browser: it wins over the
+     one the server rendered, so a refresh does not change it back. */
+  const saved = localStorage.getItem(LANGUAGE_KEY);
+  if (saved && saved !== document.documentElement.lang) {
+    await switchLanguage(saved).catch(() => {});
+  }
   if (document.getElementById("messages")) start();
   if (document.getElementById("model-form")) startSettings();
 });

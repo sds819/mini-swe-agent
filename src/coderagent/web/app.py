@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -80,6 +80,13 @@ def create_app(
     def settings(request: Request):
         """The page where the model is configured."""
         return page(request, "settings.html")
+
+    @app.get("/api/i18n/{language}")
+    def strings_of(language: str):
+        """The strings of a language, for a browser that switches without a reload."""
+        if language not in codes:
+            raise HTTPException(status_code=404, detail="unknown language")
+        return {"language": language, "strings": STRINGS[language]}
 
     @app.get("/lang/{language}")
     def set_language(language: str, request: Request):

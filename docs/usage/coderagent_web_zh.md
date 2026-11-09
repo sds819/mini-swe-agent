@@ -213,6 +213,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
 | GET | `/api/config/model/key` | 模型的 key，明文 |
 | GET | `/lang/{language}` | 换个语言，记在 cookie 里 |
+| GET | `/api/i18n/{language}` | 一种语言的文案，给不想刷新页面的浏览器用 |
 | PUT | `/api/config/model` | 把模型设置写进用户级文件 |
 | PUT | `/api/config/permissions` | 把权限设置写进用户级文件 |
 | POST | `/api/config/model/test` | 拿设置试一下 |
@@ -236,6 +237,9 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 
 访客自己说了算：顶栏那个下拉框换语言，换完记在 cookie 里；
 每个页面也都可以加 `?lang=zh`（或者 `?lang=en`）。
+
+换语言**不换页面**：浏览器把那种语言的页面取回来放进去，整个页面——模板里的字和
+浏览器自己写的字——立刻就换了语言。这个选择浏览器里也记了一份，所以刷新不会变回去。
 
 谁说了算，按这个顺序：
 

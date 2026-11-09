@@ -15,7 +15,7 @@
     </nav>
     <span class="spacer"></span>
     <select class="language" title="这里选的语言比地址所在的地区说了算"
-            onchange="location.href='/lang/' + this.value + '?next=' + encodeURIComponent({{ request.url.path | tojson }})">
+            onchange="chooseLanguage(this.value)">
       {% for option in languages %}
       <option value="{{ option.code }}"{% if option.code == language %} selected{% endif %}>{{ option.name }}</option>
       {% endfor %}
