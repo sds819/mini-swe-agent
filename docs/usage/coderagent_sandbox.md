@@ -15,6 +15,8 @@ The sandboxes of mini-swe-agent are used as they are:
 | `sandbox.type` | What it does |
 |---|---|
 | `local` | The commands run on this machine |
+| `docker` | A Docker container |
+| `singularity` | A Singularity container |
 | `swerex_docker` | A Docker container that SWE-ReX manages |
 | `swerex_modal` | A container on Modal |
 | `bubblewrap` | A sandbox without root |

@@ -68,5 +68,6 @@ The command above is used like this:
 /commit src/coderagent/core/loop.py
 ```
 
-A file without a front matter is ignored. The commands of the project are found
-by walking up from the working directory.
+A file without a front matter is ignored. The commands are looked up in
+`<cwd>/.coderagent/commands/*.md` — the agent does not walk up the directories
+to find them.
