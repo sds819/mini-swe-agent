@@ -186,6 +186,36 @@ Read more in our [documentation](https://mini-swe-agent.com/latest/):
 * [FAQ](https://mini-swe-agent.com/latest/faq/)
 * [Contribute!](https://mini-swe-agent.com/latest/contributing/)
 
+## The coding agent (`coder`)
+
+This repository also ships `coder`: an interactive coding agent built on the same model and environment layer.
+It adds what a daily driver needs on top of mini — a tool system with permissions, sessions you can resume and
+fork, context compaction, MCP servers, hooks, subagents — and it runs in the terminal **and** in the browser.
+
+```bash
+pip install -e ".[web]"      # the browser interface needs fastapi, uvicorn and jinja2
+cd my-project
+
+coder                        # the terminal interface
+coder web                    # the same agent in the browser
+```
+
+- **`coder`** — the terminal interface: streaming output, approval prompts, slash commands (`/model`, `/mode`, `/cost`, …)
+- **`coder web`** — the same agent in the browser (`http://127.0.0.1:8765`): chat page, settings page, file tree, diffs
+
+Both share the same sessions, the same event log and the same permissions, so a session started in the browser
+can be continued in the terminal with `coder --resume <id>`, and the other way round.
+
+> [!WARNING]
+> The browser interface has **no authentication**: everybody who can reach the port can drive the agent and run
+> shell commands in the working directory. Keep it on `127.0.0.1`.
+
+Read more in [docs/usage](docs/usage/):
+
+* [Coding agent overview](docs/usage/coderagent.md) — installation, the terminal interface, configuration, tools, permissions
+* [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
+* [Everything `coder` can do](docs/usage/coderagent_features.md) — one page, every feature, with the errors you may hit
+
 ## Attribution
 
 If you found this work helpful, please consider citing the [SWE-agent paper](https://arxiv.org/abs/2405.15793) in your work:
