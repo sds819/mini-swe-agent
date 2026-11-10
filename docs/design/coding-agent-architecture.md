@@ -531,6 +531,39 @@ FastAPI 的事件循环里**绝不**跑 agent 代码——碰文件系统/模型
 **依赖边界**：`web/__init__.py` 只有 docstring——`import coderagent` **不会**拉起
 fastapi / uvicorn / jinja2；`ui/cli.py` 的 `web` 子命令在函数体里惰性导入。
 
+#### Web 版的功能清单
+
+| 功能 | 说明 |
+|---|---|
+| **聊天页** | 三栏：左栏是会话列表与文件树，中栏是对话，右栏是状态、本轮改过的文件与正在看的文件 |
+| **流式输出** | SSE 推送，边生成边显示；断线重连带 `since` 接着看，不会从头再来 |
+| **工具卡** | 一次调用一张卡（标题用与 TUI 同一份 `summarize()`），按 `tool_call_id` 更新同一张卡，带输出、报错与 diff |
+| **审批卡** | Allow / Deny / Always 三个按钮；**没人回答就是拒绝**（超时自动 DENY） |
+| **设置页** | 模型参数写成表单，每个字段下面标着它来自哪一层（`defaults`/`project`/`user`/`env`），底部是脱敏后的分层预览 |
+| **连通性测试** | 一次最便宜的调用 + 一次工具调用测试，测通了再保存 |
+| **测试模型面板** | 端点 + key + 模型名，不写任何文件，只管试 |
+| **权限两个入口** | 设置页写用户级配置（对**下一个**会话生效），聊天页的模式下拉框改**当前**会话（**立刻**生效） |
+| **会话管理** | 列表 / 续接 / fork / 回放；回放能看到历史消息与工具的 diff |
+| **文件浏览** | 目录树、读文件、工作区 diff；越界一律 **403** |
+| **Slash 命令** | 与终端**同一套**（内置命令 + 项目自定义命令），输出走 `command_output` 条目，不混进对话气泡 |
+| **中断** | 一键停掉正在跑的那轮 |
+| **页面语言** | 中英文；顶栏下拉框切换**不刷新页面**，选择记在浏览器与 cookie 里 |
+| **HTTP API** | 页面的每个动作都是普通 HTTP 调用，可以拿脚本驱动；交互式文档在 `/api/docs` |
+
+对外的接口面（`/api` 前缀）：
+
+| 分组 | 端点 |
+|---|---|
+| 会话 | `GET/POST /api/sessions`、`GET /api/sessions/{id}`、`/events`、`/items?since=`、`/stream?since=`、`/status`、`/metrics`、`/changes`、`POST /resume`、`/fork`、`/messages`、`/interrupt`、`/mode` |
+| 审批 | `POST /api/approvals/{id}`（allow / deny / always） |
+| 配置 | `GET /api/config`、`GET /api/config/model/key`、`PUT /api/config/model`、`PUT /api/config/permissions`、`POST /api/config/model/test` |
+| 文件 | `GET /api/files?path=&depth=`、`GET /api/file?path=`、`GET /api/diff?path=` |
+| 其它 | `GET /api/commands`、`GET /api/i18n/{language}`、`GET /lang/{language}` |
+
+状态码是接口契约的一部分：写接口缺 `X-Coder-Client` 头 → **403**；会话正忙 → **409**；
+未知会话 / 无人等待的审批 → **404**；空消息 / 非法模式 / 非法审批决策 → **400**；路径越界
+→ **403**。
+
 ### 4.7 L6 扩展层
 
 #### MCP 客户端
