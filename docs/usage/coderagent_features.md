@@ -151,7 +151,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |
 | `'{name}' is not one of the aliases of this file` | The model name is not in the `model_list` of the alias file. | Use one of the aliases, or drop `litellm_config`. |
 | `BadRequestError` | The provider refused the request (a wrong key, a wrong name, a wrong parameter). | It is **not** retried; the message of the provider is the answer. |
-| `AuthenticationError` | The key is missing or wrong. | Set `model.model_kwargs.api_key`, or the key of the endpoint in the alias file. |
+| `AuthenticationError` | The key is missing or wrong. | Set `model.model_kwargs.api_key`, or the key of the endpoint in the alias file, or the key of the provider in the environment (`OPENAI_API_KEY` for `openai/…`). |
 | `ContextWindowExceededError` | The request was larger than the window of the model. | Lower `context.context_window`, or use a model with a bigger window. |
 
 Retries are a separate thing from the errors above: a rate limit or a timeout

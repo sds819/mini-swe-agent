@@ -109,8 +109,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
   项目级的 `.coderagent/config.yaml` **永远不写**——它会进 git。文件里页面不认识的段落原样保留。
 - **对新会话生效**。跑着的服务保留启动时的配置，新会话建 loop 时重新读一遍文件。
   当前这个会话想立刻换模型，用 `/model <名字>`。
-- **环境变量里的 key 在页面上看不到**。页面读的是配置文件，而 `DEEPSEEK_API_KEY` 这类变量
-  在环境里，所以 `api_key_set` 会是 false——这是正常的，页面管的是配置文件里的 key。
+- **环境变量里的 key 也算数**。页面先读配置文件，再读环境：`DEEPSEEK_API_KEY` 这类变量
+  里的 key 一样会显示出来，`api_key_set` 是 true，字段下面那行写着来源是 `env`。
+  看哪个变量由模型名决定：`openai/…` 找 `OPENAI_API_KEY`，`deepseek/…` 找 `DEEPSEEK_API_KEY`。
 - **key 那一栏**。平时只显示 `set (********1234)`，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
   配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。
@@ -299,8 +300,8 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 ## 常见问题 {#faq}
 
 **「设置页里 `api_key_set` 是 false」**
-key 在环境变量里（`DEEPSEEK_API_KEY` 之类），不在配置文件里。页面只管配置文件的 key，
-模型本身照样能用环境变量里的 key。
+key 确实不在：配置文件里没有，环境里也没有对应厂商的变量（`DEEPSEEK_API_KEY` 之类）。
+模型名前面那个厂商决定看哪个变量——`openai/…` 找 `OPENAI_API_KEY`。
 
 **「改了设置没生效」**
 对**新会话**生效。当前这个会话还在用启动时的配置，想立刻换就 `/model <名字>`。

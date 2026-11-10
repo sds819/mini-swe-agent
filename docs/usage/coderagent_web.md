@@ -75,7 +75,7 @@ The model configuration, in a form:
 | Model name | `model.model_name`, e.g. `deepseek/deepseek-flash`. The provider in front of the name says who is called: `openai/MiniMax-M2.7` for a third party endpoint, `deepseek/deepseek-flash` for DeepSeek |
 | Litellm config file | `model.litellm_config` — the file with the aliases of the models |
 | API base | `model.model_kwargs.api_base` — the address of the provider |
-| API key | `model.model_kwargs.api_key`. A click shows it, a second click hides it again |
+| API key | `model.model_kwargs.api_key`, or the key of the provider in the environment. A click shows it, a second click hides it again |
 | Retries | `model.max_retries` |
 | Cache control | `model.set_cache_control` |
 | Routing | `model.routing` |
@@ -120,11 +120,12 @@ result is the same four lines as the test of the form.
 The sections the page does not know about are kept as they are; the comments
 in the file are lost.
 
-**A key in the environment is not in the page.** The page reads the
-configuration files, so a provider key that comes from the environment
-(`DEEPSEEK_API_KEY` and the like) is not shown and `api_key_set` stays false.
-That is the normal case; the page is for the keys that live in the
-configuration.
+**A key in the environment is in the page.** The page reads the configuration
+files first and then the environment: a provider key that comes from the
+environment (`DEEPSEEK_API_KEY` and the like) is shown like any other key, and
+`api_key_set` is true. The layer under the field says `env` when the key comes
+from there. The name of the model says which variable is looked at: `openai/…`
+means `OPENAI_API_KEY`, `deepseek/…` means `DEEPSEEK_API_KEY`.
 
 **The key of the field.** The field of the key shows `set (********1234)` while
 the key itself stays hidden. A click on the field asks the server for the key

@@ -5,12 +5,15 @@ import pytest
 pytest.importorskip("fastapi")
 
 from coderagent.paths import config_home  # noqa: E402
+from coderagent.web.config_api import ENV_KEYS  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
 def _no_model_in_the_environment(monkeypatch):
     """The environment of the user must not decide what the test expects."""
     monkeypatch.delenv("MSWEA_MODEL_NAME", raising=False)
+    for name in ENV_KEYS.values():
+        monkeypatch.delenv(name, raising=False)
 
 
 def test_the_settings_are_written_to_the_user_file(make_client, tmp_path):
@@ -213,6 +216,59 @@ def test_a_payload_without_a_key_keeps_the_one_that_is_set(make_client):
     client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
 
     assert client.get("/api/config/model/key").json()["api_key"] == "sk-secret-value"
+
+
+def test_the_key_of_the_environment_is_the_key_of_the_agent(make_client, monkeypatch):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-env-value"
+
+
+def test_the_key_of_the_settings_wins_over_the_environment(make_client, monkeypatch):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash", "api_key": "sk-file-value"})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-file-value"
+
+
+def test_the_page_says_the_key_is_set_when_it_comes_from_the_environment(make_client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "openai/MiniMax-M2.7"})
+
+    view = client.get("/api/config").json()["model"]
+
+    assert view["api_key_set"] is True
+    assert view["api_key_hint"] == "********" + "sk-env-value"[-4:]
+
+
+def test_the_table_says_the_key_comes_from_the_environment(make_client, monkeypatch):
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    assert client.get("/api/config").json()["sources"]["api_key"] == "env"
+
+
+def test_the_alias_is_resolved_before_the_environment_is_asked(make_client, monkeypatch, tmp_path):
+    """The alias points at a model of another provider, and that provider has the key."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env-value")
+    path = _aliases_file(tmp_path, alias="my-alias", model="openai/MiniMax-M2.7")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "my-alias", "litellm_config": path})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == "sk-env-value"
+
+
+def test_a_provider_without_a_key_in_the_environment_has_no_key(make_client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env-value")
+    client = make_client()
+    client.put("/api/config/model", json={"model_name": "deepseek/deepseek-flash"})
+
+    assert client.get("/api/config/model/key").json()["api_key"] == ""
 
 
 def test_the_model_has_to_call_the_tools():

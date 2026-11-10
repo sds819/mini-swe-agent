@@ -145,7 +145,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |
 | `'{name}' is not one of the aliases of this file` | 模型名不在这个文件的 `model_list` 里。 | 用列表里的别名，或者去掉 `litellm_config`。 |
 | `BadRequestError` | 厂商拒绝了请求（key 不对、名字不对、参数不对）。 | **不会**重试，厂商的报错就是答案。 |
-| `AuthenticationError` | key 缺了或者不对。 | 设 `model.model_kwargs.api_key`，或者在别名文件里写端点的 key。 |
+| `AuthenticationError` | key 缺了或者不对。 | 设 `model.model_kwargs.api_key`，或者在别名文件里写端点的 key，或者在环境里放厂商的 key（`openai/…` 找 `OPENAI_API_KEY`）。 |
 | `ContextWindowExceededError` | 请求比模型的窗口大。 | 调小 `context.context_window`，或者换一个窗口更大的模型。 |
 
 重试和上面的错误是两回事：限流和超时才重试，坏请求不重试。重试次数来自
