@@ -19,6 +19,7 @@
 | 文档 | 内容 |
 |---|---|
 | [coding-agent-architecture.md](coding-agent-architecture.md) | **主架构文档**：定位、能力差距矩阵、六层分层架构、模块设计、关键接口、配置、风险、依赖边界 |
+| [coderagent-design-logic.md](coderagent-design-logic.md) | **设计逻辑文档**：为什么长成这样——三条承重决策、全局不变量、有意的不对称、逐层取舍、依赖地图 |
 | [milestones/M0-skeleton.md](milestones/M0-skeleton.md) | M0 骨架与配置：Session / EventBus / Loop / Config 的逐条任务分解 |
 | [milestones/M1-tools-permissions.md](milestones/M1-tools-permissions.md) | M1 工具系统与权限：ToolRegistry / PermissionPolicy / 内置工具规范 |
 | [milestones/M2-context-session.md](milestones/M2-context-session.md) | M2 上下文治理与会话管理：结构化压缩 / 恢复 / 检查点 |
@@ -43,6 +44,13 @@
 | 决策 | 位置 |
 |---|---|
 | 六层分层架构与数据流 | 主架构 §3 |
+| **为什么这么设计**（承重决策 / 不变量 / 取舍） | 设计逻辑 §2、§3、§5 |
+| 事件日志是唯一事实来源 | 设计逻辑 §2.1 |
+| 同步核心 + 界面订阅者 | 设计逻辑 §2.2 |
+| 所有副作用过同一道闸 | 设计逻辑 §2.3 |
+| fail-open 与 fail-closed 的分界 | 设计逻辑 §3.3 |
+| 扩展是项目优先、规则是用户优先 | 设计逻辑 §4.1 |
+| 改一处必须改另一处 | 设计逻辑 §9 |
 | Session / EventBus 事件溯源 | 主架构 §4.1、M0 §2.2 |
 | 结构化摘要 schema | 主架构 §4.4、M2 §2.3 |
 | 权限模式与规则求值 | 主架构 §4.3、M1 §2.4 |

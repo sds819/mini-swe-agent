@@ -141,6 +141,7 @@ nav:
   - Design (WIP):
     - "Overview": design/README.md
     - "Architecture": design/coding-agent-architecture.md
+    - "Design logic": design/coderagent-design-logic.md
     - "M0 — Skeleton & config": design/milestones/M0-skeleton.md
     - "M1 — Tools & permissions": design/milestones/M1-tools-permissions.md
     - "M2 — Context & sessions": design/milestones/M2-context-session.md
