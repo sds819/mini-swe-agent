@@ -216,6 +216,11 @@ Read more in [docs/usage](docs/usage/):
 * [The web interface](docs/usage/coderagent_web.md) — the chat page, the settings page, the HTTP API, the security model
 * [Everything `coder` can do](docs/usage/coderagent_features.md) — one page, every feature, with the errors you may hit
 
+And if you want to know how it was designed, [docs/design](docs/design/):
+
+* [The architecture](docs/design/coding-agent-architecture.md) — the layers, the modules, the interfaces, the key decisions
+* [The design logic](docs/design/coderagent-design-logic.md) — why it grew this way: the load-bearing decisions, the invariants, the trade-offs
+
 ## Attribution
 
 If you found this work helpful, please consider citing the [SWE-agent paper](https://arxiv.org/abs/2405.15793) in your work:
