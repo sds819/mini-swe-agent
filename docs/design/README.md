@@ -1,7 +1,7 @@
 # Coding Agent 设计文档集
 
 > 目标：在 mini-SWE-agent 的极简哲学之上，构建一个对标 Codex CLI / Claude Code 的交互式 coding agent。
-> 状态：实现中（WIP）。M0 / M1 / M2 / M3 / M4 已完成。
+> 状态：实现中（WIP）。M0 / M1 / M2 / M3 / M4 / M5 已完成。
 
 ## 里程碑进度
 
@@ -12,7 +12,7 @@
 | M2 | 上下文治理与会话管理 | ✅ 已完成 | `src/coderagent/core/{context,summarize,checkpoint,tokens,budget,history,instructions,memory}.py`、`src/coderagent/ui/commands/` |
 | M3 | 交互体验与扩展 | ✅ 已完成 | `src/coderagent/ui/{tui.py,cli.py,commands/,widgets/}`、`src/coderagent/{extensions/hooks.py,tools/mcp.py}` |
 | M4 | 进阶能力 | ✅ 已完成 | `src/coderagent/core/{subagent,sandbox,telemetry}.py`、`src/coderagent/extensions/{skills,plugins,reflect}.py`、`src/coderagent/models/router.py`、`src/coderagent/tools/builtin/{task,skill}.py` |
-| M5 | Web 版 | 🚧 实现中 | `src/coderagent/web/` |
+| M5 | Web 版 | ✅ 已完成 | `src/coderagent/web/` |
 
 ## 文档索引
 
@@ -35,7 +35,7 @@
 ## 阅读顺序
 
 1. 先读主架构文档的「能力差距分析」与「总体分层架构」两节，建立全局认知。
-2. 再按 M0 → M4 顺序读里程碑文档，每个文档末尾都有该阶段的出口条件与 Definition of Done。
+2. 再按 M0 → M5 顺序读里程碑文档，每个文档末尾都有该阶段的出口条件与 Definition of Done。
 3. 实现时以里程碑文档里的任务清单（`- [ ]`）为 checklist。
 
 ## 快速索引：关键决策在哪里
@@ -50,5 +50,9 @@
 | 上下文超限兜底路径 | M2 §2.6 |
 | MCP 客户端设计 | M3 §4 |
 | Hooks 事件点与执行语义 | M3 §5 |
+| Web 版为什么不改核心 | M5 §2、主架构 §4.6 |
+| SSE 缓冲与 `seq` 空间 | M5 §3.2、M5-web-modules §5.1 |
+| Web 版的路径安全三层 | M5 §9.1、M5-web-modules §10 |
+| 权限的两个入口（设置页 / 聊天页） | M5 §8.5 |
 | 跨里程碑接口契约 | 主架构 §9.3 |
 | 与上游的依赖边界 | 主架构 §12 |

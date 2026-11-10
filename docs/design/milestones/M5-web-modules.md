@@ -2,7 +2,7 @@
 
 > 目标：把 [M5-web-interface.md](M5-web-interface.md) 里的**总体设计**落到**模块与函数**一级：
 > 每个模块负责什么、对外暴露哪些函数与签名、每个接口出入参长什么样、失败时怎么办。
-> 状态：与代码同步（M5 的代码已落地，本文按现有实现逐模块描述，并标注需要补的地方）。
+> 状态：已完成（M5 的代码已落地，本文按现有实现逐模块描述，未决问题见 §16）。
 
 M5 那篇讲的是「为什么这么做」。本文讲的是「具体是哪个函数、参数是什么、返回什么」。
 两者配合看：**先读 M5 的 §2–§11 建立认知，再查本文的表格定位到具体函数。**
@@ -348,6 +348,7 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | `SECRET_MARKERS = ("key", "token", "secret", "password")` | 名字里含这些词的一律当密钥 |
 | `DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules")` | 直接在 `model:` 下的字段 |
 | `MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")` | 配置页要展示的字段 |
+| `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；模型名斜杠前面那段就是厂商 |
 
 ### 9.2 函数
 
@@ -356,12 +357,15 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | `is_secret(name) -> bool` | | 名字含密钥词 |
 | `redact(value) -> Any` | | 递归：dict 的密钥名是密钥 → 值替换成 `"***"` |
 | `hint(secret) -> str` | | `********abcd`（末 4 位）；短于 4 位 → `********` |
-| `sources(cwd) -> dict[str, str]` | 字段 → 层名 | 层名：`defaults` / `project` / `user` / `env`。**文件赢过环境变量**；只有 `model_name` 会是 `env` |
+| `sources(cwd) -> dict[str, str]` | 字段 → 层名 | 层名：`defaults` / `project` / `user` / `env`。**文件赢过环境变量**；`model_name` 与 `api_key` 都会是 `env` |
 | `model_view(cwd) -> dict` | 见下 | **永不含明文密钥** |
 | `layers_preview(cwd) -> list[dict]` | `[{layer, model}]` | 每一层都过 `redact` |
 | `user_config_path() -> Path` | | `config_home()/"config.yaml"`（`MSWEA_CODER_HOME` 生效） |
 | `write_user_model(payload) -> Path` | 写后的路径 | 见 §9.3 |
 | `effective_model(cwd, overrides) -> (name, kwargs)` | | 当前配置 + 表单里的覆盖 |
+| `provider_of(model_name) -> str` | | 厂商：名字里有 `/` 就取斜杠前面那段，否则问 litellm |
+| `env_api_key(model_name) -> str` | | 厂商在环境里的 key（`ENV_KEYS` 表） |
+| `effective_api_key(cwd) -> str` | | agent 真正会用的 key：**配置 > 别名文件 > 环境变量** |
 | `test_connection(name, kwargs) -> dict` | | 一次 `max_tokens=1` 的调用 |
 
 **`model_view` 的字段**

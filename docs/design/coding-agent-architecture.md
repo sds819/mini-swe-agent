@@ -47,6 +47,7 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 | 终端 diff 预览 | ✅ | ✅ | ❌ | ✅ L5 |
 | 流式输出 | ✅ | ✅ | ❌ | ✅ L4 |
 | 多模型路由 | ✅ | ✅ | ⚠️ 单模型 | ✅ L4 ModelRouter |
+| 浏览器界面 | ❌ | ❌ | ❌ | ✅ M5 Web 版（FastAPI + SSE） |
 
 ---
 
@@ -54,7 +55,7 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  L5  交互层  CLI(typer) / TUI(textual) / 非交互 exec 模式     │
+│  L5  交互层  CLI(typer) / TUI(textual) / Web(FastAPI+SSE)   │
 │      流式渲染 · diff 预览 · slash 命令 · 审批交互             │
 ├─────────────────────────────────────────────────────────────┤
 │  L4  模型网关  ModelGateway                                │
@@ -102,6 +103,12 @@ AgentLoop.step() ──► ModelGateway.query(stream=True)
          ▼
    SessionStore.persist()  →  .coderagent/sessions/<id>.jsonl
 ```
+
+**三种前端，一套内核**：CLI（typer）、TUI（textual）、Web（FastAPI + SSE）跑的是同一套
+loop / 工具 / 权限 / 事件日志；TUI 与 Web 都是 `EventBus` 的**订阅者**，不各自实现循环。
+Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线程里跑，再把 `Event` 翻译成前端
+条目推给浏览器，核心逻辑一行没改（详见 §4.6 的 Web 一节与
+[M5-web-interface.md](milestones/M5-web-interface.md)）。
 
 ---
 
@@ -451,6 +458,79 @@ coder [task]                       # 主入口，等价于 mini
 - `n` 拒绝并把拒绝理由回传给模型
 - `a` 总是允许（写入用户级规则文件）
 
+#### Web（FastAPI + SSE）
+
+> 完整设计见 [M5-web-interface.md](milestones/M5-web-interface.md)（为什么这么做）与
+> [M5-web-modules.md](milestones/M5-web-modules.md)（哪个函数、什么签名）。
+
+`coder web` 把同一个 agent 放进浏览器：聊天页是终端界面的窗口版，设置页把模型参数配成表单。
+**核心一行没改**——web 版需要的四件事核心里已经有了：
+
+| 需要的能力 | 现成的地基 |
+|---|---|
+| 模型参数可结构化读写 | pydantic `ModelConfig`，`model_kwargs` 直传 litellm |
+| 配置分层 | `config/loader.py` 的四层合并 |
+| 事件可订阅 | `core/events.py` 的 `EventBus`（TUI 已是它的一个订阅者） |
+| 回合可放到别的线程 | 核心全程同步，TUI 已在工作线程里跑 turn |
+
+模块布局（`src/coderagent/web/`）：
+
+```
+├── app.py           # create_app(config, cwd, ...) -> FastAPI
+├── api.py           # APIRouter(prefix="/api")：全部 REST + SSE 端点
+├── sessions.py      # SessionRegistry + SessionRuntime：线程、环形缓冲、turn 执行
+├── events.py        # normalize(Event) -> list[item]：核心事件 → 前端条目
+├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
+├── config_api.py    # 读写用户级 config.yaml、分层预览、脱敏、连通性测试
+├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
+├── i18n.py          # 页面语言：地区判定 + 浏览器文案
+├── server.py        # serve(cwd, host, port)：uvicorn 入口
+├── templates/{en,zh}/  # Jinja2 模板（每种语言一份）
+└── static/          # app.css / app.js（原生 JS，无构建步骤）
+```
+
+**线程模型**：每会话一个 worker 线程；turn 期间持 `busy` 标志，第二个 `/messages` → **409**。
+FastAPI 的事件循环里**绝不**跑 agent 代码——碰文件系统/模型/loop 的端点都写成普通 `def`。
+每会话的 `AgentLoop` **懒建**（第一次跑 turn 时才建），否则看一眼会话列表就起一整套 MCP 线程。
+
+**传输**：服务端 → 浏览器用 **SSE**（单向推送、自带重连），浏览器 → 服务端用 **REST**。
+不用 WebSocket：没有双向实时需求。SSE 帧是 `data: {json}\n\n`，每 15 秒一个 `: keep-alive`；
+一轮结束时发 `turn_end`（命令是 `command_end`），流随之关闭，浏览器拿新的 `since` 重开。
+
+**缓冲与回放**：`/items?since=` 与 SSE **共用一个 `seq` 空间**。环形缓冲（1000 条）里存的是
+`normalize()` 之后的条目；**流式的增量（`text_delta` / `reasoning_delta`）是瞬时的**，只推给
+正在听的浏览器、**不进缓冲**——否则一轮长回答的 token 会把历史挤出缓冲。整段答案随后以一条
+`assistant_message` 进缓冲。
+
+**审批**：`WebApprover` 在 worker 线程上阻塞（`threading.Event` 唤醒），答案由
+`POST /api/approvals/{id}` 送回；**没人回答就是拒绝**（超时自动 DENY，与 TUI 一致）。
+`Always allow` 会往用户级规则文件写一条规则，前端必须提示这一点。
+
+**模型配置页**：显式字段 + 自由 kwargs，附**分层来源预览**（每个字段来自 `defaults` /
+`project` / `user` / `env` 哪一层）与**连通性测试**（一次 `max_tokens=1` 的调用，外加一次
+工具调用测试）。密钥只回 `api_key_set` + 掩码，点击才取明文。写入**只落用户级文件**
+`~/.coderagent/config.yaml`——**项目级 `.coderagent/config.yaml` 永远不写**（它会进 git）。
+
+**权限的两个入口**：设置页写用户级配置文件的 `permissions:` 段（对**下一个**会话生效），
+聊天页的模式下拉框改**当前**会话的 `PermissionPolicy`（**立刻**生效，策略是原地改的）。
+`--permission-mode` 钉死的是会话**开始时**的模式，不是锁。
+
+**文件浏览**：目录树 / 读文件 / 工作区 diff 复用现有工具（`list_entries`、`ReadTool`、
+`make_diff`），路径安全是三层：`resolve()` → `within_bounds()` → 工具自己的检查。
+**不能用 `policy.evaluate("read", ...)` 当边界检查**——`allow` 规则能越过边界，那会把整块磁盘
+暴露给浏览器。
+
+**安全模型**：默认只听 `127.0.0.1`；**没有认证**（能访问端口的人就能驱动 agent 在工作目录里
+跑 shell，与 `coder` 命令行的信任模型相同）；写接口要求 `X-Coder-Client: 1` 头，跨站浏览器
+发不了（`curl` 不受影响）；密钥永不明文出服务器。
+
+**页面语言**：中文地区（CN/HK/MO/TW）默认中文，其余英文；顶栏下拉框与 `?lang=` 的选择优先级
+最高，其次是地址所在的地区，最后才是浏览器的 `accept-language`。加一种语言要动三处：
+模板目录、`i18n.py` 的 `LANGUAGES`/`STRINGS`、以及 `REGION_LANGUAGES`。
+
+**依赖边界**：`web/__init__.py` 只有 docstring——`import coderagent` **不会**拉起
+fastapi / uvicorn / jinja2；`ui/cli.py` 的 `web` 子命令在函数体里惰性导入。
+
 ### 4.7 L6 扩展层
 
 #### MCP 客户端
@@ -613,6 +693,19 @@ src/coderagent/
 │   ├── hooks.py             # HookRunner
 │   ├── skills.py
 │   └── plugins.py
+├── web/
+│   ├── __init__.py          # 只有 docstring：不 import fastapi（web extra 才是硬依赖）
+│   ├── app.py               # create_app：装配 app、静态资源、模板
+│   ├── api.py               # 全部 REST + SSE 端点（/api 前缀）
+│   ├── sessions.py          # SessionRuntime / SessionRegistry：线程、环形缓冲、turn
+│   ├── events.py            # normalize(Event) -> 前端条目
+│   ├── approver.py          # WebApprover：阻塞式审批
+│   ├── config_api.py        # 配置分层、脱敏、写回、连通性测试
+│   ├── files.py             # 文件浏览与 diff（路径越界 403）
+│   ├── i18n.py              # 页面语言与地区判定
+│   ├── server.py            # serve()：uvicorn 入口
+│   ├── templates/{en,zh}/   # Jinja2 模板，每种语言一份
+│   └── static/              # app.css / app.js（原生 JS，无构建步骤）
 ├── config/
 │   ├── schema.py            # pydantic 配置模型
 │   ├── loader.py            # 四层配置合并
@@ -681,6 +774,27 @@ sandbox:
   # 其余选项原样传给环境（如 docker 的 run_args、image）
 ```
 
+### 7.1 谁可以写配置
+
+| 写入方 | 写哪一层 | 生效时机 |
+|---|---|---|
+| CLI `-c key=value` | 内存（最高优先级） | 当次运行 |
+| Web 设置页 | **只写用户级** `~/.coderagent/config.yaml` | **下一个**会话 |
+| 项目级 `.coderagent/config.yaml` | **任何自动流程都不写**（会进 git） | — |
+
+Web 设置页是**合并**而不是覆盖：读现有 YAML → 只改用户提交的子键 → 写回，未知的顶层段
+（`agent:` / `tools:` / `mcp:`…）与未知的 `model:` 子键原样保留。已知代价：注释会丢
+（用 `yaml.safe_dump`，不引 ruamel）。
+
+### 7.2 api key 的来源顺序
+
+```
+model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的环境变量
+```
+
+（`openai/…` → `OPENAI_API_KEY`，`deepseek/…` → `DEEPSEEK_API_KEY`，其余同理。）
+设置页读到的也是这个顺序，`sources.api_key` 会报出它来自哪一层；密钥永不明文出服务器。
+
 ---
 
 ## 8. 关键设计决策
@@ -697,6 +811,15 @@ sandbox:
 | 8 | MCP 工具统一命名 `mcp__server__tool` | 服务端原名 | 避免与内置工具冲突，与 Claude Code 生态兼容 |
 | 9 | 独立顶层包 `src/coderagent/`，而非 `minisweagent/coder/` | 嵌套 | 保持上游仓库干净，日后可独立拆仓；同时需改 pyproject 的 packages.find |
 | 10 | 子 Agent 后置到 M3 | 首版实现 | 复杂度高、收益依赖模型能力；先把主循环与上下文治理做扎实 |
+| 11 | Web 版**不改核心**，只做另一个事件订阅者 | 为 web 重写一套循环 | 会话/工具/权限/事件日志全复用；浏览器里开的会话能用 `coder --resume` 在终端接着聊 |
+| 12 | 服务端 → 浏览器用 **SSE** | WebSocket | 单向推送、自带重连、心跳现成；没有双向实时需求，少一个协议少一份状态 |
+| 13 | 写接口要 `X-Coder-Client: 1` 头 | token 认证 / 同源检查 | 跨站浏览器发不出这个头（要先过预检，而服务端不给许可）；`curl` 不受影响，零配置 |
+| 14 | 流式增量**不进**环形缓冲 | 全进缓冲 | 逐 token 的增量一轮能有几百条，会把历史挤出缓冲；整段答案随后以一条 `assistant_message` 进缓冲 |
+| 15 | 配置**只写用户级文件** | 也允许写项目级 | 项目级 `.coderagent/config.yaml` 会进 git，密钥不能进仓库 |
+| 16 | 路径边界用 `within_bounds()` | `policy.evaluate("read", …)` | `allow` 规则能越过边界检查，那等于把整块磁盘暴露给浏览器 |
+| 17 | 权限分两层：设置页（新会话）+ 聊天页（立刻） | 只有设置页 | 运行中的会话要能立刻换模式，否则无人值守跑法很别扭 |
+| 18 | 启动时的 `--permission-mode` 钉的是**会话开始时的模式**，不是锁 | 锁死模式 | 聊天页换模式是「当着会话的面做的决定」，不是文件里的设置 |
+| 19 | Web 版**没有认证**，文档里明说 | 加个 token | 单用户本机工具，信任模型同 `coder` 命令行；加 token 反而挡了脚本化调用 |
 
 ---
 
@@ -711,6 +834,7 @@ sandbox:
 | M2 | [M2-context-session.md](milestones/M2-context-session.md) | 上下文治理与会话管理：压缩 / 恢复 / 检查点 | 2 周 |
 | M3 | [M3-ui-extensions.md](milestones/M3-ui-extensions.md) | 交互体验与扩展：TUI / MCP / Hooks / 命令 | 2 周 |
 | M4 | [M4-advanced.md](milestones/M4-advanced.md) | 进阶能力：子 Agent / 路由 / 记忆 / 插件 | 按需 |
+| M5 | [M5-web-interface.md](milestones/M5-web-interface.md) · [M5-web-modules.md](milestones/M5-web-modules.md) | Web 版：FastAPI 应用 / SSE 事件流 / 审批 / 配置页 / 文件浏览 | 1 周 |
 
 ### 9.1 里程碑依赖图
 
@@ -733,11 +857,17 @@ sandbox:
                │ TUI / MCP / Hooks
         ┌──────▼──────┐
         │ M4 进阶能力  │
+        └──────┬──────┘
+               │ Subagent / Router / Skills / Plugins
+        ┌──────▼──────┐
+        │ M5 Web 版   │
         └─────────────┘
 ```
 
 **硬依赖**：M1 需要 M0 的 EventBus（工具事件）与 Session（todo 状态）；M2 需要 M1 的工具输出形态（裁剪对象）；M3 需要 M2 的 `ContextEngine`（状态栏 token 用量）与命令实现。
 **软依赖**：M4 各特性彼此独立，可单独交付。
+**M5 不依赖任何新能力**：它只用 M0–M4 已经有的地基（EventBus 订阅、四层配置、工具、slash 命令），
+所以可以独立交付；反过来它对核心的改动都是**加法**（见 §12 的改动表）。
 
 ### 9.2 各里程碑的核心交付物与出口条件
 
@@ -761,6 +891,10 @@ sandbox:
 - 交付：`tools/builtin/task.py`、`models/router.py`、`extensions/{skills,plugins}.py`
 - 出口：`task` 委派不污染主上下文；路由能按上下文长度与预算升降档；`coder export` 输出完整 trace
 
+**M5 — Web 版**
+- 交付：`web/{app,api,sessions,events,approver,config_api,files,i18n,server}.py`、`web/templates/{en,zh}/`、`web/static/`，以及 `coder web` 子命令
+- 出口：浏览器里能完整跑一轮（发消息 → 流式输出 → 触发审批 → 允许 → 看工具卡与 diff）；`/settings` 能改模型参数并测试连通性，只写用户级文件；权限两个入口都生效（设置页对新会话、聊天页对运行中的会话）；文件树能浏览、读文件、看 diff，越界 403；会话能列表 / 续接 / fork；`pytest tests/coderagent -q` 全绿且 `mkdocs build --strict` 无警告
+
 ### 9.3 跨里程碑接口契约
 
 以下接口在引入后**不再变更**，后续里程碑只能扩展不能改语义：
@@ -775,6 +909,9 @@ sandbox:
 | `ContextEngine.build_messages` | M2 | 消息顺序固定：system → instructions → summary → history |
 | `ModelGateway.query_stream` | M3 | 产出 `ModelEvent` 序列；工具调用在 `tool_call_done` 时完整 |
 | `HookRunner.run` | M3 | 异常 / 超时不得阻断主流程（除非 `strict`） |
+| `web.events.normalize` | M5 | 核心事件 → 前端条目的**唯一**翻译层；未知事件类型返回空列表，不抛异常 |
+| `SessionRuntime.emit` / `attach` / `detach` | M5 | 缓冲与 SSE 共用同一个 `seq` 空间；瞬时条目只推不存 |
+| `PermissionPolicy.within_bounds` | M5 | 路径越界检查**不被规则放宽**；越界 → 403 |
 
 ### 9.4 全局 Definition of Done
 
@@ -800,6 +937,11 @@ sandbox:
 | 压缩层 | 假 model 返回固定摘要 | 保留窗口不被压缩、摘要字段完整注入 |
 | 会话层 | 真实 JSONL 文件 | 中断后 resume 状态一致、事件顺序单调 |
 | 端到端 | 假 model（脚本化响应序列）+ 真实 env | 多轮收敛、工具并行顺序正确 |
+| Web 层 | `TestClient` + `ScriptedModel` + 真实 tmp 文件系统 | 写接口缺客户端头 403、会话忙 409、路径越界 403、密钥不明文、项目级配置永不被写、审批超时自动 DENY |
+
+Web 层的测试在 `tests/coderagent/web/`：`fastapi` 是**可选依赖**，测试文件首行
+`pytest.importorskip("fastapi")`；`MSWEA_CODER_HOME` 被全局 fixture 指向 tmp → 隔离。
+**所有 web 代码必须在调用时读 `config_home()`，不能 import 时缓存**。
 
 关键：**造一个 `ScriptedModel`**，按序返回预置响应，用于不依赖真实 API 的全链路测试（这是让 CI 可跑的前提）。
 
@@ -815,6 +957,11 @@ sandbox:
 | TUI 与 headless 行为分叉 | 线上问题难复现 | 核心逻辑（loop/context/tools）与 UI 完全解耦，headless 为准 |
 | 权限规则误伤 | 体验差 | 提供 `/permissions` 查看命中规则与来源；拒绝时回传原因让模型改写 |
 | 上游 mini-swe-agent 演进冲突 | 维护成本 | `coderagent` 只依赖 `minisweagent` 的稳定公共 API（Protocol/配置/环境），版本化锁定 |
+| Web 版**没有认证**，能访问端口就能驱动 agent | 高 | 默认只听 `127.0.0.1`；`--host` 非回环时打印警告；文档明写信任模型同 `coder` 命令行 |
+| 每会话一个 `AgentLoop` ⇒ 每会话一套 MCP server 线程 | 中 | loop 懒建（第一次跑 turn 才建）；会话多了仍会涨，文档说明 |
+| 跨站请求驱动 agent（CSRF） | 中 | 写接口要 `X-Coder-Client: 1` 头，跨站浏览器发不出（预检不通过） |
+| 浏览器读到工作目录外的东西 | 中 | `resolve()` + `within_bounds()`，越界 403；**边界检查不被规则放宽** |
+| 密钥泄漏到仓库或日志 | 高 | 只写用户级文件；API 只回掩码；分层预览里的密钥全抹成 `***` |
 
 ---
 
@@ -843,3 +990,23 @@ include = ["minisweagent*", "coderagent*"]
 [project.scripts]
 coder = "coderagent.ui.cli:app"
 ```
+
+Web 版是**可选依赖**（`import coderagent` 不该拉起 fastapi）：
+
+```toml
+[project.optional-dependencies]
+web = ["fastapi", "uvicorn", "jinja2"]
+```
+
+### 12.1 M5 对既有文件的改动（全部是加法）
+
+| 文件 | 改动 |
+|---|---|
+| `tools/executor.py` | `_publish` 里把带 diff 的 `TOOL_RESULT` 也写进事件日志（回放才看得到 diff） |
+| `tools/permissions.py` | `_within_bounds` → 公开的 `within_bounds` |
+| `tools/builtin/search.py` | `LsTool.run` 的遍历逻辑抽成公开 `list_entries`（行为不变） |
+| `ui/commands/__init__.py` | `register()` 按名字去重（每会话一个 loop，否则全局命令表无限膨胀） |
+| `ui/cli.py` | 新增 `web` 子命令（函数内惰性导入） |
+| `config/loader.py` | 抽出 `config_layers(cwd)`，`load_config` 复用它 |
+| `run.py` / `testing/factory.py` | 把 `store` 传给 `ToolExecutor` |
+| `pyproject.toml` | `web` extra + package-data（模板与静态文件） |

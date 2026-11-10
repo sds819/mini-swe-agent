@@ -2,7 +2,7 @@
 
 > 目标：把 coding agent 从「终端里的一个程序」搬到浏览器里，并让模型参数可以在网页上配。
 > 依赖：M0–M4 全部完成。本里程碑**不改核心架构**，只加一层新的交互面。
-> 状态：实现中（WIP）。代码已落地，测试与使用文档待补。
+> 状态：已完成。代码已落地，测试与使用文档已补齐。
 > 配套：[M5-web-modules.md](M5-web-modules.md) 讲模块与函数级别的设计（本文讲总体设计）。
 
 ---
@@ -508,9 +508,9 @@ fixture 用 `load_config([], cwd=tmp_path)` + `ScriptedModel` 建 app，`TestCli
   够把前面的历史挤掉。→ **已修（Q7）**：流式的增量是**瞬时条目**，只推给正在听的浏览器，
   **不进环形缓冲**（`web/events.py` 的 `TRANSIENT_KINDS`）；整段答案随后以一条
   `assistant_message` 进缓冲。
-- **环境的 API key 在设置页看不到**：`api_key_set` 是 `false`，因为页面读的是配置文件，
-  而 `DEEPSEEK_API_KEY` 在环境里。这是正常的（页面是给配置里的 key 用的），但要在
-  文档里写明，否则用户会以为 key 没生效。
+- **环境的 API key 现在也在设置页里**：早期版本只读配置文件，所以 `DEEPSEEK_API_KEY` 这类
+  环境变量在页面上看不到（`api_key_set` 是 `false`），而 agent 其实在用它。**已修**：key 的来源
+  顺序是「配置 > 别名文件 > 厂商的环境变量」，`sources.api_key` 会报出它来自哪一层。
 - **`sources.model_name` 显示 `env`**：`MSWEA_MODEL_NAME` 在环境里时，模型名来自环境而不是
   文件。这与 loader 的口径一致（文件 > 环境 > 默认）。
 - **每轮结束有一条 `reflection` 分隔线**：那是 `settle()` 沉淀记忆的那次调用，它的钱算进
