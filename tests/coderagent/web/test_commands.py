@@ -47,6 +47,16 @@ def test_an_unknown_command_says_so(make_client, send, wait_for):
     assert "Unknown command" in [item["text"] for item in items if item["kind"] == "command_output"][0]
 
 
+def test_the_exit_command_says_the_server_keeps_running(make_client, send, wait_for):
+    client = make_client()
+    session_id = client.post("/api/sessions").json()["id"]
+    send(client, session_id, "/exit")
+
+    items = wait_for(client, session_id, "command_output")
+
+    assert "ctrl+c" in [item["text"] for item in items if item["kind"] == "command_output"][0]
+
+
 def test_clear_starts_a_new_session_and_the_registry_follows(make_client, send):
     client = make_client()
     session_id = client.post("/api/sessions").json()["id"]

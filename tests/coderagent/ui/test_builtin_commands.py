@@ -330,3 +330,25 @@ def test_a_fact_can_be_forgotten(tmp_path):
     (memory / "projects.md").write_text("# Project memory\n\n- the build is make build\n", encoding="utf-8")
     assert "Removed" in _run(context, output, "/memory forget the build is make build")
     assert "make build" not in (memory / "projects.md").read_text(encoding="utf-8")
+
+
+def test_the_exit_command_leaves_the_interface(tmp_path):
+    context, output = _context(tmp_path)
+    left: list[bool] = []
+    context.quit = lambda: left.append(True)
+    _run(context, output, "/exit")
+    assert left == [True]
+    assert output == []
+
+
+def test_the_exit_command_says_so_when_there_is_nothing_to_leave(tmp_path):
+    context, output = _context(tmp_path)
+    assert "ctrl+c" in _run(context, output, "/exit")
+
+
+def test_quit_is_an_alias_of_exit(tmp_path):
+    context, output = _context(tmp_path)
+    left: list[bool] = []
+    context.quit = lambda: left.append(True)
+    _run(context, output, "/quit")
+    assert left == [True]

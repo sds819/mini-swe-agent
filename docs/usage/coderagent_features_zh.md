@@ -860,10 +860,11 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 
 ## 命令
 
-二十四个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
+二十五个内置命令：`/help`、`/model`、`/mode`、`/plan`、`/compact`、
 `/clear`、`/resume`、`/fork`、`/rewind`、`/diff`、`/init`、`/cost`、
 `/todos`、`/mcp`、`/permissions`、`/hooks`、`/agents`、`/skills`、
-`/plugins`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`。
+`/plugins`、`/memory`、`/status`、`/sandbox`、`/export`、`/context`、
+`/exit`（别名 `/quit`）。
 
 自己的命令放在 `.coderagent/commands/*.md`，和它们一起用。
 

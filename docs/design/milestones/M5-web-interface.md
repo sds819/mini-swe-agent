@@ -17,7 +17,7 @@
 | F5.4 | 工具审批 | P0 | 浏览器点 Allow / Deny / Always；超时自动 DENY |
 | F5.5 | 会话管理 | P1 | 列表 / 续接 / fork / 回放 |
 | F5.6 | 文件浏览与 diff | P1 | 目录树、读文件、工作区 diff |
-| F5.7 | Slash 命令 | P1 | 复用 `ui/commands` 的 23 个内置命令与自定义命令 |
+| F5.7 | Slash 命令 | P1 | 复用 `ui/commands` 的 25 个内置命令与自定义命令 |
 | F5.8 | 中断 | P1 | `/interrupt` 停掉正在跑的一轮 |
 
 ---
@@ -207,7 +207,7 @@ executor._prepare()
 
 ## 7. Slash 命令
 
-原样复用 `ui/commands/__init__.py:80` 的 `run(context, line)`——23 个内置命令和自定义命令
+原样复用 `ui/commands/__init__.py:80` 的 `run(context, line)`——25 个内置命令和自定义命令
 都只通过 `context.say(...)` 说话，零 textual 依赖。
 
 - `CommandContext.output` 接到 `runtime.emit({"kind": "command_output", "text": ...})`。

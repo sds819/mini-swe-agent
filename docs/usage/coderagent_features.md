@@ -910,10 +910,11 @@ The sections and what they hold:
 
 ## The commands
 
-Twenty-four built-in commands: `/help`, `/model`, `/mode`, `/plan`,
+Twenty-five built-in commands: `/help`, `/model`, `/mode`, `/plan`,
 `/compact`, `/clear`, `/resume`, `/fork`, `/rewind`, `/diff`, `/init`,
 `/cost`, `/todos`, `/mcp`, `/permissions`, `/hooks`, `/agents`, `/skills`,
-`/plugins`, `/memory`, `/status`, `/sandbox`, `/export` and `/context`.
+`/plugins`, `/memory`, `/status`, `/sandbox`, `/export`, `/context` and
+`/exit` (also `/quit`).
 
 Your own commands live in `.coderagent/commands/*.md` and join them.
 

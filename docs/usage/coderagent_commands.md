@@ -39,9 +39,14 @@ coder --task "/help"  # a command without the interface
 | `/sandbox` | Where the commands of the agent run |
 | `/export` | Write the conversation to a file |
 | `/context` | The size of the context |
+| `/exit` (`/quit`) | Leave the interface |
 
 The money of `/cost` is the money of the session. A new session (`/clear`) starts
 at zero, whatever the session before it spent.
+
+`/exit` closes the terminal interface, the same way `ctrl+q` does. In the
+browser there is nothing to close, so it says that the server keeps running:
+stop it with `ctrl+c` in the terminal that started it.
 
 ## Your own commands
 

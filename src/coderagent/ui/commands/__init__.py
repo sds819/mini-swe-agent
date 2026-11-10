@@ -35,6 +35,8 @@ class CommandContext:
     """The MCP manager, when one is running."""
     output: Callable[[str], None] = print
     """Where the answer goes."""
+    quit: Callable[[], None] | None = None
+    """How to leave the interface. None when there is nothing to leave."""
 
     def say(self, text: str) -> None:
         self.output(text)

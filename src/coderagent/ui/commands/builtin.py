@@ -356,6 +356,14 @@ def _context(context: CommandContext, argument: str) -> None:
     )
 
 
+def _exit(context: CommandContext, argument: str) -> None:
+    """Leave the interface."""
+    if context.quit is None:
+        context.say("The server keeps running. Stop it with ctrl+c where it was started.")
+        return
+    context.quit()
+
+
 register(Command(name="help", description="List the commands", handler=_help))
 register(Command(name="model", description="Show or switch the model", handler=_model, aliases=["m"]))
 register(Command(name="mode", description="Show or switch the permission mode", handler=_mode))
@@ -380,3 +388,4 @@ register(Command(name="status", description="Show the state of the session", han
 register(Command(name="sandbox", description="Show where the commands run", handler=_sandbox))
 register(Command(name="export", description="Write the conversation to a file", handler=_export))
 register(Command(name="context", description="Show the size of the context", handler=_context))
+register(Command(name="exit", description="Leave the interface", handler=_exit, aliases=["quit"]))

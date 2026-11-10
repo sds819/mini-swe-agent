@@ -267,6 +267,19 @@ def test_several_answers_can_be_picked(tmp_path):
     assert options.markup().count("\\[[gray]-[/gray]]") == 1
 
 
+def test_the_exit_command_leaves_the_interface(tmp_path):
+    app = _app(tmp_path)
+
+    async def go():
+        async with app.run_test() as pilot:
+            await pilot.press(*"/exit")
+            await pilot.press("enter")
+            await pilot.pause()
+            return app.is_running
+
+    assert asyncio.run(go()) is False
+
+
 def test_the_approver_waits_for_the_answer(tmp_path):
     bus = EventBus()
     approver = TUIAprover(bus)

@@ -296,6 +296,7 @@ class CoderApp(App):
             checkpoints=self.loop.checkpoints,
             mcp=self.loop.mcp,
             output=lambda text: self._add_message("assistant", text),
+            quit=self.action_quit,
         )
         run_command(context, line)
 
