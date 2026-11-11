@@ -1,6 +1,8 @@
 """Session state and its persistence. Events are the source of truth, the session is derived."""
 
 import json
+import logging
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -10,6 +12,8 @@ from pathlib import Path
 from coderagent.core.events import Event, EventType
 from coderagent.core.telemetry import collect
 from coderagent.paths import config_home
+
+logger = logging.getLogger("coderagent.core.session")
 
 
 class SessionState(str, Enum):
@@ -77,6 +81,7 @@ class SessionStore:
         with self.path(session_id).open("a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
             f.flush()
+            os.fsync(f.fileno())
 
     def events(self, session_id: str) -> list[Event]:
         path = self.path(session_id)
@@ -86,7 +91,11 @@ class SessionStore:
         for line in path.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
-            event = Event.from_dict(json.loads(line))
+            try:
+                event = Event.from_dict(json.loads(line))
+            except json.JSONDecodeError:
+                logger.warning("A line of the session log is broken, it is skipped: %s", line[:120])
+                continue
             if event is not None:
                 events.append(event)
         return events
@@ -122,7 +131,11 @@ class SessionStore:
             return []
         sessions = []
         for meta_path in self.root.glob("*.meta.json"):
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            try:
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                logger.warning("The meta file of a session is broken, it is skipped: %s", meta_path)
+                continue
             if cwd is not None and Path(meta.get("cwd", "")) != Path(cwd):
                 continue
             sessions.append(self.rebuild(meta["id"]))
@@ -173,4 +186,7 @@ class SessionStore:
             "created_at": session.created_at,
             "model_name": session.model_name,
         }
-        self.meta_path(session.id).write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        path = self.meta_path(session.id)
+        temporary = path.with_name(f"{path.name}.tmp")
+        temporary.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(temporary, path)
