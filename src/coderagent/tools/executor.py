@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from coderagent.core.events import Event, EventType
+from coderagent.core.redact import redact
 from coderagent.core.session import SessionState
 from coderagent.tools.base import ToolContext, ToolResult
 from coderagent.tools.permissions import (
@@ -163,7 +164,7 @@ class ToolExecutor:
         self._publish(action, result, ctx)
         if result.metadata.get("truncated"):
             ctx.session.metadata.setdefault("truncated_outputs", []).append(result.metadata["truncated"])
-        content = result.content
+        content = redact(result.content)
         if self.hooks:
             hook = self.hooks.apply(
                 "PostToolUse", {"tool": action["tool"], "params": action["args"], "result": content}
@@ -185,9 +186,9 @@ class ToolExecutor:
             payload={
                 "tool": action["tool"],
                 "tool_call_id": action["tool_call_id"],
-                "content": result.content,
+                "content": redact(result.content),
                 "is_error": result.is_error,
-                "diff": result.metadata.get("diff", ""),
+                "diff": redact(result.metadata.get("diff", "")),
             },
         )
         ctx.bus.publish(event)

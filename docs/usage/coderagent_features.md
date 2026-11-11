@@ -264,6 +264,12 @@ An error occurred while executing the command: Command 'sleep 60' timed out afte
 A background command answers with `Started background task {id}: {cmd}` and is
 read with `bash_output`, killed with `bash_kill`.
 
+The output of a tool is written to the log of the session and sent to the
+provider. What looks like a secret in it — an API key, a token, a password, a
+private key — is replaced with `[redacted]` before either happens. A file that
+holds a secret is stored in a checkpoint without it, and it is not restored by
+`/rewind`: the file is left as it is and the command says which one it was.
+
 ## The permissions
 
 - **Five modes** — `default`, `acceptEdits`, `plan`, `readonly` and `bypass`.

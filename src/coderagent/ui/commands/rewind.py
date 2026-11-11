@@ -11,10 +11,13 @@ def list_checkpoints(store: CheckpointStore, session_id: str) -> list[Checkpoint
     return store.all(session_id)
 
 
-def rewind(context: ContextEngine, checkpoints: CheckpointStore, checkpoint_id: str, cwd: Path) -> list[str]:
+def rewind(
+    context: ContextEngine, checkpoints: CheckpointStore, checkpoint_id: str, cwd: Path
+) -> tuple[list[str], list[str]]:
     """Restore the files of a checkpoint and roll the conversation back to it.
 
-    Returns the paths that were changed. The conversation is not deleted but marked
+    Returns the paths that were changed and the paths that were left alone,
+    because their content held a secret. The conversation is not deleted but marked
     as reverted, so the event log stays the source of truth.
     """
     checkpoint = checkpoints.get(context.session.id, checkpoint_id)
@@ -22,4 +25,4 @@ def rewind(context: ContextEngine, checkpoints: CheckpointStore, checkpoint_id: 
         raise ValueError(f"no checkpoint '{checkpoint_id}' in this session")
     changed = restore_files(checkpoint, cwd)
     context.rewind_to(checkpoint.messages)
-    return changed
+    return changed, list(getattr(checkpoint, "redacted", []))

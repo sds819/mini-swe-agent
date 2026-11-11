@@ -85,9 +85,28 @@ def test_rewinding_restores_the_files_and_the_conversation(tmp_path):
     target.write_text("new", encoding="utf-8")
     context.append({"role": "assistant", "content": "done"})
 
-    assert rewind(context, store, checkpoint.id, tmp_path) == ["a.py"]
+    assert rewind(context, store, checkpoint.id, tmp_path) == (["a.py"], [])
     assert target.read_text(encoding="utf-8") == "old"
     assert [message["role"] for message in context.history.messages] == ["user"]
+
+
+def test_a_file_that_holds_a_secret_is_stored_without_it(tmp_path):
+    (tmp_path / ".env").write_text("API_KEY=sk-abcdefghijklmnopqrstuvwxyz\n", encoding="utf-8")
+    store = _store(tmp_path)
+    checkpoint = create_file_checkpoint(store, "session", 1, tmp_path, ".env")
+    assert "sk-abcdefghijklmnopqrstuvwxyz" not in checkpoint.payload[".env"]
+    assert checkpoint.redacted == [".env"]
+
+
+def test_a_file_that_holds_a_secret_is_not_restored(tmp_path):
+    """Writing it back would put a placeholder where the secret was."""
+    target = tmp_path / ".env"
+    target.write_text("API_KEY=sk-abcdefghijklmnopqrstuvwxyz\n", encoding="utf-8")
+    store = _store(tmp_path)
+    checkpoint = create_file_checkpoint(store, "session", 1, tmp_path, ".env")
+    target.write_text("API_KEY=sk-0123456789abcdefghijklmnop\n", encoding="utf-8")
+    assert restore_files(checkpoint, tmp_path) == []
+    assert "sk-0123456789abcdefghijklmnop" in target.read_text(encoding="utf-8")
 
 
 def test_rewinding_an_unknown_checkpoint_is_an_error(tmp_path):

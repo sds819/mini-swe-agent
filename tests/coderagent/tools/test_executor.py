@@ -113,3 +113,22 @@ def test_the_executor_publishes_the_tool_results(tmp_path):
     executor = build_executor(tmp_path, context=ctx)
     executor.execute(executor.plan([_call("read", {"path": "a.py"})]))
     assert seen == ["read"]
+
+
+def test_a_secret_in_the_output_of_a_tool_is_hidden(tmp_path):
+    (tmp_path / "a.env").write_text("API_KEY=sk-abcdefghijklmnopqrstuvwxyz\n", encoding="utf-8")
+    executor = build_executor(tmp_path)
+    observations = executor.execute(executor.plan([_call("read", {"path": "a.env"})]))
+    assert "sk-abcdefghijklmnopqrstuvwxyz" not in observations[0]["content"]
+    assert "[redacted]" in observations[0]["content"]
+
+
+def test_a_secret_does_not_reach_the_log_of_the_session(tmp_path):
+    from coderagent.core.session import SessionStore
+
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    (tmp_path / "a.env").write_text("API_KEY=sk-abcdefghijklmnopqrstuvwxyz\n", encoding="utf-8")
+    executor = build_executor(tmp_path, store=store, context=build_context(tmp_path, session=session))
+    executor.execute(executor.plan([_call("read", {"path": "a.env"})]))
+    assert "sk-abcdefghijklmnopqrstuvwxyz" not in store.path(session.id).read_text(encoding="utf-8")

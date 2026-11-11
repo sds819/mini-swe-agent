@@ -132,8 +132,10 @@ def _rewind(context: CommandContext, argument: str) -> None:
             or "No checkpoints yet."
         )
         return
-    changed = rewind(context.loop.context, context.checkpoints, argument, context.cwd)
+    changed, skipped = rewind(context.loop.context, context.checkpoints, argument, context.cwd)
     context.say(f"Restored {len(changed)} file(s): {', '.join(changed) or 'nothing changed'}")
+    if skipped:
+        context.say(f"Not restored, they hold a secret: {', '.join(skipped)}")
 
 
 def _diff(context: CommandContext, argument: str) -> None:

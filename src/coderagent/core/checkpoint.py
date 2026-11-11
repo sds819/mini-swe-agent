@@ -10,6 +10,7 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from coderagent.core.redact import has_secret, redact
 from coderagent.paths import config_home
 
 
@@ -24,6 +25,8 @@ class Checkpoint:
     """For `file_diff`: `{path: old_content}`, where `None` means the file did not exist."""
     messages: int = 0
     """How many messages the conversation had when the checkpoint was taken."""
+    redacted: list[str] = field(default_factory=list)
+    """The paths whose content held a secret, so it cannot be put back exactly."""
 
     def to_dict(self) -> dict:
         return {
@@ -33,6 +36,7 @@ class Checkpoint:
             "kind": self.kind,
             "payload": self.payload,
             "messages": self.messages,
+            "redacted": self.redacted,
         }
 
     @classmethod
@@ -44,6 +48,7 @@ class Checkpoint:
             kind=data.get("kind", "file_diff"),
             payload=data.get("payload", {}),
             messages=data.get("messages", 0),
+            redacted=data.get("redacted", []),
         )
 
     @property
@@ -61,7 +66,9 @@ class CheckpointStore:
     def path(self, session_id: str) -> Path:
         return self.root / f"{session_id}.json"
 
-    def create(self, session_id: str, turn: int, kind: str, payload: dict, messages: int = 0) -> Checkpoint:
+    def create(
+        self, session_id: str, turn: int, kind: str, payload: dict, messages: int = 0, redacted: list[str] | None = None
+    ) -> Checkpoint:
         checkpoint = Checkpoint(
             id=f"{time.strftime('%Y%m%d')}-{uuid.uuid4().hex[:6]}",
             timestamp=time.time(),
@@ -69,6 +76,7 @@ class CheckpointStore:
             kind=kind,
             payload=payload,
             messages=messages,
+            redacted=redacted or [],
         )
         checkpoints = self.all(session_id)
         checkpoints.append(checkpoint)
@@ -90,10 +98,13 @@ class CheckpointStore:
 
     def _write(self, session_id: str, checkpoints: list[Checkpoint]) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
-        self.path(session_id).write_text(
+        path = self.path(session_id)
+        path.write_text(
             json.dumps([checkpoint.to_dict() for checkpoint in checkpoints], ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        path.chmod(0o600)
+        """The checkpoints hold the content of the files of the project."""
 
 
 def snapshot_file(path: Path) -> str | None:
@@ -111,7 +122,11 @@ def create_file_checkpoint(
     path: str,
     messages: int = 0,
 ) -> Checkpoint | None:
-    """Snapshot a file before a write tool changes it."""
+    """Snapshot a file before a write tool changes it.
+
+    A file that holds a secret is stored without it, so it cannot be put back
+    exactly. The path is remembered, so the user can be told about it.
+    """
     target = Path(path)
     if not target.is_absolute():
         target = Path(cwd) / target
@@ -119,13 +134,23 @@ def create_file_checkpoint(
         name = str(target.relative_to(Path(cwd)))
     except ValueError:
         name = str(target)
-    return store.create(session_id, turn, "file_diff", {name: snapshot_file(target)}, messages)
+    content = snapshot_file(target)
+    secret = content is not None and has_secret(content)
+    payload = {name: redact(content) if secret else content}
+    return store.create(session_id, turn, "file_diff", payload, messages, [name] if secret else [])
 
 
 def restore_files(checkpoint: Checkpoint, cwd: Path) -> list[str]:
-    """Put the files back the way they were. Returns the paths that changed."""
+    """Put the files back the way they were. Returns the paths that changed.
+
+    A file whose content was redacted is left alone: writing it back would put
+    a placeholder where the secret was.
+    """
     changed = []
+    redacted = set(getattr(checkpoint, "redacted", []))
     for name, content in checkpoint.payload.items():
+        if name in redacted:
+            continue
         path = Path(cwd) / name
         if content is None:
             if path.exists():

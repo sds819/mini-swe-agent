@@ -251,6 +251,11 @@ An error occurred while executing the command: Command 'sleep 60' timed out afte
 放到后台的命令回答 `Started background task {id}: {cmd}`，用 `bash_output`
 读，用 `bash_kill` 杀。
 
+工具的输出会写进会话日志，也会发给模型。里面长得像密钥的东西——API key、
+token、密码、私钥——在写和发之前都会换成 `[redacted]`。带密钥的文件存进
+checkpoint 时会被去掉密钥，`/rewind` 也不会把它恢复回去：文件保持原样，
+命令会告诉你是哪一个。
+
 ## 权限
 
 - **五种模式**——`default`、`acceptEdits`、`plan`、`readonly`、`bypass`。
