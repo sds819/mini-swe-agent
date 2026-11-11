@@ -77,6 +77,22 @@ def test_a_task_without_a_verify_command_is_an_error(tmp_path):
         load_task(directory)
 
 
+def test_a_task_that_must_fail_is_read(tmp_path):
+    """A task that must fail keeps the suite honest."""
+    directory = tmp_path / "guard"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("prompt: hi\nverify:\n  - false\nexpect: fail\n", encoding="utf-8")
+    assert load_task(directory).expect == "fail"
+
+
+def test_an_expectation_that_is_neither_pass_nor_fail_is_an_error(tmp_path):
+    directory = tmp_path / "strange"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("prompt: hi\nverify:\n  - true\nexpect: maybe\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_task(directory)
+
+
 def test_the_tasks_of_a_suite_are_sorted_and_the_files_ignored(tmp_path):
     tasks = load_suite(_suite(tmp_path))
     assert [task.id for task in tasks] == ["alpha", "beta"]

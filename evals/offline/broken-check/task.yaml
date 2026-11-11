@@ -1,0 +1,10 @@
+id: broken-check
+prompt: |
+  Write the word `done` into the file `report.txt`.
+expect: fail
+verify:
+  - test -f report.txt
+  - grep -qx done report.txt
+tags: [offline]
+script:
+  - content: I do not write the file, the check has to fail.

@@ -24,6 +24,7 @@ def _task(
     *,
     verify: list[str] | None = None,
     timeout: int = 300,
+    expect: str = "pass",
 ) -> Task:
     """A task on the disk, with its fixture."""
     directory = tmp_path / "the-task"
@@ -33,7 +34,15 @@ def _task(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
     (directory / "task.yaml").write_text(
-        yaml.safe_dump({"prompt": "Do it.", "verify": verify or ["true"], "script": script, "timeout": timeout}),
+        yaml.safe_dump(
+            {
+                "prompt": "Do it.",
+                "verify": verify or ["true"],
+                "script": script,
+                "timeout": timeout,
+                "expect": expect,
+            }
+        ),
         encoding="utf-8",
     )
     return load_task(directory)
@@ -183,3 +192,35 @@ def test_a_failing_tool_call_is_counted(tmp_path):
     result, _ = _run(task, tmp_path)
     assert result.tool_errors == 1
     assert result.passed is False
+
+
+def test_a_task_that_must_fail_does_what_it_should(tmp_path):
+    """The check has to fail, otherwise every task would pass."""
+    task = _task(
+        tmp_path,
+        [{"content": "I do nothing."}],
+        verify=["test -f never-written.txt"],
+        expect="fail",
+    )
+    result, _ = _run(task, tmp_path)
+    assert result.passed is False
+    assert result.expect == "fail"
+    assert result.as_expected is True
+
+
+def test_a_task_that_must_fail_and_passes_is_unexpected(tmp_path):
+    task = _task(
+        tmp_path,
+        [
+            {
+                "content": "Writing.",
+                "tool_calls": [{"tool": "write", "args": {"path": "never-written.txt", "content": "x"}}],
+            },
+            {"content": "Done."},
+        ],
+        verify=["test -f never-written.txt"],
+        expect="fail",
+    )
+    result, _ = _run(task, tmp_path)
+    assert result.passed is True
+    assert result.as_expected is False

@@ -26,6 +26,12 @@ class Task:
     """The commands that decide whether the task passed. A task without one never passes."""
     setup: list[str] = field(default_factory=list)
     """The commands that prepare the working directory, before the agent starts."""
+    expect: str = "pass"
+    """What the task is supposed to do: `pass` or `fail`.
+
+    A task that must fail keeps the suite honest: a check that never fails
+    would let every task pass.
+    """
     timeout: int = DEFAULT_TIMEOUT
     """Seconds the agent may spend on the task."""
     verify_timeout: int = DEFAULT_VERIFY_TIMEOUT
@@ -48,11 +54,15 @@ def load_task(directory: Path) -> Task:
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     if not data.get("verify"):
         raise ValueError(f"the task {directory} has no verify command: a task without one can never pass")
+    expect = str(data.get("expect") or "pass")
+    if expect not in ("pass", "fail"):
+        raise ValueError(f"the task {directory} expects '{expect}', which is neither 'pass' nor 'fail'")
     return Task(
         id=str(data.get("id") or directory.name),
         prompt=str(data.get("prompt") or ""),
         verify=[str(command) for command in data["verify"]],
         setup=[str(command) for command in data.get("setup") or []],
+        expect=expect,
         timeout=int(data.get("timeout") or DEFAULT_TIMEOUT),
         verify_timeout=int(data.get("verify_timeout") or DEFAULT_VERIFY_TIMEOUT),
         tags=[str(tag) for tag in data.get("tags") or []],

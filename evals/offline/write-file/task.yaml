@@ -1,0 +1,16 @@
+id: write-file
+prompt: |
+  Create the file `hello.txt` with the single line `hello world`.
+verify:
+  - test -f hello.txt
+  - grep -qx "hello world" hello.txt
+tags: [offline]
+script:
+  - content: I write the file.
+    tool_calls:
+      - tool: write
+        args:
+          path: hello.txt
+          content: |
+            hello world
+  - content: The file is there.

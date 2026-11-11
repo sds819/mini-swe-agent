@@ -1,0 +1,123 @@
+name: Eval
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/coderagent/**'
+      - 'evals/**'
+      - 'tests/coderagent/**'
+      - '.github/workflows/eval.yaml'
+  workflow_dispatch:
+    inputs:
+      live:
+        description: 'Run the live suite as well (it needs the model secrets)'
+        type: boolean
+        default: false
+      model:
+        description: 'The model of the live suite'
+        type: string
+        default: 'openai/MiniMax-M2.7'
+      api_base:
+        description: 'The address of the model'
+        type: string
+        default: 'https://api.nengpa.com/v1'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  harness:
+    name: The harness of the pull request
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install dependencies
+        run: uv pip install --python ${Python_ROOT_DIR} -e '.[full]'
+      - name: The commit of the base
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "sha=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.event.before }}" >> $GITHUB_OUTPUT
+          fi
+      - name: The suite of the pull request
+        run: |
+          coder eval evals/offline --label head --format json --out head.json
+          coder eval-compare head.json | tee -a $GITHUB_STEP_SUMMARY
+      - name: The suite of the base
+        if: steps.base.outputs.sha != ''
+        run: |
+          git worktree add /tmp/base "${{ steps.base.outputs.sha }}"
+          mkdir -p /tmp/base/evals
+          cp -r evals/offline /tmp/base/evals/
+          uv venv /tmp/base-venv
+          uv pip install --python /tmp/base-venv/bin/python -e /tmp/base
+          if /tmp/base-venv/bin/coder eval --help > /dev/null 2>&1; then
+            /tmp/base-venv/bin/coder eval /tmp/base/evals/offline --label base --format json --out base.json
+          else
+            echo "the base has no eval harness, there is nothing to compare with"
+          fi
+      - name: Compare the two runs
+        if: steps.base.outputs.sha != ''
+        run: |
+          if [ -f base.json ]; then
+            coder eval-compare head.json --against base.json | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+  live:
+    name: The live suite
+    if: github.event_name == 'workflow_dispatch' && inputs.live
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install dependencies
+        run: uv pip install --python ${Python_ROOT_DIR} -e '.[full]'
+      - name: The configuration of the model
+        run: |
+          mkdir -p ~/.coderagent
+          cat > ~/.coderagent/config.yaml <<EOF
+          model:
+            model_name: ${{ inputs.model }}
+            model_kwargs:
+              api_key: ${{ secrets.CODER_EVAL_API_KEY }}
+              api_base: ${{ inputs.api_base }}
+          EOF
+      - name: The suite of the pull request
+        run: coder eval evals/basic --label head --format json --out head.json
+      - name: The suite of the base
+        run: |
+          git worktree add /tmp/base "${{ github.event.before }}"
+          mkdir -p /tmp/base/evals
+          cp -r evals/basic /tmp/base/evals/
+          uv venv /tmp/base-venv
+          uv pip install --python /tmp/base-venv/bin/python -e /tmp/base
+          /tmp/base-venv/bin/coder eval /tmp/base/evals/basic --label base --format json --out base.json
+      - name: Compare the two runs
+        run: |
+          coder eval-compare head.json --against base.json --max-regressions 1 --max-drop 0.25 \
+            | tee -a $GITHUB_STEP_SUMMARY

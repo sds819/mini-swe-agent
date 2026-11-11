@@ -1,0 +1,14 @@
+id: bash-command
+prompt: |
+  Write the number 5 into the file `count.txt`, one number, nothing else.
+verify:
+  - test -f count.txt
+  - grep -qx 5 count.txt
+tags: [offline]
+script:
+  - content: I write the number with the shell.
+    tool_calls:
+      - tool: bash
+        args:
+          command: echo 5 > count.txt
+  - content: The number is written.

@@ -235,6 +235,57 @@ def _wanted(task, only: list[str], tag: list[str]) -> bool:
     return not tag or bool(set(tag) & set(task.tags))
 
 
+@app.command("eval-compare")
+def eval_compare(
+    after: Path = typer.Argument(..., help="The report of the run after the change"),
+    against: Path = typer.Option(None, "--against", help="The report of the run before the change"),
+    max_regressions: int = typer.Option(0, "--max-regressions", help="The regressions that are allowed"),
+    max_drop: float = typer.Option(0.0, "--max-drop", help="The fall of the pass rate that is allowed"),
+    output_format: str = typer.Option("text", "--format", help="text|json"),
+    out: str = typer.Option("", "--out", help="The file to write the comparison to"),
+) -> None:
+    """Compare an eval report with the one before the change and say whether the agent got worse.
+
+    Without `--against` the report is only checked against what its tasks were
+    supposed to do. The exit code is the verdict: zero when the change is good,
+    one when a task that used to pass does not pass any more.
+    """
+    import json
+
+    from coderagent.eval.compare import check, compare, render, verdict
+
+    new = json.loads(after.read_text(encoding="utf-8"))
+    problems = check(new)
+    if against:
+        old = json.loads(against.read_text(encoding="utf-8"))
+        comparison = compare(old, new)
+        problems += verdict(comparison, max_regressions, max_drop)
+    else:
+        comparison = compare({"tasks": []}, new)
+    if output_format == "json":
+        payload = {
+            "before": comparison.before_label,
+            "after": comparison.after_label,
+            "harness_changed": comparison.harness_changed,
+            "before_pass_rate": comparison.before_pass_rate,
+            "after_pass_rate": comparison.after_pass_rate,
+            "drop": comparison.drop,
+            "regressions": comparison.regressions,
+            "improvements": comparison.improvements,
+            "unexpected": comparison.unexpected,
+            "problems": problems,
+        }
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        typer.echo(render(comparison))
+        for problem in problems:
+            typer.echo(f"problem: {problem}")
+    if out:
+        Path(out).write_text(render(comparison), encoding="utf-8")
+    if problems:
+        raise typer.Exit(code=1)
+
+
 @app.command()
 def export(
     session: str = typer.Option("", "--session", help="The id of the session. The last one when empty."),

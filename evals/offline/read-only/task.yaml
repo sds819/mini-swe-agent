@@ -1,0 +1,14 @@
+id: read-only
+prompt: |
+  Read the note and tell me whether anything has to be done. Do not change what is
+  already fine.
+verify:
+  - test -f notes.txt
+  - grep -q "the build is green" notes.txt
+tags: [offline]
+script:
+  - content: Let me read the note.
+    tool_calls:
+      - tool: read
+        args: {path: notes.txt}
+  - content: The build is green, there is nothing to do.

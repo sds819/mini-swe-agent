@@ -49,6 +49,10 @@ class TaskResult:
     """`scripted` or `live`."""
     passed: bool
     """The verify commands decided it. A task whose harness broke never passes."""
+    expect: str = "pass"
+    """What the task was supposed to do: `pass` or `fail`."""
+    as_expected: bool = True
+    """Whether the task did what it was supposed to do."""
     stop_reason: str = ""
     error: str = ""
     error_kind: str = ""
@@ -72,6 +76,8 @@ class TaskResult:
             "id": self.id,
             "mode": self.mode,
             "passed": self.passed,
+            "expect": self.expect,
+            "as_expected": self.as_expected,
             "stop_reason": self.stop_reason,
             "error": self.error,
             "error_kind": self.error_kind,
@@ -178,6 +184,8 @@ def run_task(
             id=task.id,
             mode=mode,
             passed=False,
+            expect=task.expect,
+            as_expected=False,
             stop_reason="setup_failed",
             error=f"the setup failed: {failed.command}",
             error_kind="setup",
@@ -210,10 +218,13 @@ def run_task(
     verify = run_commands(task.verify, loop.sandbox, task.verify_timeout)
     script_error = result.stop_reason == "error" and SCRIPT_ERROR in result.error
     error_kind = "script" if script_error else ""
+    passed = not error_kind and bool(task.verify) and all(item.exit_code == 0 for item in verify)
     return TaskResult(
         id=task.id,
         mode=mode,
-        passed=not error_kind and bool(task.verify) and all(item.exit_code == 0 for item in verify),
+        passed=passed,
+        expect=task.expect,
+        as_expected=not error_kind and passed == (task.expect == "pass"),
         stop_reason=result.stop_reason,
         error=result.error,
         error_kind=error_kind,

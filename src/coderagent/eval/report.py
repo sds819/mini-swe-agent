@@ -36,11 +36,13 @@ class Report:
         errors = [task for task in self.tasks if task.error_kind]
         graded = [task for task in self.tasks if not task.error_kind]
         passed = [task for task in graded if task.passed]
+        unexpected = [task for task in self.tasks if not task.as_expected]
         return {
             "tasks": len(self.tasks),
             "passed": len(passed),
             "failed": len(graded) - len(passed),
             "errors": len(errors),
+            "unexpected": len(unexpected),
             "pass_rate": round(len(passed) / len(graded), 4) if graded else 0.0,
             "total_cost": round(sum(task.cost for task in self.tasks), 6),
             "total_tokens_in": sum(task.tokens_in for task in self.tasks),
@@ -74,6 +76,8 @@ class Report:
         ]
         for task in self.tasks:
             mark = "✓" if task.passed else "✗"
+            if not task.as_expected:
+                mark = "!"
             note = f"  {task.error}" if task.error else ""
             lines.append(
                 f"{mark} {task.id:<24} {task.mode:<8} ${task.cost:.4f}  "
@@ -84,6 +88,8 @@ class Report:
             f"{summary['tasks']} tasks: {summary['passed']} passed, {summary['failed']} failed, "
             f"{summary['errors']} errors (pass rate {summary['pass_rate'] * 100:.1f}%)"
         )
+        if summary["unexpected"]:
+            lines.append(f"{summary['unexpected']} tasks did not do what they were supposed to do")
         lines.append(
             f"cost ${summary['total_cost']:.4f}  tokens {summary['total_tokens_in']} in / "
             f"{summary['total_tokens_out']} out  {summary['total_model_calls']} model calls"

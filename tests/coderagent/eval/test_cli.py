@@ -90,3 +90,49 @@ def test_the_run_directory_keeps_the_working_directories(tmp_path):
     assert result.exit_code == 0, result.output
     assert (run_dir / "work" / "write-hello" / "hello.txt").exists()
     assert list((run_dir / "home" / "sessions").glob("*.jsonl"))
+
+
+def _report(path: Path, label: str, passed: bool) -> Path:
+    path.write_text(
+        json.dumps(
+            {
+                "label": label,
+                "fingerprint": "sha256:x",
+                "summary": {"tasks": 1, "passed": int(passed)},
+                "tasks": [{"id": "write-hello", "passed": passed, "expect": "pass", "as_expected": passed}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_a_report_that_did_what_it_should_passes(tmp_path):
+    after = _report(tmp_path / "after.json", "head", True)
+    result = CliRunner().invoke(app, ["eval-compare", str(after)])
+    assert result.exit_code == 0, result.output
+    assert "problems" not in result.output
+
+
+def test_a_report_with_a_task_that_failed_its_check_is_a_problem(tmp_path):
+    after = _report(tmp_path / "after.json", "head", False)
+    result = CliRunner().invoke(app, ["eval-compare", str(after)])
+    assert result.exit_code == 1
+    assert "did not do what they were supposed to do" in result.output
+
+
+def test_a_task_that_stops_passing_is_a_regression(tmp_path):
+    before = _report(tmp_path / "before.json", "base", True)
+    after = _report(tmp_path / "after.json", "head", False)
+    result = CliRunner().invoke(app, ["eval-compare", str(after), "--against", str(before)])
+    assert result.exit_code == 1
+    assert "regressions" in result.output
+    assert "write-hello" in result.output
+
+
+def test_the_comparison_can_be_read_as_json(tmp_path):
+    before = _report(tmp_path / "before.json", "base", True)
+    after = _report(tmp_path / "after.json", "head", True)
+    result = CliRunner().invoke(app, ["eval-compare", str(after), "--against", str(before), "--format", "json"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["regressions"] == []

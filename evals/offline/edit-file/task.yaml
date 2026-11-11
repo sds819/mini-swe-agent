@@ -1,0 +1,19 @@
+id: edit-file
+prompt: |
+  The function `add_one` in calc.py adds two instead of one. Fix it.
+verify:
+  - python -m pytest -q tests/test_calc.py
+tags: [offline]
+script:
+  - content: Let me look at the file.
+    tool_calls:
+      - tool: read
+        args: {path: calc.py}
+  - content: Now I fix the addition.
+    tool_calls:
+      - tool: edit
+        args:
+          path: calc.py
+          old_string: "return n + 2"
+          new_string: "return n + 1"
+  - content: The function adds one now.
