@@ -1,0 +1,15 @@
+id: no-op
+prompt: |
+  The note in notes.txt says that the build is green. Read it and tell me whether
+  anything has to be done. Do not change what is already fine.
+verify:
+  - test -f notes.txt
+  - grep -q "the build is green" notes.txt
+tags: [no-op]
+script:
+  - content: Let me read the note.
+    tool_calls:
+      - tool: read
+        args:
+          path: notes.txt
+  - content: The build is green, so there is nothing to do.

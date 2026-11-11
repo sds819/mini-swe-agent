@@ -1,0 +1,21 @@
+id: off-by-one
+prompt: |
+  The function `add_one` in calc.py is off by one: it adds two instead of one.
+  Fix it so that the test passes.
+verify:
+  - python -m pytest -q tests/test_calc.py
+tags: [bugfix]
+script:
+  - content: Let me look at the file first.
+    tool_calls:
+      - tool: read
+        args:
+          path: calc.py
+  - content: "Found it: the function adds two. Fixing it."
+    tool_calls:
+      - tool: edit
+        args:
+          path: calc.py
+          old_string: "return n + 2"
+          new_string: "return n + 1"
+  - content: The test passes now.
