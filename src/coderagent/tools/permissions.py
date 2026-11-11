@@ -140,9 +140,8 @@ class PermissionPolicy:
         if tool in PATH_TOOLS:
             path = str(params.get("path", ""))
             if path and not self.within_bounds(path):
-                if matched and matched.decision == "allow":
-                    return Decision("allow", matched, matched.reason)
-                return Decision("deny", matched, f"'{path}' is outside the working directory {self.cwd}")
+                """A rule cannot open the disk: the bounds hold in every mode."""
+                return Decision("deny", matched, self._outside_reason(path))
         return Decision(decision, matched, matched.reason if matched else "")
 
     def _default_decision(self, tool: str) -> str:
@@ -189,6 +188,14 @@ class PermissionPolicy:
         if resolved.is_relative_to(self.cwd):
             return True
         return any(resolved.is_relative_to(directory) for directory in self.include_dirs)
+
+    def _outside_reason(self, path: str) -> str:
+        """Why the path is refused, and where it would be allowed."""
+        reason = f"'{path}' is outside the working directory {self.cwd}"
+        if self.include_dirs:
+            directories = ", ".join(str(directory) for directory in self.include_dirs)
+            return f"{reason}. The directories that are open: {directories}"
+        return reason
 
 
 def pattern_for(tool: str, params: dict[str, Any]) -> str:

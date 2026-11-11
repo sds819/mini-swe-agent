@@ -123,3 +123,28 @@ def test_the_modes_that_take_nothing_away_need_no_explanation(mode):
 def test_plan_and_readonly_are_told_different_things():
     assert "plan you would follow" in mode_note(PermissionMode.PLAN)
     assert "describe the change you would make" in mode_note(PermissionMode.READONLY)
+
+
+def test_an_allow_rule_cannot_open_a_path_outside_the_working_directory(tmp_path):
+    """The rules of the user cannot widen the bounds."""
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT,
+        [Rule(tool="read", pattern="**/etc/passwd", decision="allow")],
+        cwd=tmp_path,
+    )
+    assert policy.check("read", {"path": "/etc/passwd"}) == "deny"
+
+
+def test_an_allow_rule_cannot_open_a_path_outside_the_working_directory_in_bypass(tmp_path):
+    policy = PermissionPolicy(
+        PermissionMode.BYPASS,
+        [Rule(tool="write", pattern="**/escape.py", decision="allow")],
+        cwd=tmp_path,
+    )
+    assert policy.check("write", {"path": str(tmp_path.parent / "escape.py")}) == "deny"
+
+
+def test_the_reason_names_the_directories_that_are_open(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, include_dirs=[str(tmp_path / "vendor")])
+    decision = policy.evaluate("read", {"path": "/etc/passwd"})
+    assert "vendor" in decision.reason
