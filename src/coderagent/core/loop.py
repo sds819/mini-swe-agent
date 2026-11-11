@@ -51,6 +51,7 @@ class AgentLoop:
         router=None,
         plugins=None,
         sandbox=None,
+        schema_budget: int | None = None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -76,6 +77,8 @@ class AgentLoop:
         """The plugins that were loaded, by name."""
         self.sandbox = sandbox
         """The environment the commands run in."""
+        self.schema_budget = schema_budget
+        """The tokens the schemas of the tools may take. None means no limit."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self.context = context or ContextEngine(

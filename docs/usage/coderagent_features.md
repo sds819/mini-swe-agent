@@ -184,9 +184,10 @@ The thirteen built-in tools:
 - **Tools of MCP servers** — `mcp__<server>__<tool>`, from every server that
   is configured.
 - **Tools of plugins** — a plugin can add tools, commands and hooks.
-- **The schemas are trimmed to the budget** — when the tools do not fit in
-  the context, the ones that matter least go first. `bash` and `read` are
-  never dropped.
+- **The schemas are trimmed to the budget** — the schemas of the tools may
+  take a tenth of the context window; `tools.schema_budget_tokens` sets
+  another budget. When they do not fit, the ones that matter least go first.
+  `bash` and `read` are never dropped.
 - **The tool set is configurable** — `tools.enabled` is the list of the tools
   the model may call, `tools.disabled` takes single ones away.
 
@@ -887,7 +888,7 @@ The sections and what they hold:
 |---|---|
 | `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control` |
 | `agent` | `system_prompt`, `max_turns`, `cost_limit` |
-| `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens` |
+| `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs` |
 | `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model` |
 | `memory` | `project_path`, `user_path`, `enabled` |

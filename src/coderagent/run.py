@@ -41,6 +41,7 @@ from coderagent.tools.builtin.task import TaskTool
 from coderagent.tools.executor import ToolExecutor
 from coderagent.tools.mcp import MCPManager
 from coderagent.tools.permissions import HeadlessApprover, PermissionPolicy, Rule
+from coderagent.tools.registry import estimate_tokens
 from coderagent.tools.rules import load_rules
 from coderagent.ui.commands import register as register_command
 
@@ -88,6 +89,18 @@ def purpose_gateway(config: Config, gateway: ModelGateway, purpose: str) -> Mode
     return ModelGateway(build_model(config, name))
 
 
+def schema_budget(config: Config, context_window: int) -> int:
+    """The tokens the schemas of the tools may take.
+
+    A tenth of the context window, and never less than the built-in tools need,
+    so that a small window does not take a tool away from the agent. The tools
+    that go over the budget are dropped, the last useful ones first.
+    """
+    if config.tools.schema_budget_tokens:
+        return config.tools.schema_budget_tokens
+    return max(context_window // 10, estimate_tokens(build_registry().schemas()))
+
+
 def build_loop(
     config: Config,
     cwd: Path,
@@ -132,11 +145,13 @@ def build_loop(
         system_prompt = f"{system_prompt}\n\n{skill_index(skills)}"
     if subagent_index(specs):
         system_prompt = f"{system_prompt}\n\n{subagent_index(specs)}"
+    context_config = _context_config(config, config.model.model_name)
+    budget = schema_budget(config, context_config.context_window)
     context = ContextEngine(
         session,
         store,
         bus,
-        _context_config(config, config.model.model_name),
+        context_config,
         gateway,
         system_prompt=system_prompt,
         memory_config=config.memory,
@@ -172,6 +187,7 @@ def build_loop(
         before_write=before_write,
         store=store,
         on_path=context.note_path,
+        schema_budget=budget,
     )
     if "task" in config.tools.enabled and "task" not in config.tools.disabled:
         registry.register(TaskTool(runner, specs))
@@ -195,7 +211,8 @@ def build_loop(
         store,
         bus,
         context=context,
-        tools=registry.schemas(),
+        tools=registry.schemas(budget),
+        schema_budget=budget,
         system_prompt=system_prompt,
         max_turns=config.agent.max_turns,
         cost_limit=config.agent.cost_limit,

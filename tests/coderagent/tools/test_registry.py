@@ -46,6 +46,13 @@ def test_budget_trimming_keeps_the_tools_that_fit():
     assert len(registry.schemas(budget_tokens=10_000)) == 3
 
 
+def test_budget_trimming_drops_the_biggest_tool_of_an_unknown_name():
+    """A tool the trim order does not know is dropped when it does not fit."""
+    registry = ToolRegistry([_Dummy("bash"), _Dummy("read"), _Dummy("mcp__big__thing", "x" * 5000)])
+    names = [schema["function"]["name"] for schema in registry.schemas(budget_tokens=100)]
+    assert names == ["bash", "read"]
+
+
 def test_estimate_tokens_grows_with_the_schema_size():
     small = ToolRegistry([_Dummy("a")]).schemas()
     large = ToolRegistry([_Dummy("a"), _Dummy("b", "x" * 500)]).schemas()

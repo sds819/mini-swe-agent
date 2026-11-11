@@ -58,6 +58,12 @@ class ToolRegistry:
             if name in NEVER_TRIM:
                 continue
             schemas = [schema for schema in schemas if schema["function"]["name"] != name]
+        while estimate_tokens(schemas) > budget_tokens:
+            """What is left does not fit either: the biggest schema goes first."""
+            droppable = [schema for schema in schemas if schema["function"]["name"] not in NEVER_TRIM]
+            if not droppable:
+                break
+            schemas.remove(max(droppable, key=lambda schema: len(json.dumps(schema))))
         return schemas
 
     def _schema(self, tool: Tool) -> dict:

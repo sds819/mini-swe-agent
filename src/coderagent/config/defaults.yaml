@@ -16,6 +16,7 @@ tools:
   disabled: []
   bash_timeout: 120
   max_output_tokens: 8000
+  schema_budget_tokens: 0
 
 permissions:
   mode: default

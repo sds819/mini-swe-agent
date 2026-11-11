@@ -62,6 +62,8 @@ class ToolConfig(BaseModel):
     disabled: list[str] = Field(default_factory=list)
     bash_timeout: int = 120
     max_output_tokens: int = 8000
+    schema_budget_tokens: int = 0
+    """The tokens the schemas of the tools may take. 0 means a tenth of the context window."""
 
 
 class PermissionConfig(BaseModel):

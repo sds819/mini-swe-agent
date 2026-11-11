@@ -175,7 +175,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 
 - **MCP 服务器的工具**——`mcp__<服务器>__<工具>`，配了的服务器都有。
 - **插件的工具**——插件可以加工具、命令和 hook。
-- **工具的 schema 会按预算裁剪**——工具塞不进上下文时，最不重要的先走。
+- **工具的 schema 会按预算裁剪**——工具的 schema 最多占上下文的十分之一（`tools.schema_budget_tokens` 可以另设预算）；塞不下时最不重要的先走。
   `bash` 和 `read` 永远不裁。
 - **工具集可以配**——`tools.enabled` 是模型能调的工具清单，`tools.disabled`
   是单独拿掉几个。
@@ -837,7 +837,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 |---|---|
 | `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control` |
 | `agent` | `system_prompt`、`max_turns`、`cost_limit` |
-| `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens` |
+| `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs` |
 | `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model` |
 | `memory` | `project_path`、`user_path`、`enabled` |

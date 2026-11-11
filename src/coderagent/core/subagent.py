@@ -122,6 +122,7 @@ class SubAgentRunner:
         before_write=None,
         store=None,
         on_path=None,
+        schema_budget: int | None = None,
     ) -> None:
         self.gateway = gateway
         self.registry = registry
@@ -140,6 +141,8 @@ class SubAgentRunner:
         """The event log. The result of a tool of the sub agent lands in it."""
         self.on_path = on_path
         """Called with the path of every path based tool."""
+        self.schema_budget = schema_budget
+        """The tokens the schemas of the tools may take. None means no limit."""
 
     def run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         """Run the sub agent and return the structured result."""
@@ -165,7 +168,7 @@ class SubAgentRunner:
             {"role": "system", "content": system},
             {"role": "user", "content": f"{description}\n\n{prompt}".strip()},
         ]
-        schemas = registry.schemas()
+        schemas = registry.schemas(self.schema_budget)
         turns = 0
         touched: list[str] = []
         summary = ""
