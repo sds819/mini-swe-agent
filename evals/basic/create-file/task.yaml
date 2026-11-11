@@ -6,11 +6,3 @@ verify:
   - test -f hello.txt
   - grep -qx "hello world" hello.txt
 tags: [feature]
-script:
-  - content: Creating the file.
-    tool_calls:
-      - tool: write
-        args:
-          path: hello.txt
-          content: "hello world\n"
-  - content: The file is there.

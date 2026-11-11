@@ -52,9 +52,10 @@ them exit with 0. A task without a `verify` never passes, so a suite cannot
 pass by doing nothing.
 
 The `script` is a scripted model: the answers of the agent are written down
-instead of asked for. It needs no API key, so the suite of the repository runs
-offline, and it makes the trajectory of the harness itself reproducible. A suite
-may mix scripted and live tasks, and the report says which is which (`"mode"`).
+instead of asked for. It needs no API key, so a task with a script runs offline,
+and it makes the trajectory of the harness itself reproducible. A task without a
+script runs against the real model. A suite may mix scripted and live tasks, and
+the report says which is which (`"mode"`).
 
 ## The command
 
@@ -144,8 +145,12 @@ your machine.** Run it in a container, or with a sandbox type of your choice
 
 ## The example suite
 
-`evals/basic` holds three tasks, all of them scripted, so the suite runs without
-an API key:
+`evals/basic` holds three tasks. They have no `script`, so they run against the
+real model and they need an API key:
+
+```bash
+coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
+```
 
 | task | what it is |
 |---|---|
@@ -155,3 +160,6 @@ an API key:
 
 The third one is deliberate: an agent that changes what it should not is as much
 a bug as an agent that changes nothing.
+
+To run a task without an API key, give it a `script`: the answers of the agent
+are written down, and the trajectory is the same every time.

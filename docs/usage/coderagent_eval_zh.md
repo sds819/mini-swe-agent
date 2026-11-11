@@ -46,7 +46,8 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 **没有 `verify` 的任务永远不算通过**，所以一个 suite 不可能靠「什么都不做」通过。
 
 `script` 是脚本化模型：agent 的回答是写死的，不是问模型要来的。
-它不需要 API key，所以仓库里的样例任务集可以离线跑，而且 harness 自己的轨迹是可复现的。
+它不需要 API key，所以带 `script` 的任务可以离线跑，而且 harness 自己的轨迹是可复现的；
+不带 `script` 的任务走真实模型。
 一个 suite 可以混着放脚本任务和真实模型任务，报告里每个任务都带 `mode`。
 
 ## 命令
@@ -128,7 +129,11 @@ diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
 
 ## 样例任务集
 
-`evals/basic` 里有三个任务，都是脚本化的，所以不需要 API key：
+`evals/basic` 里有三个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
+
+```bash
+coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
+```
 
 | 任务 | 内容 |
 |---|---|
@@ -137,3 +142,5 @@ diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
 | `no-op` | 一个已经做好的任务：agent 得**什么都别改** |
 
 第三个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。
+
+想不花 API key 就跑一个任务，给它加一段 `script`：agent 的回答是写死的，轨迹每次都一样。

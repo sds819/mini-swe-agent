@@ -6,10 +6,3 @@ verify:
   - test -f notes.txt
   - grep -q "the build is green" notes.txt
 tags: [no-op]
-script:
-  - content: Let me read the note.
-    tool_calls:
-      - tool: read
-        args:
-          path: notes.txt
-  - content: The build is green, so there is nothing to do.
