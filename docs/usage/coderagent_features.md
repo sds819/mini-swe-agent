@@ -275,6 +275,9 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
 - **Five modes** — `default`, `acceptEdits`, `plan`, `readonly` and `bypass`.
 - **The model is told** — in `plan` and `readonly` the agent knows that it may
   not change anything, and answers with what it found instead.
+- **The shell has boundaries** — the commands that only look around go through,
+  the ones that destroy something or send it out ask, and a path outside the
+  working directory is refused.
 - **Rules** — `~/.coderagent/rules.yaml` and `.coderagent/rules.yaml` decide
   per tool and per pattern. The user level file wins.
 - **`Always allow`** — the button of an approval writes a rule, so the same
@@ -296,11 +299,15 @@ The mode decides what happens without any rule:
 
 | Mode | `read`, `glob`, `grep`, `ls` | `write`, `edit`, `multi_edit` | `bash` | `todo_write`, `bash_output`, `bash_kill` |
 |---|---|---|---|---|
-| `default` | allow | ask | ask | allow |
-| `acceptEdits` | allow | allow | ask | allow |
+| `default` | allow | ask | ask¹ | allow |
+| `acceptEdits` | allow | allow | ask¹ | allow |
 | `plan` | allow | deny | deny | allow |
 | `readonly` | allow | deny | deny | allow |
 | `bypass` | allow | allow | allow | allow |
+
+¹ The commands that only look around — `ls`, `cat`, `grep`, `git status` and
+the like — go through without a question. The rest asks. See
+[the shell](#the-shell) below.
 
 A rule file decides per tool and per pattern:
 
@@ -321,7 +328,9 @@ rules:
 
 `pattern` is a glob for the path tools (`*` in one segment, `**` across
 directories), a **regular expression** for `bash`, and the tool name for
-everything else.
+everything else. For `bash` the pattern is matched against the **beginning of
+each part** of the command: `git push` matches `git push origin main`, and it
+does not match `echo "git push"`.
 
 ```bash
 coder -t "run the tests" --permission-mode acceptEdits
@@ -360,6 +369,7 @@ rules:
 | `{path}:{line}: unknown rule keys: {keys}` | The rule has a key that does not exist. | The keys are `tool`, `pattern`, `decision` and `reason`. |
 | `{path}: invalid YAML: {error}` | The rule file cannot be parsed. | Fix the YAML; the message has the line. |
 | `{path}: \`rules\` must be a list` | The `rules` key is not a list. | Make it a list of mappings. |
+| `Error: permission denied for 'bash'. '{path}' is outside the working directory {cwd}` | The command names a path outside the working directory. | Use a path inside it, or open the directory with `permissions.include_dirs`. |
 
 A rule with `decision: allow` does **not** open the disk: a path outside the
 working directory stays outside, unless it is in `permissions.include_dirs`.
@@ -368,6 +378,38 @@ The rules of the user cannot widen the bounds.
 `permissions.deny_paths` adds a rule that denies everything that matches, and
 it is applied after the rule files, so it wins over an `allow` of the same
 path.
+
+### The shell
+
+The `bash` tool is the one that can do anything, so it has three boundaries.
+
+**The commands that only look around go through.** `ls`, `cat`, `head`, `tail`,
+`grep`, `diff`, `wc`, `jq` and the reading commands of `git` (`status`, `diff`,
+`log`, `show`, …) are safe: they do not change anything and they do not reach
+the network. They do not ask.
+
+**The commands that destroy something or send it out ask.** `rm`, `mv`, `cp`,
+`chmod`, `curl`, `wget`, `ssh`, `pip`, `npm`, `docker`, `git push` and the
+like. They are not refused — a person decides, and the approval says what the
+command does ("sends data out of the machine"). In `bypass` they go through
+like everything else, because nobody is there to ask.
+
+**A path outside the working directory is refused.** `cat /etc/passwd`,
+`cat ../secret`, `cat ~/.ssh/id_rsa` and `cd ..` are denied in every mode,
+like the paths of the file tools. The programs of the system may be named
+(`/bin/ls`), the data may not leave the working directory. `permissions.include_dirs`
+opens a directory outside it.
+
+Every part of a command is judged on its own, and the strictest part wins: an
+allowed `pytest` does not carry a `rm` along with it.
+
+```bash
+ls -la                       # goes through
+git status                   # goes through
+curl http://example.com      # asks: sends data out of the machine
+pytest -q && rm -rf build    # asks: the rm is dangerous
+cat /etc/passwd              # refused
+```
 
 ## The sessions
 

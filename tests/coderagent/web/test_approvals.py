@@ -8,7 +8,7 @@ from tests.coderagent.web.conftest import assistant, bash_call  # noqa: E402
 
 
 def test_an_allowed_tool_runs(make_client, send, wait_for):
-    client = make_client(responses=[assistant(tool_calls=[bash_call("echo approved")]), assistant("done")])
+    client = make_client(responses=[assistant(tool_calls=[bash_call("sh -c 'echo approved'")]), assistant("done")])
     session_id = client.post("/api/sessions").json()["id"]
     send(client, session_id, "run it")
 
@@ -16,7 +16,7 @@ def test_an_allowed_tool_runs(make_client, send, wait_for):
     request = [item for item in items if item["kind"] == "approval_request"][0]
 
     assert request["tool"] == "bash"
-    assert request["params"] == {"command": "echo approved"}
+    assert request["params"] == {"command": "sh -c 'echo approved'"}
     assert client.post(f"/api/approvals/{request['id']}", json={"decision": "allow"}).status_code == 200
 
     items = wait_for(client, session_id, "turn_end")
@@ -26,7 +26,7 @@ def test_an_allowed_tool_runs(make_client, send, wait_for):
 
 
 def test_a_denied_tool_does_not_run(make_client, send, wait_for):
-    client = make_client(responses=[assistant(tool_calls=[bash_call("echo approved")]), assistant("done")])
+    client = make_client(responses=[assistant(tool_calls=[bash_call("sh -c 'echo approved'")]), assistant("done")])
     session_id = client.post("/api/sessions").json()["id"]
     send(client, session_id, "run it")
 
@@ -42,7 +42,7 @@ def test_a_denied_tool_does_not_run(make_client, send, wait_for):
 
 def test_an_approval_that_nobody_answers_is_denied(make_client, send, wait_for):
     client = make_client(
-        responses=[assistant(tool_calls=[bash_call("echo approved")]), assistant("done")],
+        responses=[assistant(tool_calls=[bash_call("sh -c 'echo approved'")]), assistant("done")],
         project_config="ui:\n  approval_timeout: 1\n",
     )
     session_id = client.post("/api/sessions").json()["id"]

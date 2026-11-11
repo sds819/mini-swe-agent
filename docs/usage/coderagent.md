@@ -358,8 +358,8 @@ permissions:
 
 The pattern is a glob for the tools that touch a path (`read`, `write`,
 `edit`, `multi_edit`, `glob`, `grep`, `ls`) and a regular expression for
-`bash`. The decision is `allow`, `ask` or `deny`. The last rule that matches
-wins.
+`bash`, where it is matched against the beginning of each part of the command.
+The decision is `allow`, `ask` or `deny`. The last rule that matches wins.
 
 The rules of the project live in `.coderagent/rules.yaml`, the rules of the
 user in `~/.coderagent/rules.yaml`. Both are read, in that order, so a rule of
@@ -377,6 +377,11 @@ rules:
 says. `permissions.include_dirs` are the directories outside the working
 directory that the agent may still touch. Without them the agent stays inside
 the directory of the session.
+
+The shell has its own boundaries: the commands that only look around (`ls`,
+`cat`, `grep`, `git status`) go through without a question, the ones that
+destroy something or send it out (`rm`, `curl`, `git push`) ask, and a path
+outside the working directory is refused in every mode.
 
 `/permissions` shows the mode and the rules that are in effect.
 

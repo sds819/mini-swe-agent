@@ -127,7 +127,9 @@ def test_the_session_waits_for_the_approval(tmp_path):
         context=build_context(tmp_path, session=session, bus=bus, policy=policy),
     )
     loop = AgentLoop(
-        ModelGateway(ScriptedModel([_assistant(tool_calls=[_bash_call("echo hi")]), _assistant(content="done")])),
+        ModelGateway(
+            ScriptedModel([_assistant(tool_calls=[_bash_call("sh -c 'echo hi'")]), _assistant(content="done")])
+        ),
         executor,
         session,
         store,

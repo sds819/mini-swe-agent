@@ -6,6 +6,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Protocol
 
+from coderagent.tools import bash_policy
+
 READ_TOOLS = {"read", "glob", "grep", "ls"}
 WRITE_TOOLS = {"write", "edit", "multi_edit"}
 INFO_TOOLS = {"todo_write", "bash_output", "bash_kill"}
@@ -119,11 +121,14 @@ class PermissionPolicy:
         *,
         cwd: Path | None = None,
         include_dirs: list[str] | None = None,
+        bounded: bool = True,
     ) -> None:
         self.mode = PermissionMode(mode)
         self.rules = list(rules or [])
         self.cwd = Path(cwd).resolve() if cwd else Path.cwd().resolve()
         self.include_dirs = [Path(directory).resolve() for directory in include_dirs or []]
+        self.bounded = bounded
+        """Whether the commands run on this disk. A container has its own boundary."""
 
     def check(self, tool: str, params: dict) -> str:
         """Return `allow`, `ask` or `deny`."""
@@ -131,6 +136,8 @@ class PermissionPolicy:
 
     def evaluate(self, tool: str, params: dict) -> Decision:
         """Like `check`, but also reports which rule was hit and why."""
+        if tool == "bash":
+            return self._evaluate_bash(str(params.get("command", "")))
         decision = self._default_decision(tool)
         matched: Rule | None = None
         for rule in self.rules:
@@ -143,6 +150,47 @@ class PermissionPolicy:
                 """A rule cannot open the disk: the bounds hold in every mode."""
                 return Decision("deny", matched, self._outside_reason(path))
         return Decision(decision, matched, matched.reason if matched else "")
+
+    def _evaluate_bash(self, command: str) -> Decision:
+        """The decision for a shell command.
+
+        Every part of the command is judged on its own and the strictest part
+        wins: an allowed `pytest` does not carry a `rm` along with it. A path
+        that leaves the working directory is refused in every mode.
+        """
+        outside = bash_policy.outside_paths(command, self.cwd, self.include_dirs) if self.bounded else []
+        if outside:
+            """The bounds of the disk hold in every mode, like they do for the file tools."""
+            return Decision("deny", None, self._outside_reason(outside[0]))
+        if self.mode == PermissionMode.BYPASS:
+            return Decision("allow", None, "")
+        if self.mode in (PermissionMode.PLAN, PermissionMode.READONLY):
+            return Decision("deny", None, "")
+        decision, matched, reason = "allow", None, ""
+        for segment in bash_policy.segments(command):
+            rule = self._bash_rule(segment)
+            if rule is not None:
+                decision = _strictest(decision, rule.decision)
+                matched = rule
+                reason = rule.reason or reason
+                continue
+            kind, why = bash_policy.classify_segment(segment)
+            if kind == "dangerous":
+                decision = _strictest(decision, "ask")
+                reason = reason or why
+            elif kind == "unknown":
+                decision = _strictest(decision, "ask")
+        return Decision(decision, matched, reason)
+
+    def _bash_rule(self, segment: str) -> Rule | None:
+        """The last rule that matches a part of the command."""
+        matched = None
+        for rule in self.rules:
+            if rule.tool not in ("*", "bash"):
+                continue
+            if _matches_bash(rule.pattern, segment):
+                matched = rule
+        return matched
 
     def _default_decision(self, tool: str) -> str:
         if self.mode == PermissionMode.BYPASS:
@@ -163,11 +211,6 @@ class PermissionPolicy:
             if not path:
                 return rule.pattern == "*"
             return bool(glob_to_regex(rule.pattern).match(self._relative(path)))
-        if tool == "bash":
-            try:
-                return bool(re.search(rule.pattern, str(params.get("command", ""))))
-            except re.error:
-                return False
         return rule.pattern in ("*", tool)
 
     def _relative(self, path: str) -> str:
@@ -203,5 +246,27 @@ def pattern_for(tool: str, params: dict[str, Any]) -> str:
     if tool in PATH_TOOLS:
         return str(params.get("path", "*"))
     if tool == "bash":
-        return re.escape(str(params.get("command", "")))
+        """A rule is matched against a part of the command, so the rule names the first one."""
+        parts = bash_policy.segments(str(params.get("command", "")))
+        return re.escape(parts[0]) if parts else "*"
     return tool
+
+
+def _matches_bash(pattern: str, segment: str) -> bool:
+    """Whether the pattern of a rule is the beginning of a part of the command.
+
+    A rule is about a command, not about a word somewhere in a line: `git push`
+    does not match `echo "git push"`.
+    """
+    if pattern == "*":
+        return True
+    try:
+        return bool(re.match(pattern, segment))
+    except re.error:
+        return False
+
+
+def _strictest(first: str, second: str) -> str:
+    """The stricter of two decisions."""
+    order = {"allow": 0, "ask": 1, "deny": 2}
+    return first if order.get(first, 1) >= order.get(second, 1) else second

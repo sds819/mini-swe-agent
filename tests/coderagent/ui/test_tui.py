@@ -126,7 +126,7 @@ def test_the_card_of_a_tool_call_is_shown(tmp_path):
     call = {
         "id": "call_1",
         "type": "function",
-        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+        "function": {"name": "bash", "arguments": '{"command": "sh -c \'echo hi\'"}'},
     }
     app = _app(
         tmp_path,
@@ -155,7 +155,7 @@ def test_the_approval_is_asked_and_the_tool_runs(tmp_path):
     call = {
         "id": "call_1",
         "type": "function",
-        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+        "function": {"name": "bash", "arguments": '{"command": "sh -c \'echo hi\'"}'},
     }
     app = _app(
         tmp_path,
@@ -184,7 +184,7 @@ def test_the_answers_are_picked_with_the_arrow_keys(tmp_path):
     call = {
         "id": "call_1",
         "type": "function",
-        "function": {"name": "bash", "arguments": '{"command": "echo hi"}'},
+        "function": {"name": "bash", "arguments": '{"command": "sh -c \'echo hi\'"}'},
     }
     app = _app(
         tmp_path,

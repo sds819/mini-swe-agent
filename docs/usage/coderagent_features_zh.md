@@ -280,8 +280,8 @@ checkpoint 时会被去掉密钥，`/rewind` 也不会把它恢复回去：文�
 
 | 模式 | `read`、`glob`、`grep`、`ls` | `write`、`edit`、`multi_edit` | `bash` | `todo_write`、`bash_output`、`bash_kill` |
 |---|---|---|---|---|
-| `default` | 允许 | 问 | 问 | 允许 |
-| `acceptEdits` | 允许 | 允许 | 问 | 允许 |
+| `default` | 允许 | 问 | 问¹ | 允许 |
+| `acceptEdits` | 允许 | 允许 | 问¹ | 允许 |
 | `plan` | 允许 | 拒绝 | 拒绝 | 允许 |
 | `readonly` | 允许 | 拒绝 | 拒绝 | 允许 |
 | `bypass` | 允许 | 允许 | 允许 | 允许 |
@@ -304,7 +304,11 @@ rules:
 ```
 
 `pattern` 对路径类工具是 glob（`*` 在一段里，`**` 跨目录），对 `bash` 是
-**正则**，别的工具就是工具名。
+**正则**，别的工具就是工具名。对 `bash`，这个正则要对上命令**每一段的开头**：
+`git push` 能对上 `git push origin main`，但对不上 `echo "git push"`。
+
+¹ 只是看的命令——`ls`、`cat`、`grep`、`git status` 之类——直接放行，不问；
+其余的问。详见下面的[命令行](#命令行)。
 
 ```bash
 coder -t "跑一下测试" --permission-mode acceptEdits
@@ -343,6 +347,7 @@ rules:
 | `{path}:{line}: unknown rule keys: {keys}` | 规则里有不存在的键。 | 键只有 `tool`、`pattern`、`decision`、`reason`。 |
 | `{path}: invalid YAML: {error}` | 规则文件解析不了。 | 修 YAML，消息里带着行号。 |
 | `{path}: \`rules\` must be a list` | `rules` 不是一个列表。 | 写成一个由映射组成的列表。 |
+| `Error: permission denied for 'bash'. '{path}' is outside the working directory {cwd}` | 命令里点了工作目录以外的路径。 | 用工作目录里的路径，或者用 `permissions.include_dirs` 打开那个目录。 |
 
 `decision: allow` 的规则**不会**把整块磁盘打开：工作目录以外的路径还是
 碰不到，除非它在 `permissions.include_dirs` 里。用户级的规则也不能放宽这个
@@ -350,6 +355,35 @@ rules:
 
 `permissions.deny_paths` 加的是一条「全部拒绝」的规则，它在规则文件之后
 生效，所以同样路径上的 `allow` 打不过它。
+
+### 命令行
+
+`bash` 是唯一什么都能干的工具，所以它有三条边界。
+
+**只是看的命令直接放行。** `ls`、`cat`、`head`、`tail`、`grep`、`diff`、`wc`、
+`jq`，还有 `git` 里读东西的那些子命令（`status`、`diff`、`log`、`show`……）
+是安全的：它们不改东西，也不联网，所以不问。
+
+**会毁东西或者把东西送出去的命令要问。** `rm`、`mv`、`cp`、`chmod`、`curl`、
+`wget`、`ssh`、`pip`、`npm`、`docker`、`git push` 这些。它们不是被拒绝——由
+人来决定，审批上会写清楚这条命令干什么（「把数据送出这台机器」）。在
+`bypass` 下它们照常放行，因为那儿没有人可问。
+
+**工作目录以外的路径被拒绝。** `cat /etc/passwd`、`cat ../secret`、
+`cat ~/.ssh/id_rsa`、`cd ..` 在任何模式下都被拒绝，和文件工具的路径一样。
+系统的程序可以点名（`/bin/ls`），但数据不许离开工作目录。
+`permissions.include_dirs` 可以打开工作目录以外的目录。
+
+命令的每一段都单独判，取最严的那一段：放行了 `pytest` 也不代表跟着它的
+`rm` 一起放行。
+
+```bash
+ls -la                       # 放行
+git status                   # 放行
+curl http://example.com      # 要问：把数据送出这台机器
+pytest -q && rm -rf build    # 要问：rm 是危险的
+cat /etc/passwd              # 拒绝
+```
 
 ## 会话
 

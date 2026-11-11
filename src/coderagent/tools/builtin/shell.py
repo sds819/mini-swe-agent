@@ -36,7 +36,9 @@ class BashTool:
     name = "bash"
     description = (
         "Run a shell command in the working directory. Use it for pipelines, builds and tests; "
-        "use the dedicated file tools for reading and editing files."
+        "use the dedicated file tools for reading and editing files. The commands that only look "
+        "around go through; the ones that destroy something or send it out ask for approval, and "
+        "a path outside the working directory is refused."
     )
     parameters = {
         "type": "object",

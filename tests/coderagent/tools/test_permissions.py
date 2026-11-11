@@ -1,6 +1,14 @@
 import pytest
 
-from coderagent.tools.permissions import PermissionMode, PermissionPolicy, Rule, glob_to_regex, mode_block, mode_note
+from coderagent.tools.permissions import (
+    PermissionMode,
+    PermissionPolicy,
+    Rule,
+    glob_to_regex,
+    mode_block,
+    mode_note,
+    pattern_for,
+)
 
 
 def test_the_default_mode_allows_reads_and_asks_for_everything_else(tmp_path):
@@ -9,14 +17,14 @@ def test_the_default_mode_allows_reads_and_asks_for_everything_else(tmp_path):
     assert policy.check("glob", {"pattern": "*"}) == "allow"
     assert policy.check("write", {"path": "a.py"}) == "ask"
     assert policy.check("edit", {"path": "a.py"}) == "ask"
-    assert policy.check("bash", {"command": "ls"}) == "ask"
+    assert policy.check("bash", {"command": "pytest -q"}) == "ask"
 
 
 def test_accept_edits_allows_file_writes_but_asks_for_bash(tmp_path):
     policy = PermissionPolicy(PermissionMode.ACCEPT_EDITS, [], cwd=tmp_path)
     assert policy.check("edit", {"path": "a.py"}) == "allow"
     assert policy.check("write", {"path": "a.py"}) == "allow"
-    assert policy.check("bash", {"command": "ls"}) == "ask"
+    assert policy.check("bash", {"command": "pytest -q"}) == "ask"
 
 
 @pytest.mark.parametrize("mode", [PermissionMode.PLAN, PermissionMode.READONLY])
@@ -29,7 +37,7 @@ def test_plan_and_readonly_deny_every_write(tmp_path, mode):
 
 def test_bypass_allows_everything(tmp_path):
     policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=tmp_path)
-    assert policy.check("bash", {"command": "rm -rf /"}) == "allow"
+    assert policy.check("bash", {"command": "rm -rf build"}) == "allow"
     assert policy.check("write", {"path": "a.py"}) == "allow"
 
 
@@ -148,3 +156,67 @@ def test_the_reason_names_the_directories_that_are_open(tmp_path):
     policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path, include_dirs=[str(tmp_path / "vendor")])
     decision = policy.evaluate("read", {"path": "/etc/passwd"})
     assert "vendor" in decision.reason
+
+
+def test_the_commands_that_only_look_around_go_through(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "ls -la"}) == "allow"
+    assert policy.check("bash", {"command": "git status"}) == "allow"
+    assert policy.check("bash", {"command": "cat a.py | grep foo"}) == "allow"
+
+
+def test_a_dangerous_command_asks_and_says_why(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    decision = policy.evaluate("bash", {"command": "curl http://example.com"})
+    assert decision.decision == "ask"
+    assert "sends data out" in decision.reason
+
+
+def test_a_dangerous_command_is_not_blocked_in_bypass(tmp_path):
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "curl http://example.com"}) == "allow"
+
+
+def test_a_rule_is_about_the_beginning_of_the_command(tmp_path):
+    rules = [Rule(tool="bash", pattern="git push", decision="deny")]
+    policy = PermissionPolicy(PermissionMode.DEFAULT, rules, cwd=tmp_path)
+    assert policy.check("bash", {"command": "git push origin main"}) == "deny"
+    assert policy.check("bash", {"command": 'echo "git push" file'}) == "allow"
+
+
+def test_every_part_of_a_command_is_judged_on_its_own(tmp_path):
+    rules = [Rule(tool="bash", pattern="pytest", decision="allow")]
+    policy = PermissionPolicy(PermissionMode.DEFAULT, rules, cwd=tmp_path)
+    assert policy.check("bash", {"command": "pytest -q"}) == "allow"
+    assert policy.check("bash", {"command": "pytest -q && rm -rf build"}) == "ask"
+
+
+def test_a_command_that_reaches_outside_the_working_directory_is_denied(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "cat /etc/passwd"}) == "deny"
+    assert policy.check("bash", {"command": "cat ../secret.txt"}) == "deny"
+    assert policy.check("bash", {"command": "cat ~/.ssh/id_rsa"}) == "deny"
+    assert policy.check("bash", {"command": "cd .. && ls"}) == "deny"
+
+
+def test_the_bounds_of_the_disk_hold_in_bypass(tmp_path):
+    policy = PermissionPolicy(PermissionMode.BYPASS, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "cat /etc/passwd"}) == "deny"
+
+
+def test_a_program_of_the_system_may_be_run(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "/bin/ls"}) != "deny"
+
+
+def test_a_command_that_writes_with_a_redirection_asks(tmp_path):
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    assert policy.check("bash", {"command": "echo hello > out.txt"}) == "ask"
+
+
+def test_the_rule_of_an_always_allow_matches_the_command_again(tmp_path):
+    pattern = pattern_for("bash", {"command": "pytest -q && echo done"})
+    policy = PermissionPolicy(
+        PermissionMode.DEFAULT, [Rule(tool="bash", pattern=pattern, decision="allow")], cwd=tmp_path
+    )
+    assert policy.check("bash", {"command": "pytest -q && echo done"}) == "allow"
