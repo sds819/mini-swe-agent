@@ -266,7 +266,7 @@ def eval_compare(
         payload = {
             "before": comparison.before_label,
             "after": comparison.after_label,
-            "harness_changed": comparison.harness_changed,
+            "config_changed": comparison.config_changed,
             "before_pass_rate": comparison.before_pass_rate,
             "after_pass_rate": comparison.after_pass_rate,
             "drop": comparison.drop,

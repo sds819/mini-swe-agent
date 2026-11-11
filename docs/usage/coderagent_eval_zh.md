@@ -24,6 +24,7 @@ verify:                       # 必填，在 agent 结束后执行；全部 exit
   - python -m pytest -q tests/test_calc.py
 timeout: 300                  # 可选，agent 这一轮的墙钟秒数（默认 300）
 verify_timeout: 300           # 可选，每条 verify 命令的秒数（默认 300）
+expect: pass                  # 可选，`pass`（默认）或 `fail`
 tags: [bugfix]                # 可选
 config:                       # 可选，配置覆盖：YAML 文件路径或 `a.b=c`
   - agent.max_turns=20
@@ -44,6 +45,10 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 
 `verify` 就是这个任务的判据：全部命令 exit 0 才算通过。
 **没有 `verify` 的任务永远不算通过**，所以一个 suite 不可能靠「什么都不做」通过。
+
+`expect: fail` 是给那些**必须不通过**的任务用的：它是 suite 的保险丝——
+一个从来不失败的判据，会让每个任务都通过。
+报告里每个任务带 `as_expected`（它有没有做到该做的），summary 里数了 `unexpected`（没做到的有几个）。
 
 `script` 是脚本化模型：agent 的回答是写死的，不是问模型要来的。
 它不需要 API key，所以带 `script` 的任务可以离线跑，而且 harness 自己的轨迹是可复现的；
@@ -78,13 +83,15 @@ coder eval <suite> \
   "started_at": 1762830000.0,
   "duration_seconds": 41.2,
   "summary": {
-    "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "pass_rate": 0.667,
+    "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "unexpected": 0,
+    "pass_rate": 0.667,
     "total_cost": 0.0412, "total_tokens_in": 12345, "total_tokens_out": 6789,
     "total_model_calls": 12, "total_tool_calls": 30
   },
   "tasks": [
     {
       "id": "off-by-one", "mode": "live", "passed": true,
+      "expect": "pass", "as_expected": true,
       "stop_reason": "end_turn", "error": "", "error_kind": "",
       "cost": 0.012, "tokens_in": 800, "tokens_out": 200,
       "model_calls": 7, "tool_calls": 9, "tool_errors": 1, "approvals": 0,
@@ -127,6 +134,45 @@ diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
 但 `bash` 可以：**本地跑 eval，模型写的命令就在你的机器上执行。**
 请在容器里跑，或者在配置里换一个 `sandbox.type`。
 
+## 对比
+
+两份同一个 suite 的报告能回答「这次改 harness 到底有没有把 agent 改差」：
+
+```bash
+coder eval-compare after.json --against before.json
+```
+
+**退出码就是结论**：零 = 这次改动是好的；一 = 有任务原来能过、现在过不了了。
+只比较两份报告**都有**的任务；`expect: fail` 的任务不算通过率，它只是保险丝。
+
+```bash
+coder eval-compare after.json \
+  [--against before.json] [--max-regressions N] [--max-drop R] [--format text|json]
+```
+
+- 不给 `--against` 时，只检查这份报告本身：任务没做到该做的、或者 harness 没能评判它，都是问题。
+- `--max-regressions` 和 `--max-drop` 是「原谅一点」的额度。
+  真实模型不是确定性的，所以 live suite 需要留点余量；脚本 suite 不需要。
+
+## 拉取请求的检查
+
+`.github/workflows/eval.yaml` 会跑一遍这个 PR 的 suite，再用**基线的 harness** 跑一遍，然后对比：
+
+```bash
+git worktree add /tmp/base <基线那个 commit>
+cp -r evals/offline /tmp/base/evals/
+PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+  eval /tmp/base/evals/offline --label base --format json --out base.json
+coder eval-compare head.json --against base.json
+```
+
+CI 跑的是 `evals/offline`：每个任务都是脚本化的，所以这个检查**不需要 API key**，
+而且每次说的都是同一件事。它里面还有一个**必须不通过**的任务，
+所以「判据从来不失败」这种坏情况藏不住。
+
+`live` 这个 job 拿 `evals/basic` 和真实模型做同样的事。它只能手动触发，
+需要模型的密钥，而且会原谅一次回归——因为模型不是确定性的。
+
 ## 样例任务集
 
 `evals/basic` 里有八个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
@@ -150,5 +196,9 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 
 除了 `no-op`，每个任务在 agent 开始之前都是**没通过**的——一个什么都不做就能过的任务是个坏任务。
 `tests/coderagent/eval/test_suite.py` 盯着这件事。
+
+`evals/offline` 是另一个 suite：五个任务，全是脚本化的，全离线。
+`broken-check` 是这个 suite 的保险丝：它的判据**必须**失败，
+所以一个从来不失败的判据藏不住。
 
 想不花 API key 就跑一个任务，给它加一段 `script`：agent 的回答是写死的，轨迹每次都一样。

@@ -31,8 +31,8 @@ class Comparison:
     """The tasks of the second run that did not do what they were supposed to do."""
 
     @property
-    def harness_changed(self) -> bool:
-        """Whether the two runs ran a different harness."""
+    def config_changed(self) -> bool:
+        """Whether the two runs ran a different configuration."""
         return self.before_fingerprint != self.after_fingerprint
 
     @property
@@ -127,10 +127,10 @@ def render(comparison: Comparison) -> str:
         f"after:  {comparison.after_label or '-'}  fingerprint: {comparison.after_fingerprint or '-'}",
     ]
     if comparison.before_fingerprint:
-        if comparison.harness_changed:
-            lines.append("the harness changed between the two runs")
+        if comparison.config_changed:
+            lines.append("the configuration changed between the two runs")
         else:
-            lines.append("the harness did not change between the two runs")
+            lines.append("the two runs ran the same configuration")
     if comparison.compared:
         lines.append(
             f"pass rate: {comparison.before_pass_rate:.3f} -> {comparison.after_pass_rate:.3f} "

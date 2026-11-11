@@ -64,10 +64,9 @@ jobs:
           git worktree add /tmp/base "${{ steps.base.outputs.sha }}"
           mkdir -p /tmp/base/evals
           cp -r evals/offline /tmp/base/evals/
-          uv venv /tmp/base-venv
-          uv pip install --python /tmp/base-venv/bin/python -e /tmp/base
-          if /tmp/base-venv/bin/coder eval --help > /dev/null 2>&1; then
-            /tmp/base-venv/bin/coder eval /tmp/base/evals/offline --label base --format json --out base.json
+          if PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" eval --help > /dev/null 2>&1; then
+            PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+              eval /tmp/base/evals/offline --label base --format json --out base.json
           else
             echo "the base has no eval harness, there is nothing to compare with"
           fi
@@ -114,9 +113,8 @@ jobs:
           git worktree add /tmp/base "${{ github.event.before }}"
           mkdir -p /tmp/base/evals
           cp -r evals/basic /tmp/base/evals/
-          uv venv /tmp/base-venv
-          uv pip install --python /tmp/base-venv/bin/python -e /tmp/base
-          /tmp/base-venv/bin/coder eval /tmp/base/evals/basic --label base --format json --out base.json
+          PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+            eval /tmp/base/evals/basic --label base --format json --out base.json
       - name: Compare the two runs
         run: |
           coder eval-compare head.json --against base.json --max-regressions 1 --max-drop 0.25 \

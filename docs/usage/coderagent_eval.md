@@ -26,6 +26,7 @@ verify:                       # required, in the working directory, after the ag
   - python -m pytest -q tests/test_calc.py
 timeout: 300                  # optional, the seconds of the agent (default 300)
 verify_timeout: 300           # optional, the seconds of each verify command
+expect: pass                  # optional, `pass` (default) or `fail`
 tags: [bugfix]                # optional
 config:                       # optional, a yaml file or `a.b=c` overrides
   - agent.max_turns=20
@@ -50,6 +51,11 @@ copied into the working directory before the agent starts.
 The `verify` commands are the judgement of the task: the task passed when all of
 them exit with 0. A task without a `verify` never passes, so a suite cannot
 pass by doing nothing.
+
+`expect: fail` is for the tasks that must *not* pass: a guard that keeps the
+suite honest, because a check that never fails would let every task pass. The
+report says whether a task did what it was supposed to do (`as_expected`), and
+the summary counts the ones that did not (`unexpected`).
 
 The `script` is a scripted model: the answers of the agent are written down
 instead of asked for. It needs no API key, so a task with a script runs offline,
@@ -87,13 +93,15 @@ coder eval <suite> \
   "started_at": 1762830000.0,
   "duration_seconds": 41.2,
   "summary": {
-    "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "pass_rate": 0.667,
+    "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "unexpected": 0,
+    "pass_rate": 0.667,
     "total_cost": 0.0412, "total_tokens_in": 12345, "total_tokens_out": 6789,
     "total_model_calls": 12, "total_tool_calls": 30
   },
   "tasks": [
     {
       "id": "off-by-one", "mode": "live", "passed": true,
+      "expect": "pass", "as_expected": true,
       "stop_reason": "end_turn", "error": "", "error_kind": "",
       "cost": 0.012, "tokens_in": 800, "tokens_out": 200,
       "model_calls": 7, "tool_calls": 9, "tool_errors": 1, "approvals": 0,
@@ -143,6 +151,51 @@ mode. The `bash` tool can: **a local eval runs the commands the model writes on
 your machine.** Run it in a container, or with a sandbox type of your choice
 (`sandbox.type` in the configuration).
 
+## The comparison
+
+Two reports of the same suite say whether a change of the harness made the agent
+worse:
+
+```bash
+coder eval-compare after.json --against before.json
+```
+
+The exit code is the verdict: zero when the change is good, one when a task
+that used to pass does not pass any more. Only the tasks that both runs have
+are compared, and a task with `expect: fail` is not a rate but a guard.
+
+```bash
+coder eval-compare after.json \
+  [--against before.json] [--max-regressions N] [--max-drop R] [--format text|json]
+```
+
+- Without `--against` the report is only checked against what its tasks were
+  supposed to do: a task that did not, or a task the harness could not grade,
+  is a problem.
+- `--max-regressions` and `--max-drop` forgive a little. The real model is not
+  deterministic, so a live suite needs a margin; a scripted suite does not.
+
+## The check of the pull request
+
+`.github/workflows/eval.yaml` runs the suite of the pull request, runs it
+again with the harness of the base, and compares the two:
+
+```bash
+git worktree add /tmp/base <the commit of the base>
+cp -r evals/offline /tmp/base/evals/
+PYTHONPATH=/tmp/base/src python -c "from coderagent.ui.cli import app; app()" \
+  eval /tmp/base/evals/offline --label base --format json --out base.json
+coder eval-compare head.json --against base.json
+```
+
+The suite of the CI is `evals/offline`: every task of it is scripted, so the
+check needs no API key and says the same thing every time. It holds a task that
+must fail, so the check of the suite cannot be vacuous.
+
+The job `live` does the same with `evals/basic` and the real model. It is
+manual, it needs the secrets of the model, and it forgives one regression,
+because the model is not deterministic.
+
 ## The example suite
 
 `evals/basic` holds eight tasks. They have no `script`, so they run against the
@@ -169,6 +222,10 @@ a bug as an agent that changes nothing.
 Every task but `no-op` fails its check before the agent starts, so a task that
 is solved by doing nothing is a broken task. `tests/coderagent/eval/test_suite.py`
 keeps an eye on that.
+
+`evals/offline` is the other suite: five tasks, all scripted, all offline. The
+`broken-check` task is the guard of the suite: its check has to fail, so a check
+that never fails cannot hide.
 
 To run a task without an API key, give it a `script`: the answers of the agent
 are written down, and the trajectory is the same every time.

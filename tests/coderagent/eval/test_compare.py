@@ -22,7 +22,7 @@ def test_a_task_that_stops_passing_is_a_regression():
     assert comparison.before_pass_rate == 1.0
     assert comparison.after_pass_rate == 0.5
     assert comparison.drop == 0.5
-    assert comparison.harness_changed
+    assert comparison.config_changed
 
 
 def test_a_task_that_starts_passing_is_an_improvement():
@@ -31,7 +31,7 @@ def test_a_task_that_starts_passing_is_an_improvement():
     comparison = compare(before, after)
     assert comparison.improvements == ["one"]
     assert comparison.regressions == []
-    assert not comparison.harness_changed
+    assert not comparison.config_changed
 
 
 def test_a_task_of_only_one_run_is_not_compared():
@@ -96,7 +96,7 @@ def test_the_comparison_is_readable():
     before = _report("base", "sha256:a", [_task("one", True)])
     after = _report("head", "sha256:b", [_task("one", False)])
     text = render(compare(before, after))
-    assert "the harness changed between the two runs" in text
+    assert "the configuration changed between the two runs" in text
     assert "regressions: one" in text
     assert "pass rate: 1.000 -> 0.000" in text
 
