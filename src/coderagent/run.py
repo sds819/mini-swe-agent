@@ -150,20 +150,6 @@ def build_loop(
     ctx = ToolContext(cwd=cwd, session=session, bus=bus, policy=policy, config=config.tools, env=environment)
     checkpoints = CheckpointStore(keep=config.checkpoint.keep)
     hooks = HookRunner(config.hooks, cwd) if config.hooks.events else None
-    runner = SubAgentRunner(
-        gateway,
-        registry,
-        policy,
-        lambda: ctx,
-        approver=approver,
-        gateway_for=lambda purpose: purpose_gateway(config, gateway, purpose),
-        bus=bus,
-        session_id=session.id,
-    )
-    if "task" in config.tools.enabled and "task" not in config.tools.disabled:
-        registry.register(TaskTool(runner, specs))
-    if "skill" in config.tools.enabled and "skill" not in config.tools.disabled:
-        registry.register(SkillTool(skills))
 
     def before_write(tool: str, params: dict) -> None:
         """Snapshot the file before a write tool changes it."""
@@ -172,6 +158,25 @@ def build_loop(
             create_file_checkpoint(
                 checkpoints, session.id, session.turn_count, cwd, str(path), len(context.history.messages)
             )
+
+    runner = SubAgentRunner(
+        gateway,
+        registry,
+        policy,
+        lambda: ctx,
+        approver=approver or HeadlessApprover(allow=False),
+        gateway_for=lambda purpose: purpose_gateway(config, gateway, purpose),
+        bus=bus,
+        session_id=session.id,
+        hooks=hooks,
+        before_write=before_write,
+        store=store,
+        on_path=context.note_path,
+    )
+    if "task" in config.tools.enabled and "task" not in config.tools.disabled:
+        registry.register(TaskTool(runner, specs))
+    if "skill" in config.tools.enabled and "skill" not in config.tools.disabled:
+        registry.register(SkillTool(skills))
 
     executor = ToolExecutor(
         registry,

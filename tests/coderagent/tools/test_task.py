@@ -3,12 +3,16 @@
 import json
 from pathlib import Path
 
+from coderagent.config.schema import HookCommand, HookConfig, HookMatcher
+from coderagent.core.events import EventType
+from coderagent.core.session import SessionStore
 from coderagent.core.subagent import (
     SubAgentRunner,
     SubagentSpec,
     load_subagents,
     parse_subagent,
 )
+from coderagent.extensions.hooks import HookRunner
 from coderagent.models.gateway import ModelGateway
 from coderagent.testing.factory import build_context
 from coderagent.testing.scripted_model import ScriptedModel
@@ -219,6 +223,71 @@ def test_a_broken_sub_agent_is_reported_as_an_error(tmp_path):
     result = _runner(model, tmp_path).run(_spec(), "Find", "Look")
     assert result["status"] == "error"
     assert "no model" in result["summary"]
+
+
+def test_the_sub_agent_goes_through_the_hooks(tmp_path):
+    """A hook of the session also holds the sub agent."""
+    hooks = HookRunner(
+        HookConfig(
+            events={
+                "PreToolUse": [
+                    HookMatcher(matcher="write", hooks=[HookCommand(command='echo \'{"decision": "deny"}\'')])
+                ]
+            }
+        ),
+        tmp_path,
+    )
+    model = ScriptedModel(
+        [
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [_call("write", {"path": "a.py", "content": "x"})],
+            },
+            {"role": "assistant", "content": "I could not write."},
+        ]
+    )
+    result = _runner(model, tmp_path, hooks=hooks).run(_spec(tools=["write"]), "Change", "Do it")
+
+    assert result["summary"] == "I could not write."
+    assert not (tmp_path / "a.py").exists()
+
+
+def test_the_sub_agent_takes_a_checkpoint_before_it_writes(tmp_path):
+    taken: list[tuple[str, dict]] = []
+    model = ScriptedModel(
+        [
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [_call("write", {"path": "a.py", "content": "x"})],
+            },
+            {"role": "assistant", "content": "Written."},
+        ]
+    )
+    _runner(model, tmp_path, before_write=lambda tool, params: taken.append((tool, params))).run(
+        _spec(tools=["write"]), "Change", "Do it"
+    )
+
+    assert taken == [("write", {"path": "a.py", "content": "x"})]
+
+
+def test_the_result_of_a_tool_of_the_sub_agent_is_in_the_log(tmp_path):
+    store = SessionStore(tmp_path / "sessions")
+    model = ScriptedModel(
+        [
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [_call("write", {"path": "a.py", "content": "x"})],
+            },
+            {"role": "assistant", "content": "Written."},
+        ]
+    )
+    _runner(model, tmp_path, store=store).run(_spec(tools=["write"]), "Change", "Do it")
+
+    results = [event for event in store.events("test") if event.type == EventType.TOOL_RESULT]
+    assert [event.payload["tool"] for event in results] == ["write"]
 
 
 def test_the_tool_reports_an_unknown_sub_agent(tmp_path):

@@ -106,6 +106,10 @@ You write the documentation of a module. Read the code, then write the docs.
 子 agent 的工具和主 agent 的工具走同一层权限。在 `plan` 模式下，子 agent 同样
 不能写东西。
 
+hook 也是同一套：`PreToolUse` hook 拦住一个工具，对子 agent 同样拦住；子 agent
+写的文件也会做 checkpoint，`/rewind` 能把它退回去。子 agent 每次工具调用的结果
+都落在会话的事件日志里。
+
 `task` 工具本身是个要问的工具，和 `bash` 一样。没有终端就没人能回答，所以脚本
 里这次调用会被拒：
 

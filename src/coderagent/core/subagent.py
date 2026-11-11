@@ -118,6 +118,10 @@ class SubAgentRunner:
         gateway_for=None,
         bus: EventBus | None = None,
         session_id: str = "",
+        hooks=None,
+        before_write=None,
+        store=None,
+        on_path=None,
     ) -> None:
         self.gateway = gateway
         self.registry = registry
@@ -128,11 +132,28 @@ class SubAgentRunner:
         """Returns the gateway of a purpose. The main gateway when it is not set."""
         self.bus = bus
         self.session_id = session_id
+        self.hooks = hooks
+        """The hook runner of the session. The sub agent goes through the same hooks."""
+        self.before_write = before_write
+        """Called before a write tool changes a file, e.g. to take a checkpoint."""
+        self.store = store
+        """The event log. The result of a tool of the sub agent lands in it."""
+        self.on_path = on_path
+        """Called with the path of every path based tool."""
 
     def run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         """Run the sub agent and return the structured result."""
         registry = self._restricted(spec)
-        executor = ToolExecutor(registry, self.policy, self.ctx_factory, self.approver)
+        executor = ToolExecutor(
+            registry,
+            self.policy,
+            self.ctx_factory,
+            self.approver,
+            hooks=self.hooks,
+            before_write=self.before_write,
+            store=self.store,
+            on_path=self.on_path,
+        )
         gateway = self._gateway(spec)
         before = gateway.total_cost
         system = spec.system_prompt or spec.description

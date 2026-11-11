@@ -111,6 +111,11 @@ main model, so the budget of the session still holds it.
 The tools of the sub agent go through the same permission layer as the tools
 of the main agent. In `plan` mode a sub agent cannot write either.
 
+They go through the same hooks too: a `PreToolUse` hook that blocks a tool
+blocks it for the sub agent as well, and a file a sub agent writes is
+checkpointed like a file of the main agent, so `/rewind` can bring it back.
+The result of every tool of a sub agent lands in the event log of the session.
+
 The `task` tool itself is a tool that is asked for, like `bash`. Without a
 terminal nobody can answer, so in a script the call is refused:
 
