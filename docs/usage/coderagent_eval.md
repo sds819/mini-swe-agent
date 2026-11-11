@@ -145,7 +145,7 @@ your machine.** Run it in a container, or with a sandbox type of your choice
 
 ## The example suite
 
-`evals/basic` holds three tasks. They have no `script`, so they run against the
+`evals/basic` holds eight tasks. They have no `script`, so they run against the
 real model and they need an API key:
 
 ```bash
@@ -155,11 +155,20 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 | task | what it is |
 |---|---|
 | `off-by-one` | a bug in `calc.py`, the agent has to find it and fix it |
+| `import-error` | a module that imports a name that does not exist |
+| `rename-symbol` | a function that has to be renamed in the module and in its callers |
 | `create-file` | a file that does not exist yet, the agent has to write it |
+| `cli-flag` | a script that ignores the argument it is given |
+| `config-value` | a value in a configuration file that has to change |
+| `grep-count` | a question about the files of the repository, answered in a file |
 | `no-op` | a task that is already done: the agent has to leave the code alone |
 
-The third one is deliberate: an agent that changes what it should not is as much
+The last one is deliberate: an agent that changes what it should not is as much
 a bug as an agent that changes nothing.
+
+Every task but `no-op` fails its check before the agent starts, so a task that
+is solved by doing nothing is a broken task. `tests/coderagent/eval/test_suite.py`
+keeps an eye on that.
 
 To run a task without an API key, give it a `script`: the answers of the agent
 are written down, and the trajectory is the same every time.

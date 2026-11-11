@@ -1,0 +1,8 @@
+id: grep-count
+prompt: |
+  How many lines of the log files under `logs/` contain the word ERROR?
+  Write the number, and nothing else, into `errors.txt` in the working directory.
+verify:
+  - test -f errors.txt
+  - grep -qx 5 errors.txt
+tags: [search]

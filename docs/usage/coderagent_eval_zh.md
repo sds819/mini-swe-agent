@@ -129,7 +129,7 @@ diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
 
 ## 样例任务集
 
-`evals/basic` 里有三个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
+`evals/basic` 里有八个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
 
 ```bash
 coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
@@ -138,9 +138,17 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 | 任务 | 内容 |
 |---|---|
 | `off-by-one` | `calc.py` 里的 bug，agent 得自己找出来并修好 |
+| `import-error` | 模块 import 了一个不存在的名字 |
+| `rename-symbol` | 一个函数，模块里和调用它的地方都得改名 |
 | `create-file` | 一个还不存在的文件，agent 得把它写出来 |
+| `cli-flag` | 脚本无视了传进来的参数 |
+| `config-value` | 配置文件里的一个值要改 |
+| `grep-count` | 问仓库里的文件，然后把这个答案写进文件 |
 | `no-op` | 一个已经做好的任务：agent 得**什么都别改** |
 
-第三个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。
+最后一个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。
+
+除了 `no-op`，每个任务在 agent 开始之前都是**没通过**的——一个什么都不做就能过的任务是个坏任务。
+`tests/coderagent/eval/test_suite.py` 盯着这件事。
 
 想不花 API key 就跑一个任务，给它加一段 `script`：agent 的回答是写死的，轨迹每次都一样。

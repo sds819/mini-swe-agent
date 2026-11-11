@@ -1,0 +1,9 @@
+id: cli-flag
+prompt: |
+  The script `greet.py` ignores its arguments: `python greet.py --name World` prints
+  `Hello!`. It should greet the person it is given, so that
+  `python greet.py --name World` prints `Hello, World!`.
+verify:
+  - test "$(python greet.py --name World)" = "Hello, World!"
+  - test "$(python greet.py --name Ada)" = "Hello, Ada!"
+tags: [feature]
