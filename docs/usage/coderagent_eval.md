@@ -1,0 +1,157 @@
+# The eval harness
+
+The coding agent is a harness: an event log, a permission layer, structured tools,
+a context engine, a trace. A harness that is never measured is a harness that is
+never improved. `coder eval` runs a suite of tasks and reports what the agent
+did, so that a change of the harness can be compared with the change before it.
+
+```bash
+coder eval evals/basic --format json --out /tmp/eval.json
+```
+
+## The suite
+
+A suite is a directory, every task is a directory inside it. A task has a
+`task.yaml` and, next to it, the files that are the initial state of the working
+directory of the agent.
+
+```yaml
+# evals/basic/off-by-one/task.yaml
+id: off-by-one                # optional, the name of the directory by default
+prompt: |
+  The function `add_one` in calc.py is off by one. Fix it so that the test passes.
+setup:                        # optional, in the working directory, before the agent
+  - pip install -e .
+verify:                       # required, in the working directory, after the agent
+  - python -m pytest -q tests/test_calc.py
+timeout: 300                  # optional, the seconds of the agent (default 300)
+verify_timeout: 300           # optional, the seconds of each verify command
+tags: [bugfix]                # optional
+config:                       # optional, a yaml file or `a.b=c` overrides
+  - agent.max_turns=20
+script:                       # optional, the scripted model. Empty means: the real model.
+  - content: Let me look at the file first.
+    tool_calls:
+      - tool: read
+        args: {path: calc.py}
+  - content: Found it. Fixing it.
+    tool_calls:
+      - tool: edit
+        args:
+          path: calc.py
+          old_string: "return n + 2"
+          new_string: "return n + 1"
+  - content: The test passes now.
+```
+
+Every file of the task directory that is not a yaml file is a fixture: it is
+copied into the working directory before the agent starts.
+
+The `verify` commands are the judgement of the task: the task passed when all of
+them exit with 0. A task without a `verify` never passes, so a suite cannot
+pass by doing nothing.
+
+The `script` is a scripted model: the answers of the agent are written down
+instead of asked for. It needs no API key, so the suite of the repository runs
+offline, and it makes the trajectory of the harness itself reproducible. A suite
+may mix scripted and live tasks, and the report says which is which (`"mode"`).
+
+## The command
+
+```bash
+coder eval <suite> \
+  [-m MODEL] [-c SPEC ...] [--only ID ...] [--tag TAG ...] \
+  [--format text|json] [--out FILE] [--keep] [--label NAME] \
+  [--run-dir DIR] [--permission-mode bypass|default]
+```
+
+- `--only` and `--tag` select the tasks of the suite.
+- `--format json` prints the report as json. `--out` always writes the json report.
+- `--run-dir` keeps the working directories and the sessions in a place you choose.
+- `--keep` keeps the temporary directory of the run.
+- `--permission-mode default` asks for the approval of a human that is never
+  there: the agent is not blocked, but the report counts the questions it would
+  have asked (`approvals`).
+
+## The report
+
+```json
+{
+  "format": "coder-eval-1.0",
+  "label": "live-1",
+  "suite": "evals/basic",
+  "model": "nengpa/minimax-m2.7",
+  "fingerprint": "sha256:9f2c…",
+  "config": {"…": "the input of the fingerprint, as it was"},
+  "started_at": 1762830000.0,
+  "duration_seconds": 41.2,
+  "summary": {
+    "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "pass_rate": 0.667,
+    "total_cost": 0.0412, "total_tokens_in": 12345, "total_tokens_out": 6789,
+    "total_model_calls": 12, "total_tool_calls": 30
+  },
+  "tasks": [
+    {
+      "id": "off-by-one", "mode": "live", "passed": true,
+      "stop_reason": "end_turn", "error": "", "error_kind": "",
+      "cost": 0.012, "tokens_in": 800, "tokens_out": 200,
+      "model_calls": 7, "tool_calls": 9, "tool_errors": 1, "approvals": 0,
+      "compactions": 0, "duration_seconds": 5.1, "session_id": "20261111-a1b2c3",
+      "setup": [],
+      "verify": [
+        {"command": "python -m pytest -q tests/test_calc.py",
+         "exit_code": 0, "timed_out": false, "output": "1 passed"}
+      ]
+    }
+  ]
+}
+```
+
+The cost of a model that litellm does not know is 0, so the tokens are always in
+the report next to it: they come from the provider and they are reliable.
+
+`model_calls` counts the calls of the main loop. The calls of the sub agents are
+not in it, their cost is.
+
+`tool_errors` counts the tool calls that failed, the ones that were denied
+included.
+
+## The fingerprint
+
+The fingerprint is the hash of the configuration the agent ran with: the model,
+the system prompt, the tools, the permission mode, the context and the sandbox.
+Two runs with the same fingerprint are comparable, two runs with a different one
+are not: the harness changed, so the numbers moved for that reason.
+
+The input of the fingerprint is in the report as well, so a diff of two reports
+says *what* changed:
+
+```bash
+diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
+```
+
+## The isolation
+
+Every task runs on its own: its own working directory, its own session, its own
+model. The sessions, the checkpoints, the rules and the memory of the user go to
+a temporary directory, so a run of the eval does not touch the data of the user
+nor the repository.
+
+The file tools cannot leave the working directory, not even in the `bypass`
+mode. The `bash` tool can: **a local eval runs the commands the model writes on
+your machine.** Run it in a container, or with a sandbox type of your choice
+(`sandbox.type` in the configuration).
+
+## The example suite
+
+`evals/basic` holds three tasks, all of them scripted, so the suite runs without
+an API key:
+
+| task | what it is |
+|---|---|
+| `off-by-one` | a bug in `calc.py`, the agent has to find it and fix it |
+| `create-file` | a file that does not exist yet, the agent has to write it |
+| `no-op` | a task that is already done: the agent has to leave the code alone |
+
+The third one is deliberate: an agent that changes what it should not is as much
+a bug as an agent that changes nothing.

@@ -77,6 +77,7 @@ nav:
         - "命令": usage/coderagent_commands_zh.md
         - "子 agent": usage/coderagent_subagents_zh.md
         - "Hooks": usage/coderagent_hooks_zh.md
+        - "评测": usage/coderagent_eval_zh.md
       - "Overview": usage/coderagent.md
       - "Features": usage/coderagent_features.md
       - "Web interface": usage/coderagent_web.md
@@ -90,6 +91,7 @@ nav:
       - "Plugins": usage/coderagent_plugins.md
       - "Sandbox": usage/coderagent_sandbox.md
       - "Trace export": usage/coderagent_export.md
+      - "Evals": usage/coderagent_eval.md
     - "Language models":
       - "Quick start": models/quickstart.md
       - "Local models": models/local_models.md
