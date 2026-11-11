@@ -1,0 +1,8 @@
+1.对于deepseek初始化时需要注意:模型需要改为 deepseek/deepseek-flash，即provider/model
+2.需要安装两个插件，保证项目运行正常：pip install -U typer mcp ，python版本为3.11
+3.建议新增在conda环境中运行，以隔离其他环境
+4.参数配置在.env环境中，
+    配置如下:(参考 .env.example)
+    MSWEA_CONFIGURED='true'
+    MSWEA_MODEL_NAME='deepseek/deepseek-flash'
+    DEEPSEEK_API_KEY='sk-yourkey'

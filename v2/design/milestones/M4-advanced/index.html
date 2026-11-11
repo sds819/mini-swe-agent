@@ -1,0 +1,5434 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mini-swe-agent.com/latest/design/milestones/M4-advanced/">
+      
+      
+        <link rel="prev" href="../M3-ui-extensions/">
+      
+      
+        <link rel="next" href="../M5-web-interface/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/mini_square.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>M4 — Advanced - mini-SWE-agent documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M22%2012a10%2010%200%200%201-10%2010A10%2010%200%200%201%202%2012%2010%2010%200%200%201%2012%202a10%2010%200%200%201%2010%2010m-12%206%206-6-6-6-1.4%201.4%204.6%204.6-4.6%204.6z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../assets/custom.css">
+    
+      <link rel="stylesheet" href="../../../assets/gif-controls.css">
+    
+      <link rel="stylesheet" href="../../../assets/mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../assets/image_theme.css">
+    
+      <link rel="stylesheet" href="../../../assets/bubbles.css">
+    
+      <link rel="stylesheet" href="../../../assets/navigation_cards.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-SG2NC1GDRD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-SG2NC1GDRD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-SG2NC1GDRD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  <link href="../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#m4" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+              </button>
+            
+            
+<a href="../../../usage/programbench/">
+  🎉 Run mini-swe-agent on our new &amp; extremely challenging benchmark, ProgramBench
+</a>
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden="">
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="mini-SWE-agent documentation" class="md-header__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mini-SWE-agent documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              M4 — Advanced
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design (WIP)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://www.swebench.com/blog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://swebench.com" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Leaderboard
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="mini-SWE-agent documentation" class="md-nav__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    mini-SWE-agent documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3">
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Command line usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    <code>mini</code>
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/output_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding agent
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Coding agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_2">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4_2" id="__nav_1_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    中文
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    中文
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_features_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    功能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_web_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    网页版
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_commands_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    命令
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_subagents_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_hooks_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_eval_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_subagents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sub agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP servers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/coderagent_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5">
+        
+          
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/local_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6">
+        
+          
+          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/global_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Global configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/yaml_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Yaml config files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7">
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python bindings &amp; more
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Python bindings &amp; more
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/python_bindings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Python bindings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/control_flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understanding the agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subclassing and more
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/v2_migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2 migration guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/agents/default/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DefaultAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/agents/interactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    InteractiveAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/litellm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/litellm_response_toolcall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmResponseModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/openrouter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenRouterModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/requesty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RequestyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/portkey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/portkey_response/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyResponse
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/test_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DeterministicModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extra Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/models/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4">
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/local/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LocalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/singularity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SingularityEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/swerex_docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexDockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/bubblewrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BubblewrapEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/contree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ContreeEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/environments/swerex_modal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexModalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5">
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run Scripts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run Scripts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/hello_world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hello World
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/mini_extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini-extra
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (batch)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/swebench_single/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (single)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/run/programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked="">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design (WIP)
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design (WIP)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../coding-agent-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../coderagent-design-logic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M0-skeleton/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M0 — Skeleton &amp; config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M1-tools-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M1 — Tools &amp; permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M2-context-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M2 — Context &amp; sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M3-ui-extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M3 — UI &amp; extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M4 — Advanced
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M4 — Advanced
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 功能范围
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-f41-f42-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. F4.1 / F4.2 子 Agent 委派
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. F4.1 / F4.2 子 Agent 委派">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 动机
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 task 工具
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 执行流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 子 Agent 定义文件
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-f43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. F4.3 多模型路由
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. F4.3 多模型路由">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 路由维度
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 UI 呈现
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-f44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. F4.4 经验沉淀
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. F4.4 经验沉淀">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 读取
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-f45-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. F4.5 Skills 系统
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-f46" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. F4.6 插件机制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-f47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. F4.7 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-f48" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. F4.8 可观测性
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. F4.8 可观测性">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Trace 格式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 导出
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 成本归因
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 任务分解
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 任务分解">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t41-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.1 子 Agent 骨架
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t42-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.2 内置子 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.3 模型路由
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.4 经验沉淀
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t45-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.5 Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t46" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.6 插件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.7 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t48" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.8 可观测性
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 测试计划
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 风险
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. 实现说明（与原设计的偏差）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. 实现说明（与原设计的偏差）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 子 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 模型路由
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 经验沉淀
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.4 Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.5 插件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#136" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.6 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#137" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.7 可观测性
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#138" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.8 成本核算（实测后修正）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M5-web-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../M5-web-modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.swebench.com/blog.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://swebench.com" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaderboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 功能范围
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-f41-f42-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. F4.1 / F4.2 子 Agent 委派
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. F4.1 / F4.2 子 Agent 委派">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 动机
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 task 工具
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 执行流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 子 Agent 定义文件
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-f43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. F4.3 多模型路由
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. F4.3 多模型路由">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 路由维度
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 策略
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 UI 呈现
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-f44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. F4.4 经验沉淀
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. F4.4 经验沉淀">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 目标
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 流程
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 读取
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-f45-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. F4.5 Skills 系统
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-f46" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. F4.6 插件机制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-f47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. F4.7 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-f48" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. F4.8 可观测性
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. F4.8 可观测性">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Trace 格式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 导出
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 成本归因
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 任务分解
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 任务分解">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t41-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.1 子 Agent 骨架
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t42-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.2 内置子 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t43" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.3 模型路由
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.4 经验沉淀
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t45-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.5 Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t46" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.6 插件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.7 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t48" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4.8 可观测性
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 测试计划
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 风险
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. 实现说明（与原设计的偏差）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. 实现说明（与原设计的偏差）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 子 Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 模型路由
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 经验沉淀
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.4 Skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.5 插件
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#136" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.6 远程沙箱
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#137" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.7 可观测性
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#138" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.8 成本核算（实测后修正）
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+
+                  
+
+
+  
+    <a href="https://github.com/SWE-agent/mini-SWE-agent/edit/main/docs/design/milestones/M4-advanced.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+  
+
+
+<h1 id="m4">M4 — 进阶能力</h1>
+<blockquote>
+<p>目标：把 coding agent 从「一个人用的 CLI」升级为「可扩展、可分工、可学习的系统」。
+依赖：M0–M3 全部完成。
+本里程碑多为可选功能，可按需裁剪。</p>
+</blockquote>
+<hr>
+<h2 id="1">1. 功能范围</h2>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>功能</th>
+<th>优先级</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F4.1</td>
+<td>子 Agent 委派</td>
+<td>P0</td>
+<td><code>task</code> 工具，独立上下文执行子任务</td>
+</tr>
+<tr>
+<td>F4.2</td>
+<td>子 Agent 定义文件</td>
+<td>P0</td>
+<td><code>.coderagent/agents/*.md</code></td>
+</tr>
+<tr>
+<td>F4.3</td>
+<td>多模型路由策略</td>
+<td>P1</td>
+<td>按 purpose / 难度 / 成本自动选模型</td>
+</tr>
+<tr>
+<td>F4.4</td>
+<td>经验沉淀</td>
+<td>P1</td>
+<td>会话结束写项目/用户记忆</td>
+</tr>
+<tr>
+<td>F4.5</td>
+<td>Skills 系统</td>
+<td>P2</td>
+<td>可复用的能力包（带资源文件与脚本）</td>
+</tr>
+<tr>
+<td>F4.6</td>
+<td>插件机制</td>
+<td>P2</td>
+<td>第三方扩展的发现与加载</td>
+</tr>
+<tr>
+<td>F4.7</td>
+<td>远程沙箱</td>
+<td>P2</td>
+<td>复用 mini 的 swerex / modal / contree</td>
+</tr>
+<tr>
+<td>F4.8</td>
+<td>可观测性</td>
+<td>P1</td>
+<td>trace 导出、指标、成本归因</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-f41-f42-agent">2. F4.1 / F4.2 子 Agent 委派</h2>
+<h3 id="21">2.1 动机</h3>
+<p>某些子任务（跑遍全仓找某个符号、批量改同一模式、调研某个第三方库）会<strong>污染主上下文</strong>——大量中间输出占满预算。委派给子 agent，主 agent 只接收结论。</p>
+<h3 id="22-task">2.2 <code>task</code> 工具</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/builtin/task.py</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubagentSpec</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">"read"</span><span class="p">,</span> <span class="s2">"grep"</span><span class="p">,</span> <span class="s2">"glob"</span><span class="p">,</span> <span class="s2">"bash"</span><span class="p">])</span>
+    <span class="n">model_purpose</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cheap"</span>
+    <span class="n">max_turns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
+</code></pre></div>
+<p><strong>工具签名</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"task"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"委派一个独立子任务给子 agent。子 agent 在独立上下文中执行，返回结构化结论。适合：全仓搜索、批量重构调研、独立验证。"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parameters"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"subagent_type"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"子 agent 类型名"</span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"任务的完整描述（子 agent 看不到主会话上下文）"</span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"prompt"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"给子 agent 的具体指令"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"subagent_type"</span><span class="p">,</span><span class="w"> </span><span class="s2">"description"</span><span class="p">,</span><span class="w"> </span><span class="s2">"prompt"</span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="23">2.3 执行流程</h3>
+<div class="highlight"><pre><span></span><code>主 agent 调用 task
+  → 找到 SubagentSpec
+  → 构造子 AgentLoop：
+      - 独立 messages（只有子 agent 的 system prompt + 用户 prompt）
+      - 受限 Registry（spec.tools 白名单）
+      - 独立 ModelGateway（spec.model_purpose）
+      - 独立预算上限（spec.max_turns，成本计入主会话）
+  → 执行
+  → 子 agent 结束 → 抽取结论
+  → 作为 tool_result 返回主 agent（只返回结论，不返回全部中间过程）
+</code></pre></div>
+<p><strong>结论抽取</strong>：子 agent 的最后一条 assistant 消息作为返回值。若子 agent 达到 <code>max_turns</code> 未完成，返回「已达上限，未完成」的提示。</p>
+<p><strong>结果结构</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"completed"</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="s2">"max_turns"</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="s2">"error"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"子 agent 的结论文本"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"files_touched"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"turns"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="24-agent">2.4 子 Agent 定义文件</h3>
+<p><code>.coderagent/agents/&lt;name&gt;.md</code>：</p>
+<div class="highlight"><pre><span></span><code>---
+name: code-explorer
+description: 在代码库中定位符号、追踪调用链、总结架构。只读，不修改文件。
+tools: [read, grep, glob, ls]
+model_purpose: cheap
+<span class="gu">max_turns: 15</span>
+<span class="gu">---</span>
+
+你是一个代码库探索专家。给定一个目标（符号名、行为描述或问题），系统地定位相关代码：
+
+<span class="k">1.</span> 用 grep/glob 缩小范围
+<span class="k">2.</span> 用 read 阅读关键文件
+<span class="k">3.</span> 输出结论：涉及的文件与行号、调用关系、你的判断
+
+不要修改任何文件。
+</code></pre></div>
+<p><strong>加载</strong>：项目级 <code>.coderagent/agents/</code> + 用户级 <code>~/.coderagent/agents/</code>（用户级可覆盖同名）。</p>
+<p><strong>内置子 agent</strong></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>用途</th>
+<th>工具</th>
+<th>模型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code-explorer</code></td>
+<td>定位/理解代码</td>
+<td>read grep glob ls</td>
+<td>cheap</td>
+</tr>
+<tr>
+<td><code>verifier</code></td>
+<td>独立验证（跑测试、复现 bug）</td>
+<td>read bash</td>
+<td>main</td>
+</tr>
+<tr>
+<td><code>refactorer</code></td>
+<td>批量模式替换</td>
+<td>read edit grep glob</td>
+<td>main</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-f43">3. F4.3 多模型路由</h2>
+<h3 id="31">3.1 路由维度</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purpose</code></td>
+<td>固定用途映射（main / cheap / summarize / reflect）——M0 已预留</td>
+</tr>
+<tr>
+<td><code>complexity</code></td>
+<td>按任务规模自动选择（文件数、工具调用数、历史长度）</td>
+</tr>
+<tr>
+<td><code>budget</code></td>
+<td>剩余成本不足时降档</td>
+</tr>
+<tr>
+<td><code>user_override</code></td>
+<td>用户在会话中显式指定（<code>/model</code>）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32">3.2 策略</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/models/router.py</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoutingRule</span><span class="p">:</span>
+    <span class="n">when</span><span class="p">:</span> <span class="nb">str</span>                      <span class="c1"># 条件表达式，如 "tokens &gt; 50000"</span>
+    <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># 目标用途档位</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelRouter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">gateway</span><span class="p">:</span> <span class="n">ModelGateway</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""返回实际使用的 model_name。"""</span>
+</code></pre></div>
+<p><strong>默认策略</strong></p>
+<div class="highlight"><pre><span></span><code>主循环轮次 &gt; 30 或 token &gt; 50k  → 升级到高档模型
+成本超预算 80%                   → 降档到廉价模型
+压缩 / 经验沉淀 / 琐碎判断        → 廉价模型
+</code></pre></div>
+<h3 id="33-ui">3.3 UI 呈现</h3>
+<p>状态栏显示当前模型；切换模型时在消息流里插一条 <code>STATE_CHANGE</code> 事件，说明「因上下文变长，从 X 切换到 Y」。</p>
+<hr>
+<h2 id="4-f44">4. F4.4 经验沉淀</h2>
+<h3 id="41">4.1 目标</h3>
+<p>让 agent <strong>跨会话记住</strong>项目/用户层面的事实，例如「这个项目的测试用 <code>pytest -m slow</code>」「用户偏好中文注释」。</p>
+<h3 id="42">4.2 流程</h3>
+<div class="highlight"><pre><span></span><code>会话结束（/clear、退出，或一次 headless 运行跑完）
+  → 若本会话有值得沉淀的内容（改动了多个文件、踩了坑、确立了约定）
+  → ModelGateway.complete(purpose="reflect", prompt=...)
+  → 模型输出两类内容：
+      {project_facts: [...], user_preferences: [...]}
+  → 写入：
+      .coderagent/memory/projects.md     （项目级）
+      ~/.coderagent/CLAUDE.md             （用户级，需确认）
+</code></pre></div>
+<p><strong>写入护栏</strong></p>
+<ul>
+<li>项目记忆<strong>自动写</strong>（内容是关于项目的客观事实）</li>
+<li>用户记忆<strong>必须用户确认</strong>（UI 弹窗展示拟写入内容）</li>
+<li>去重：写入前用模型判断是否与已有内容重复</li>
+<li>长度上限：项目记忆文件 ≤ 200 行，超出时提示整理</li>
+</ul>
+<h3 id="43">4.3 读取</h3>
+<p>M2 已实现读取（项目/用户记忆作为指令块注入）。本节补充：记忆条目带 <code>source</code> 与 <code>created_at</code>，便于展示与淘汰。</p>
+<hr>
+<h2 id="5-f45-skills">5. F4.5 Skills 系统</h2>
+<p>Skill = 一个带说明、脚本与资源文件的可复用能力包。</p>
+<div class="highlight"><pre><span></span><code>.coderagent/skills/pdf-report/
+├── SKILL.md          # front-matter(name, description) + 正文（使用说明）
+├── scripts/
+│   └── make_report.py
+└── assets/
+    └── template.docx
+</code></pre></div>
+<p><strong>与自定义命令的区别</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>自定义命令</th>
+<th>Skill</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>触发</td>
+<td>用户显式 <code>/name</code></td>
+<td>模型按 <code>description</code> 自主决定调用</td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>命令正文替换进 prompt</td>
+<td>正文作为「使用说明」注入，模型调用脚本执行</td>
+</tr>
+<tr>
+<td>产物</td>
+<td>对话消息</td>
+<td>文件/脚本产物</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Skill 调用机制</strong>：给模型注入一段技能清单（名称 + 描述 + 何时使用），模型决定加载某个 Skill 的完整说明 → 走 bash 执行其脚本。</p>
+<p><strong>实现</strong>：<code>extensions/skills.py</code> 扫描 skill 目录，解析 front-matter，构造技能索引注入 system prompt。</p>
+<hr>
+<h2 id="6-f46">6. F4.6 插件机制</h2>
+<p>插件 = 第三方扩展包，提供新的工具、命令、hook、模型后端。</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/extensions/plugins.py</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Plugin</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="s2">"ExtensionRegistry"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div>
+<p><strong>发现</strong></p>
+<div class="highlight"><pre><span></span><code>~/.coderagent/plugins/*/     （用户）
+.coderagent/plugins/*/       （项目）
+pip 安装的 entry point group "coderagent.plugins"
+</code></pre></div>
+<p><strong>扩展注册表</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExtensionRegistry</span><span class="p">:</span>
+    <span class="n">tools</span><span class="p">:</span> <span class="n">ToolRegistry</span>
+    <span class="n">commands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Command</span><span class="p">]</span>
+    <span class="n">hooks</span><span class="p">:</span> <span class="n">HookConfig</span>
+    <span class="n">model_backends</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>安全</strong>：插件在主进程内执行（无沙箱），加载前打印清单并要求确认（首次加载时记录到信任列表）。</p>
+<hr>
+<h2 id="7-f47">7. F4.7 远程沙箱</h2>
+<p>直接复用 <code>minisweagent.environments.extra</code> 下的实现：</p>
+<table>
+<thead>
+<tr>
+<th>环境</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>swerex_docker</code></td>
+<td>SWE-ReX 管理的远程 Docker 容器</td>
+</tr>
+<tr>
+<td><code>swerex_modal</code></td>
+<td>Modal 上的远程执行</td>
+</tr>
+<tr>
+<td><code>contree</code></td>
+<td>无 root 的受限容器</td>
+</tr>
+</tbody>
+</table>
+<p><strong>接入方式</strong>：<code>coderagent</code> 的 <code>Environment</code> 用 <code>minisweagent.environments.get_environment(config, default_type=...)</code>，配置里 <code>sandbox.type</code> 决定用哪个。</p>
+<p><strong>远程沙箱的额外考量</strong></p>
+<ul>
+<li>需要 checkpoint 的容器快照能力 → F4.1 的 <code>container_commit</code> 路径</li>
+<li>延迟更高 → UI 需显示「远程执行中」状态而非本地 spinner</li>
+<li>凭证：<code>SWE_REX_SERVER_URL</code> / <code>SWE_REX_API_KEY</code> 等走全局 <code>.env</code></li>
+</ul>
+<hr>
+<h2 id="8-f48">8. F4.8 可观测性</h2>
+<h3 id="81-trace">8.1 Trace 格式</h3>
+<p>与 mini 的 <code>trajectory_format: "mini-swe-agent-1.1"</code> 并列，新格式：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"trajectory_format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coder-agent-1.0"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"session"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"events"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"metrics"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"total_tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">120433</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"total_tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">8421</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"per_tool"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"read"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span><span class="w"> </span><span class="nt">"bash"</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="nt">"edit"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"per_purpose_cost"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"main"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.38</span><span class="p">,</span><span class="w"> </span><span class="nt">"summarize"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.04</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">412.3</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="82">8.2 导出</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>trace.json
+coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--format<span class="w"> </span>otel<span class="w"> </span>--out<span class="w"> </span>trace.otlp
+</code></pre></div>
+<p><strong>OTel 导出</strong>：把事件映射为 span（一次 turn = 一个 span，工具调用 = 子 span），便于用 Jaeger / Tempo 观察。</p>
+<h3 id="83">8.3 成本归因</h3>
+<p>按 <code>purpose</code> 与 <code>tool</code> 维度累计成本，回答「这次会话钱花在哪了」。</p>
+<hr>
+<h2 id="9">9. 任务分解</h2>
+<h3 id="t41-agent">T4.1 子 Agent 骨架</h3>
+<ul>
+<li>[x] <code>SubagentSpec</code> + 定义文件加载</li>
+<li>[x] <code>task</code> 工具实现</li>
+<li>[x] 子 AgentLoop 构造（独立上下文、受限工具集、独立模型档位）</li>
+<li>[x] 结果结构化返回</li>
+</ul>
+<h3 id="t42-agent">T4.2 内置子 Agent</h3>
+<ul>
+<li>[x] <code>code-explorer</code> / <code>verifier</code> / <code>refactorer</code></li>
+<li>[x] <code>/agents</code> 命令列出可用子 agent</li>
+</ul>
+<h3 id="t43">T4.3 模型路由</h3>
+<ul>
+<li>[x] <code>RoutingRule</code> / <code>ModelRouter.resolve</code></li>
+<li>[x] 默认策略（轮次/token/预算）</li>
+<li>[x] 状态栏与事件提示切换</li>
+</ul>
+<h3 id="t44">T4.4 经验沉淀</h3>
+<ul>
+<li>[x] <code>reflect</code> prompt 与输出 schema</li>
+<li>[x] 项目记忆自动写入</li>
+<li>[x] 用户记忆需确认</li>
+<li>[x] 去重与长度上限</li>
+</ul>
+<h3 id="t45-skills">T4.5 Skills</h3>
+<ul>
+<li>[x] skill 目录扫描与 front-matter 解析</li>
+<li>[x] 技能索引注入 system prompt</li>
+<li>[x] 模型自主加载 skill 说明</li>
+<li>[x] <code>/skills</code> 命令</li>
+</ul>
+<h3 id="t46">T4.6 插件</h3>
+<ul>
+<li>[x] <code>ExtensionRegistry</code> 与发现机制</li>
+<li>[x] 首次加载的信任确认</li>
+<li>[x] 插件 API 文档</li>
+</ul>
+<h3 id="t47">T4.7 远程沙箱</h3>
+<ul>
+<li>[x] 配置 <code>sandbox.type</code> 接到 <code>minisweagent.environments</code></li>
+<li>[x] 远程状态在 UI 的呈现</li>
+<li>[ ] 容器 checkpoint（可选，未实现）</li>
+</ul>
+<h3 id="t48">T4.8 可观测性</h3>
+<ul>
+<li>[x] 指标累计</li>
+<li>[x] <code>coder export</code> 命令（json / otel）</li>
+<li>[x] 成本归因报表</li>
+</ul>
+<hr>
+<h2 id="10">10. 测试计划</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>覆盖点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tools/test_task.py</code></td>
+<td>子 agent 上下文隔离、工具白名单限制、成本计入主会话、max_turns 截断</td>
+</tr>
+<tr>
+<td><code>models/test_router.py</code></td>
+<td>路由规则求值、预算降档、上下文升级</td>
+</tr>
+<tr>
+<td><code>extensions/test_memory.py</code></td>
+<td>沉淀写入、去重、用户记忆需确认</td>
+</tr>
+<tr>
+<td><code>extensions/test_skills.py</code></td>
+<td>skill 解析、索引注入</td>
+</tr>
+<tr>
+<td><code>extensions/test_plugins.py</code></td>
+<td>发现、信任确认、注册</td>
+</tr>
+<tr>
+<td><code>test_export.py</code></td>
+<td>trace 格式、指标正确性</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="11">11. 风险</h2>
+<table>
+<thead>
+<tr>
+<th>风险</th>
+<th>对策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>子 Agent 结果不可靠，主 agent 被误导</td>
+<td>结果结构化返回（含 status）；主 agent 可要求重试；不自动采信未验证结论</td>
+</tr>
+<tr>
+<td>子 Agent 成本失控</td>
+<td>独立 <code>max_turns</code> + 独立成本上限；计入主会话总预算</td>
+</tr>
+<tr>
+<td>经验沉淀写入错误信息污染长期上下文</td>
+<td>用户记忆需确认；项目记忆带来源与时间；提供 <code>/memory</code> 查看与删除</td>
+</tr>
+<tr>
+<td>插件在主进程执行有安全风险</td>
+<td>首次加载需确认；插件目录不进版本库；文档明示信任模型</td>
+</tr>
+<tr>
+<td>多模型引入行为不一致</td>
+<td>路由切换在事件流中显式记录，便于回溯</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="12-definition-of-done">12. Definition of Done</h2>
+<ul>
+<li>[x] <code>task</code> 工具可委派子任务，主上下文不被污染</li>
+<li>[x] 子 Agent 工具白名单被强制执行</li>
+<li>[x] 模型路由能按上下文长度与预算自动升降档</li>
+<li>[x] 经验沉淀可写入项目记忆，用户记忆需确认</li>
+<li>[x] <code>coder export</code> 输出完整 trace 与指标</li>
+</ul>
+<hr>
+<h2 id="13">13. 实现说明（与原设计的偏差）</h2>
+<p>实现与原设计的差异如下，都是有意为之。</p>
+<h3 id="131-agent">13.1 子 Agent</h3>
+<ul>
+<li>子 Agent 没有自己的 <code>AgentLoop</code>，而是由 <code>SubAgentRunner</code> 驱动一个循环：它有独立的
+  messages、受限的 <code>ToolRegistry</code>、独立的 <code>ModelGateway</code> 和自己的 <code>max_turns</code>。另起一个
+  <code>AgentLoop</code> 会带来第二套事件流和第二套会话状态，收益不大。</li>
+<li>子 Agent 的成本加回主会话，主会话的预算因此仍然管得住它。计的是它自己那几次调用，
+  详见 13.8。</li>
+<li>内置子 Agent 放在 <code>core/subagent.py</code> 的 <code>BUILTIN_SUBAGENTS</code> 里，而不是单独的目录：
+  它们是代码，不是配置。</li>
+</ul>
+<h3 id="132">13.2 模型路由</h3>
+<ul>
+<li>路由规则只比较数字。<code>tokens &gt; 50000</code> 这样的写法有效，<code>state == done</code> 这样的写法永远
+  不成立，不会被 <code>eval</code>，也不会报错。</li>
+<li><code>ModelRouter</code> 有自己的 <code>main_model</code>。注入的模型（测试、脚本）不会被配置里的
+  <code>model.model_name</code> 覆盖，路由因此不会把测试用的模型换掉。</li>
+<li>默认策略是：预算用掉 80% 降档到廉价模型，轮次超过 30 或 token 超过 50k 升档到高档
+  模型。升档只在配置了 <code>routing.strong</code> 时才发生。</li>
+</ul>
+<h3 id="133">13.3 经验沉淀</h3>
+<ul>
+<li>用户记忆的确认不是一个弹窗，而是写进 <code>.coderagent/memory/pending-memory.md</code>，用户用
+  <code>/memory confirm</code> 确认、<code>/memory forget &lt;text&gt;</code> 删除。终端界面里做一个模态框，比一个
+  文件复杂得多。</li>
+<li>记忆条目没有 <code>source</code> 与 <code>created_at</code>：写入时去重，文件上限 200 行，超出的部分提示整理。</li>
+<li>沉淀的时机是「会话结束」，跟有没有界面无关：一次 headless 运行跑完也沉淀。<code>memory.enabled</code>
+  为 false 时连模型都不问。</li>
+</ul>
+<h3 id="134-skills">13.4 Skills</h3>
+<ul>
+<li>技能目录是 <code>.coderagent/skills/&lt;name&gt;/SKILL.md</code>，一个技能一个目录，因此技能可以带
+  <code>scripts/</code> 与 <code>assets/</code>。</li>
+<li>技能正文通过 <code>skill</code> 工具加载，工具的返回里还带着技能目录的路径，模型知道脚本在哪里。</li>
+</ul>
+<h3 id="135">13.5 插件</h3>
+<ul>
+<li>插件的信任不是弹窗，而是 <code>~/.coderagent/trusted-plugins.json</code> 里的一个列表，
+  <code>/plugins trust &lt;name&gt;</code> 写入。第一次加载前问一次，问过就记住。</li>
+<li>插件的形式是目录里的 <code>plugin.py</code>，里面有一个 <code>register(registry)</code> 函数，或者一个带
+  <code>register</code> 方法的对象。pip 安装的插件走 <code>coderagent.plugins</code> 这个 entry point 组。</li>
+<li>插件的命令注册到全局的 <code>COMMANDS</code> 里，所以插件的命令和内置的命令一样可用。</li>
+<li><code>registry.model_backends</code> 这张表插件可以填，但 agent 没有读它：模型后端还没接线。</li>
+</ul>
+<h3 id="136">13.6 远程沙箱</h3>
+<ul>
+<li>只有 <code>bash</code> 工具的命令进沙箱。mini-swe-agent 的 <code>Environment</code> 协议只有 <code>execute</code>，
+  没有文件操作，所以 <code>read</code>/<code>write</code>/<code>edit</code> 仍然作用于本机文件系统。</li>
+<li>容器有自己的工作目录。本机会话的路径在容器里不存在，所以不传；要在容器里换目录，
+  用 <code>sandbox.cwd</code>。</li>
+<li>远程沙箱里的 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> 魔法被关掉了：一轮对话由模型说
+  结束，而不是由一个哨兵字符串结束。</li>
+<li>容器 checkpoint 没有实现。它需要沙箱支持快照，而 mini 的环境没有这个接口。</li>
+<li><code>sandbox.network</code> 和 <code>sandbox.writable_roots</code> 删掉了。它们从来没有生效过：mini 的环境
+  各自有一套配置（<code>run_args</code>、<code>wrapper_args</code>、<code>contree_config</code>、<code>deployment_extra_kwargs</code>），
+  没有统一的网络开关，也没有统一的可写目录清单。留着这两个选项只会让人以为它们管用。
+  网络策略写进环境里（<code>sandbox: {type: docker, run_args: ["--rm", "--network", "none"]}</code>），
+  路径限制交给权限层（<code>permissions.deny_paths</code>、<code>permissions.include_dirs</code>）。</li>
+<li><code>sandbox</code> 里的其余选项原样传给环境，环境不认识的选项被忽略。<code>/sandbox</code> 列出的是<strong>真正
+  在生效</strong>的选项。</li>
+</ul>
+<h3 id="137">13.7 可观测性</h3>
+<ul>
+<li><code>coder</code> 变成了一个命令组：主命令还是 <code>coder --task ...</code>，<code>coder export ...</code> 是它的
+  子命令。<code>coder</code> 不带参数时仍然是终端界面。</li>
+<li>trace 从事件日志算出来，而不是另外记一份。日志是唯一的事实来源。</li>
+<li>成本归因的维度是 purpose（<code>main</code>、子 agent 的档位）、model 和 tool。子 agent 的成本
+  来自 <code>task</code> 工具返回的 JSON。</li>
+<li>token 数来自流式响应的 usage，之前的实现把它丢掉了。</li>
+</ul>
+<h3 id="138">13.8 成本核算（实测后修正）</h3>
+<p>真机联调时发现原来的成本算法是错的，这里是修正后的规则：</p>
+<ul>
+<li>子 agent 的成本是它<strong>自己</strong>那几次调用的花费，不是它用的那个 gateway 的累计值。子 agent
+  常常和主 agent 共用一个 gateway，累计值里混着主 agent 已经花掉的钱。</li>
+<li>子 agent 用自己的模型时，它的花费记到主 gateway 上，所以主会话的预算仍然管得住它。</li>
+<li>压缩时生成摘要的那次调用也是一次模型调用。它的花费写进 <code>compaction</code> 事件里，因此在
+  事件日志里，和别的调用一样被计入。</li>
+<li>会话结束时那次「经验沉淀」也是一次模型调用。它的花费写进 <code>reflection</code> 事件里。它跑在
+  别的模型上时，花费记到主 gateway 上，所以主会话的预算仍然管得住它。</li>
+<li>一个会话的花费 = 事件日志里所有调用的花费之和。session、trace 指标、<code>/cost</code> 和
+  <code>coder export</code> 报的是同一个数字。</li>
+<li><code>coder</code> 的输出报两个数：<code>cost</code> 是<strong>这一轮</strong>的花费，<code>session_cost</code> 是<strong>整个会话</strong>的花费
+  （前面的轮次与结尾那次沉淀都算在内）。会话总额从事件日志算出来，所以它跟 trace 一致。</li>
+<li>子 agent 的 <code>files_touched</code> 只列<strong>改过</strong>的文件。读过的文件不算，读不是改。</li>
+<li>一个进程里的所有会话共用一个 gateway，但<strong>账单是每个会话自己的</strong>。会话的钱是它自己那几次
+  调用的花费，<code>/clear</code> 之后的新会话从 0 开始算，不背着上一段会话的账。</li>
+<li>因此 <code>cost_limit</code> 也是<strong>每个会话</strong>的预算：新会话不会因为上一段会话花光了预算而一开口就被
+  拦下。模型路由看预算比例时看的也是这个会话的花费，不是进程的累计值。</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+
+
+<div class="floating-bubbles">
+<div class="floating-bubbles-title">Our projects</div>
+  <a href="https://swe-agent.com/" class="bubble" title="SWE-agent">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sweagent_logo.svg" alt="SWE-agent">
+    <span class="bubble-tooltip">SWE-agent</span>
+  </a>
+  <a href="https://swe-rex.com/" class="bubble" title="SWE-rex">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swerex_logo.svg" alt="SWE-rex">
+    <span class="bubble-tooltip">SWE-ReX</span>
+  </a>
+  <a href="https://swesmith.com" class="bubble" title="SWE-smith">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swesmith_logo.png" alt="SWE-smith">
+    <span class="bubble-tooltip">SWE-smith</span>
+  </a>
+  <a href="https://swebench.com" class="bubble" title="SWE-bench">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swebench_logo.png" alt="SWE-bench">
+    <span class="bubble-tooltip">SWE-bench</span>
+  </a>
+  <a href="https://codeclash.ai" class="bubble" title="CodeClash">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/codeclash_logo.svg" alt="CodeClash">
+    <span class="bubble-tooltip">CodeClash</span>
+  </a>
+  <a href="https://www.swebench.com/sb-cli/" class="bubble" title="sb-cli">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sbcli_logo.svg" alt="sb-cli">
+    <span class="bubble-tooltip">sb-cli</span>
+  </a>
+</div>
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer">
+        
+          
+          <a href="../M3-ui-extensions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: M3 — UI &amp; extensions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                M3 — UI &amp; extensions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../M5-web-interface/" class="md-footer__link md-footer__link--next" aria-label="Next: M5 — Web interface">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                M5 — Web interface
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.indexes", "navigation.top", "content.action.edit", "navigation.footer", "content.code.copy", "content.footnote.tooltips", "header.autohide", "announce.dismiss", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../../assets/js/sh-annotation.js"></script>
+      
+        <script src="../../../assets/js/gif-controls.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html><!-- Floating Bubbles -->

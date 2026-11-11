@@ -1,0 +1,6762 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mini-swe-agent.com/latest/usage/coderagent_features/">
+      
+      
+        <link rel="prev" href="../coderagent/">
+      
+      
+        <link rel="next" href="../coderagent_web/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/mini_square.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Features - mini-SWE-agent documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M22%2012a10%2010%200%200%201-10%2010A10%2010%200%200%201%202%2012%2010%2010%200%200%201%2012%202a10%2010%200%200%201%2010%2010m-12%206%206-6-6-6-1.4%201.4%204.6%204.6-4.6%204.6z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../assets/custom.css">
+    
+      <link rel="stylesheet" href="../../assets/gif-controls.css">
+    
+      <link rel="stylesheet" href="../../assets/mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../assets/image_theme.css">
+    
+      <link rel="stylesheet" href="../../assets/bubbles.css">
+    
+      <link rel="stylesheet" href="../../assets/navigation_cards.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-SG2NC1GDRD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-SG2NC1GDRD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-SG2NC1GDRD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-features-of-the-coding-agent" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+              </button>
+            
+            
+<a href="../programbench/">
+  🎉 Run mini-swe-agent on our new &amp; extremely challenging benchmark, ProgramBench
+</a>
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden="">
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="mini-SWE-agent documentation" class="md-header__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mini-SWE-agent documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Features
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../design/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design (WIP)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://www.swebench.com/blog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://swebench.com" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Leaderboard
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mini-SWE-agent documentation" class="md-nav__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    mini-SWE-agent documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked="">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3">
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Command line usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    <code>mini</code>
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding agent
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Coding agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_2">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4_2" id="__nav_1_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    中文
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    中文
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_features_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    功能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_web_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    网页版
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_commands_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    命令
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_subagents_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_hooks_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_eval_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#the-ways-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ways to run it
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The ways to run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The memory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The memory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The extensions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sandbox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The sandbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-terminal-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The terminal interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The terminal interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The web interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The web interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-benchmark-part-of-mini-swe-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The benchmark part of mini-swe-agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The benchmark part of mini-swe-agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-details-are" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the details are
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_subagents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sub agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP servers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5">
+        
+          
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/local_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6">
+        
+          
+          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/global_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Global configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/yaml_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Yaml config files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7">
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python bindings &amp; more
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Python bindings &amp; more
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../python_bindings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Python bindings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/control_flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understanding the agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subclassing and more
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/v2_migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2 migration guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/agents/default/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DefaultAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/agents/interactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    InteractiveAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/litellm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/litellm_response_toolcall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmResponseModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/openrouter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenRouterModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/requesty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RequestyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/portkey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/portkey_response/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyResponse
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/test_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DeterministicModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extra Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4">
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/local/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LocalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/singularity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SingularityEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/swerex_docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexDockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/bubblewrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BubblewrapEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/contree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ContreeEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/swerex_modal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexModalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5">
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run Scripts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run Scripts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/hello_world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hello World
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/mini_extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini-extra
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (batch)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/swebench_single/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (single)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../design/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design (WIP)
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design (WIP)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coding-agent-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-design-logic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M0-skeleton/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M0 — Skeleton &amp; config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M1-tools-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M1 — Tools &amp; permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M2-context-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M2 — Context &amp; sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M3-ui-extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M3 — UI &amp; extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M4-advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M4 — Advanced
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M5-web-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/milestones/M5-web-modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.swebench.com/blog.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://swebench.com" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaderboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#the-ways-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ways to run it
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The ways to run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sessions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The sessions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The memory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The memory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The extensions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sandbox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The sandbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-terminal-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The terminal interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The terminal interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The web interface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The web interface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-benchmark-part-of-mini-swe-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The benchmark part of mini-swe-agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The benchmark part of mini-swe-agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-something-goes-wrong_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When something goes wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-details-are" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the details are
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+
+                  
+
+
+  
+    <a href="https://github.com/SWE-agent/mini-SWE-agent/edit/main/docs/usage/coderagent_features.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+  
+
+
+<h1 id="the-features-of-the-coding-agent">The features of the coding agent</h1>
+<p>A list of everything <code>coder</code> can do, one line per feature, with an example and
+the errors of every part. The pages that describe a part in detail are linked at
+the end of each section.</p>
+<blockquote>
+<p>中文版：<a href="../coderagent_features_zh/">coding agent 的功能</a></p>
+</blockquote>
+<h2 id="the-ways-to-run-it">The ways to run it</h2>
+<ul>
+<li><strong>One turn from the terminal</strong> — <code>coder -t "fix the failing test"</code>. The
+  answer is printed as text, or as JSON with <code>--output-format json</code>.</li>
+<li><strong>The terminal interface</strong> — <code>coder</code> without a task, or <code>coder --tui</code>. A
+  full screen interface with a status bar, tool cards and approvals.</li>
+<li><strong>The browser</strong> — <code>coder web</code>. The same agent in a chat page, with a
+  settings page for the model.</li>
+<li><strong>As an API</strong> — every action of the browser is a plain HTTP call, so a
+  script can drive the agent.</li>
+<li><strong>As a library</strong> — <code>coderagent.run.run_turn</code> and <code>build_loop</code> put the agent
+  into another Python program.</li>
+<li><strong>In a benchmark</strong> — the run scripts of mini-swe-agent solve SWE-bench and
+  ProgramBench with the same model interface.</li>
+</ul>
+<h3 id="example">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># One turn, the answer as text.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"add a docstring to src/app.py"</span>
+
+<span class="c1"># One turn, the answer as JSON (for a script).</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"list the files of this directory"</span><span class="w"> </span>--output-format<span class="w"> </span>json
+
+<span class="c1"># The terminal interface.</span>
+coder<span class="w">                      </span><span class="c1"># with a terminal this is the TUI</span>
+coder<span class="w"> </span>--tui<span class="w">                </span><span class="c1"># the same, said explicitly</span>
+
+<span class="c1"># The browser.</span>
+coder<span class="w"> </span>web<span class="w"> </span>--cwd<span class="w"> </span>.<span class="w"> </span>--port<span class="w"> </span><span class="m">8765</span>
+
+<span class="c1"># A session of this directory, the newest first.</span>
+coder<span class="w"> </span>--list
+</code></pre></div>
+<p>The JSON of one turn has the fields <code>session_id</code>, <code>messages</code>, <code>cost</code>, <code>usage</code>,
+<code>stop_reason</code> and <code>error</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261109-3f0a91"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"assistant"</span><span class="p">,</span><span class="w"> </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"I added the docstring."</span><span class="p">}],</span>
+<span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0012</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"input_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">4210</span><span class="p">,</span><span class="w"> </span><span class="nt">"output_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">96</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>stop_reason</code> is one of <code>end_turn</code>, <code>max_turns</code>, <code>cost_exceeded</code>, <code>token_limit</code>, <code>verify_failed</code>,
+<code>error</code> and <code>interrupted</code>.</p>
+<h3 id="when-something-goes-wrong">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>no task given</code></td>
+<td>No <code>-t</code>, no <code>--tui</code>, and stdin is not a terminal (a script, a pipe).</td>
+<td>Give a task: <code>coder -t "..."</code>.</td>
+</tr>
+<tr>
+<td><code>session 20261109-3f0a91</code></td>
+<td>The same as above, but a session was found to continue.</td>
+<td>Same; add <code>-t</code> to run a turn in it.</td>
+</tr>
+<tr>
+<td><code>Unknown command '/foo'. Try /help.</code></td>
+<td>The line started with <code>/</code> but no command has that name.</td>
+<td>Check the spelling, or <code>/help</code> for the list.</td>
+</tr>
+<tr>
+<td><code>ValueError: 'bogus' is not a valid PermissionMode</code></td>
+<td><code>--permission-mode bogus</code> — the flag is checked when the policy is built, and the exception is not caught.</td>
+<td>Use one of <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code>, <code>bypass</code>.</td>
+</tr>
+<tr>
+<td><code>ValueError: Unknown output format: xml</code></td>
+<td><code>--output-format</code> accepts only <code>text</code> and <code>json</code>.</td>
+<td>Use <code>text</code> or <code>json</code>.</td>
+</tr>
+<tr>
+<td><code>Unknown format 'xml'. Use json or otel.</code></td>
+<td><code>coder export --format</code> accepts only <code>json</code> and <code>otel</code>.</td>
+<td>Use <code>json</code> or <code>otel</code>.</td>
+</tr>
+<tr>
+<td><code>no sessions yet</code></td>
+<td><code>--list</code> found no session in this directory.</td>
+<td>Nothing to do; run a turn first.</td>
+</tr>
+<tr>
+<td><code>coder web: cannot listen on 127.0.0.1:8765 (Address already in use).</code> on stderr, exit code 1</td>
+<td>The port is taken. The server checks this itself before it starts, because uvicorn's own error does not say what to do.</td>
+<td>Use another port: <code>coder web --port 8766</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>coder</code> exits with <code>0</code> after a normal turn, whatever the answer was, and with
+<code>1</code> when it could not start at all (a bad flag value, a port that is taken).</p>
+<h2 id="the-models">The models</h2>
+<ul>
+<li><strong>Any provider litellm knows</strong> — OpenAI, DeepSeek, Anthropic, Gemini,
+  Mistral, OpenRouter, … The provider in front of the name says who is
+  called: <code>deepseek/deepseek-flash</code>.</li>
+<li><strong>Third party endpoints</strong> — an OpenAI compatible address in <code>api_base</code>, with
+  its own key. The address may be pasted with the <code>/chat/completions</code> at the
+  end; the part behind <code>/v1</code> is cut off, because litellm adds it itself.</li>
+<li><strong>Aliases</strong> — a litellm config file with a model list. The model name can
+  then be an alias of that list, and the key of the endpoint stays in the file.</li>
+<li><strong>Cache control</strong> — <code>set_cache_control: ephemeral</code> for the providers that
+  support it.</li>
+<li><strong>Retries</strong> — <code>max_retries</code>, three by default.</li>
+<li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
+  <code>reflect</code> and <code>strong</code>.</li>
+<li><strong>Routing by the state of the session</strong> — a rule like <code>tokens &gt; 50000</code>
+  switches to another model, and the reason is in the event log.</li>
+<li><strong>A separate model for the summary</strong> — <code>context.summarize_model</code>, empty
+  means the model of the agent.</li>
+<li><strong>Streaming</strong> — the answer arrives piece by piece, in the terminal and in
+  the browser.</li>
+</ul>
+<h3 id="example_1">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># The provider is the part in front of the slash.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-m<span class="w"> </span>deepseek/deepseek-flash
+
+<span class="c1"># A third party endpoint that speaks the OpenAI protocol.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-m<span class="w"> </span>openai/MiniMax-M2.7<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_base<span class="o">=</span>https://api.example.com/v1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-c<span class="w"> </span>model.model_kwargs.api_key<span class="o">=</span>sk-...
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
+<span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
+<span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span>
+<span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
+<span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
+<span class="w">    </span><span class="nt">summarize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
+<span class="w">  </span><span class="nt">routing_rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"tokens</span><span class="nv"> </span><span class="s">&gt;</span><span class="nv"> </span><span class="s">50000"</span>
+<span class="w">      </span><span class="nt">purpose</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">strong</span>
+</code></pre></div>
+<p>The model of a turn is decided in this order:</p>
+<ol>
+<li>the model the user picked with <code>/model</code> (it wins over everything),</li>
+<li>the first <code>routing_rules</code> entry whose condition holds,</li>
+<li>the automatic policy: the budget is nearly used up → <code>cheap</code>, the context is
+   big (&gt; 50000 tokens) or the session is long (&gt; 30 turns) → <code>strong</code>,</li>
+<li><code>routing.main</code>, and without it the model of the agent.</li>
+</ol>
+<p>When the model changes, the event log says why:</p>
+<div class="highlight"><pre><span></span><code>Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has grown
+</code></pre></div>
+<p>The reasons are <code>the budget is nearly used up</code>, <code>the context has grown</code>,
+<code>the session has many turns</code>, <code>the rule '&lt;when&gt;' holds</code> and
+<code>the rules of the routing say so</code>.</p>
+<h3 id="when-something-goes-wrong_1">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LLM Provider NOT provided</code></td>
+<td>The model name has no provider in front of it.</td>
+<td>Write <code>openai/&lt;name&gt;</code> for an OpenAI compatible endpoint, or <code>deepseek/&lt;name&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>ValueError: Invalid mode: {mode}</code></td>
+<td><code>set_cache_control</code> is neither <code>default_end</code> nor <code>ephemeral</code>.</td>
+<td>Use one of the two, or remove the line.</td>
+</tr>
+<tr>
+<td><code>the file does not exist</code></td>
+<td><code>model.litellm_config</code> points at a file that is not there.</td>
+<td>Fix the path; it is relative to the working directory.</td>
+</tr>
+<tr>
+<td><code>the file is not valid YAML: {error}</code></td>
+<td>The alias file cannot be parsed.</td>
+<td>Fix the YAML.</td>
+</tr>
+<tr>
+<td><code>the file has no model_list</code></td>
+<td>The alias file has no <code>model_list</code>.</td>
+<td>Add the list of the models with their <code>litellm_params</code>.</td>
+</tr>
+<tr>
+<td><code>'{name}' is not one of the aliases of this file</code></td>
+<td>The model name is not in the <code>model_list</code> of the alias file.</td>
+<td>Use one of the aliases, or drop <code>litellm_config</code>.</td>
+</tr>
+<tr>
+<td><code>BadRequestError</code></td>
+<td>The provider refused the request (a wrong key, a wrong name, a wrong parameter).</td>
+<td>It is <strong>not</strong> retried; the message of the provider is the answer.</td>
+</tr>
+<tr>
+<td><code>AuthenticationError</code></td>
+<td>The key is missing or wrong.</td>
+<td>Set <code>model.model_kwargs.api_key</code>, or the key of the endpoint in the alias file, or the key of the provider in the environment (<code>OPENAI_API_KEY</code> for <code>openai/…</code>).</td>
+</tr>
+<tr>
+<td><code>ContextWindowExceededError</code></td>
+<td>The request was larger than the window of the model.</td>
+<td>Lower <code>context.context_window</code>, or use a model with a bigger window.</td>
+</tr>
+</tbody>
+</table>
+<p>Retries are a separate thing from the errors above: a rate limit or a timeout
+is retried, a bad request is not. The number of attempts comes from
+<code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> and is <strong>10</strong> by default.
+<code>coder web</code> sets that variable from <code>model.max_retries</code> (3 by default), so in
+the browser the number of attempts follows the configuration, while in the
+terminal it does not.</p>
+<h2 id="the-tools">The tools</h2>
+<p>The thirteen built-in tools:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read</code></td>
+<td>Read a file, with the line numbers</td>
+</tr>
+<tr>
+<td><code>write</code></td>
+<td>Write a file, creating it if needed</td>
+</tr>
+<tr>
+<td><code>edit</code></td>
+<td>Replace one exact string in a file</td>
+</tr>
+<tr>
+<td><code>multi_edit</code></td>
+<td>Several edits in one file — all of them, or none</td>
+</tr>
+<tr>
+<td><code>glob</code></td>
+<td>Find files by pattern (<code>*</code> in one segment, <code>**</code> across directories)</td>
+</tr>
+<tr>
+<td><code>grep</code></td>
+<td>Search the contents with a regular expression, by lines, by file or by count</td>
+</tr>
+<tr>
+<td><code>ls</code></td>
+<td>List a directory; <code>depth: -1</code> walks the whole tree</td>
+</tr>
+<tr>
+<td><code>bash</code></td>
+<td>Run a shell command, with a timeout or in the background</td>
+</tr>
+<tr>
+<td><code>bash_output</code></td>
+<td>The output of a background command so far</td>
+</tr>
+<tr>
+<td><code>bash_kill</code></td>
+<td>Kill a background command</td>
+</tr>
+<tr>
+<td><code>todo_write</code></td>
+<td>The task list of the current work</td>
+</tr>
+<tr>
+<td><code>task</code></td>
+<td>Hand a self contained job to a sub agent</td>
+</tr>
+<tr>
+<td><code>skill</code></td>
+<td>Load the instructions of a skill</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Tools of MCP servers</strong> — <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>, from every server that
+  is configured.</li>
+<li><strong>Tools of plugins</strong> — a plugin can add tools, commands and hooks.</li>
+<li><strong>The schemas are trimmed to the budget</strong> — the schemas of the tools may
+  take a tenth of the context window; <code>tools.schema_budget_tokens</code> sets
+  another budget. When they do not fit, the ones that matter least go first.
+  <code>bash</code> and <code>read</code> are never dropped.</li>
+<li><strong>The tool set is configurable</strong> — <code>tools.enabled</code> is the list of the tools
+  the model may call, <code>tools.disabled</code> takes single ones away.</li>
+</ul>
+<h3 id="example_2">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># The model calls these, but you can call them yourself to try them out.</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"read"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src/app.py"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"edit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src/app.py"</span><span class="p">,</span><span class="w"> </span><span class="nt">"old_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x = 1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"new_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x = 2"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"grep"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"pattern"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main"</span><span class="p">,</span><span class="w"> </span><span class="nt">"output_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"files_with_matches"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"glob"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"pattern"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src/**/*.py"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ls"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src"</span><span class="p">,</span><span class="w"> </span><span class="nt">"depth"</span><span class="p">:</span><span class="w"> </span><span class="mi">-1</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest -q"</span><span class="p">,</span><span class="w"> </span><span class="nt">"timeout"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest -q"</span><span class="p">,</span><span class="w"> </span><span class="nt">"background"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash_output"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"task_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"b7f3"</span><span class="p">}}</span>
+</code></pre></div>
+<p><code>multi_edit</code> takes a list and is all or nothing:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"multi_edit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src/app.py"</span><span class="p">,</span><span class="w"> </span><span class="nt">"edits"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"old_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"import os"</span><span class="p">,</span><span class="w"> </span><span class="nt">"new_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"import os\nimport sys"</span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="nt">"old_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main():"</span><span class="p">,</span><span class="w"> </span><span class="nt">"new_string"</span><span class="p">:</span><span class="w"> </span><span class="s2">"def main(argv=None):"</span><span class="p">}</span>
+<span class="p">]}}</span>
+</code></pre></div>
+<p><code>grep</code> has three modes: <code>content</code> (the default), <code>files_with_matches</code> and
+<code>count</code>. It returns at most 100 matches, <code>glob</code> at most 200 files.</p>
+<h3 id="when-something-goes-wrong_2">When something goes wrong</h3>
+<p>Every tool answers with an <code>Error: ...</code> line instead of raising, so the model
+sees the message and can correct itself. The messages are:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read</code></td>
+<td><code>Error: file not found: {path}. Use \</code>ls` to see what is in that directory.`</td>
+</tr>
+<tr>
+<td><code>read</code></td>
+<td><code>Error: '{name}' is a directory. Use \</code>ls` to list it.`</td>
+</tr>
+<tr>
+<td><code>read</code></td>
+<td><code>Error: '{name}' is a binary file.</code></td>
+</tr>
+<tr>
+<td><code>edit</code></td>
+<td><code>Error: old_string not found in {path}. Use \</code>read` to see the exact content, then retry with more context.`</td>
+</tr>
+<tr>
+<td><code>edit</code></td>
+<td><code>Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Use more context to make it unique.</code></td>
+</tr>
+<tr>
+<td><code>multi_edit</code></td>
+<td><code>Error: Edit #1 failed, no changes were written. {inner}</code> — the file is untouched.</td>
+</tr>
+<tr>
+<td><code>grep</code></td>
+<td><code>Error: invalid regular expression '{pattern}': {error}</code></td>
+</tr>
+<tr>
+<td><code>grep</code></td>
+<td><code>Error: \</code>output_mode` must be one of content, files_with_matches, count (got '{mode}').`</td>
+</tr>
+<tr>
+<td><code>glob</code>/<code>grep</code>/<code>ls</code></td>
+<td><code>Error: path not found: {path}.</code> / <code>Error: not a directory: {path}.</code></td>
+</tr>
+<tr>
+<td><code>bash</code></td>
+<td><code>Error: \</code>command` is required and must be a non-empty string.`</td>
+</tr>
+<tr>
+<td><code>bash_output</code></td>
+<td><code>Error: unknown task id '{id}'.</code></td>
+</tr>
+<tr>
+<td><code>todo_write</code></td>
+<td><code>Error: todo #1 has invalid status '{status}'. Use one of pending, in_progress, completed.</code></td>
+</tr>
+<tr>
+<td><code>task</code></td>
+<td><code>Error: unknown sub agent '{name}'. Available sub agents: {...}.</code></td>
+</tr>
+<tr>
+<td><code>skill</code></td>
+<td><code>Error: unknown skill '{name}'. Available skills: {...}.</code></td>
+</tr>
+</tbody>
+</table>
+<p>The errors of the executor itself are raised inside the result of the call:</p>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error: unknown tool '{name}'. Available tools: {...}.</code></td>
+<td>The model called a tool that is not registered — usually because <code>tools.enabled</code> was narrowed.</td>
+</tr>
+<tr>
+<td><code>Error: permission denied for '{tool}'. {reason}</code></td>
+<td>A rule or a mode refused the call.</td>
+</tr>
+<tr>
+<td><code>Error: the user denied '{tool}'.</code></td>
+<td>Somebody pressed <code>n</code> at the approval.</td>
+</tr>
+<tr>
+<td><code>Error: '{tool}' needs approval but no approver is available. Run with --permission-mode bypass to allow it.</code></td>
+<td>A call that needed approval in a headless run. <code>--permission-mode bypass</code> or a rule that allows it.</td>
+</tr>
+<tr>
+<td><code>Error: the hook blocked '{tool}'. {reason}</code></td>
+<td>A <code>PreToolUse</code> hook refused the call.</td>
+</tr>
+<tr>
+<td><code>Error: '{tool}' failed: {type}: {e}</code></td>
+<td>The tool itself raised.</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>bash</code> call that ends with a non-zero exit code is <strong>not</strong> an error: the exit
+code is part of the output, as <code>[exit code 1]</code>. A command that runs longer than
+<code>tools.bash_timeout</code> (120 seconds by default) fails with:</p>
+<div class="highlight"><pre><span></span><code>An error occurred while executing the command: Command 'sleep 60' timed out after 120 seconds
+</code></pre></div>
+<p>A background command answers with <code>Started background task {id}: {cmd}</code> and is
+read with <code>bash_output</code>, killed with <code>bash_kill</code>.</p>
+<p>The output of a tool is written to the log of the session and sent to the
+provider. What looks like a secret in it — an API key, a token, a password, a
+private key — is replaced with <code>[redacted]</code> before either happens. A file that
+holds a secret is stored in a checkpoint without it, and it is not restored by
+<code>/rewind</code>: the file is left as it is and the command says which one it was.</p>
+<h2 id="the-permissions">The permissions</h2>
+<ul>
+<li><strong>Five modes</strong> — <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code> and <code>bypass</code>.</li>
+<li><strong>The model is told</strong> — in <code>plan</code> and <code>readonly</code> the agent knows that it may
+  not change anything, and answers with what it found instead.</li>
+<li><strong>The shell has boundaries</strong> — the commands that only look around go through,
+  the ones that destroy something or send it out ask, and a path outside the
+  working directory is refused.</li>
+<li><strong>Rules</strong> — <code>~/.coderagent/rules.yaml</code> and <code>.coderagent/rules.yaml</code> decide
+  per tool and per pattern. The user level file wins.</li>
+<li><strong><code>Always allow</code></strong> — the button of an approval writes a rule, so the same
+  tool goes through from then on.</li>
+<li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
+<li><strong>Extra directories</strong> — <code>permissions.include_dirs</code>, directories outside the
+  working directory the agent may still touch.</li>
+<li><strong>Three answers</strong> — allow, deny, always allow. Nobody answers, the call is
+  denied: in the browser after <code>ui.approval_timeout</code> seconds (five minutes by
+  default), in the terminal after no limit at all, because somebody is there.</li>
+<li><strong>In the terminal</strong> the answer is picked with the arrow keys, in the browser
+  with the buttons of the card. Without a terminal the answer is a denial.</li>
+<li><strong>Hooks run before the permission check</strong> — a hook may rewrite the call or
+  block it, and then the permission check sees the rewritten call.</li>
+</ul>
+<h3 id="example_3">Example</h3>
+<p>The mode decides what happens without any rule:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th><code>read</code>, <code>glob</code>, <code>grep</code>, <code>ls</code></th>
+<th><code>write</code>, <code>edit</code>, <code>multi_edit</code></th>
+<th><code>bash</code></th>
+<th><code>todo_write</code>, <code>bash_output</code>, <code>bash_kill</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>allow</td>
+<td>ask</td>
+<td>ask¹</td>
+<td>allow</td>
+</tr>
+<tr>
+<td><code>acceptEdits</code></td>
+<td>allow</td>
+<td>allow</td>
+<td>ask¹</td>
+<td>allow</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>allow</td>
+<td>deny</td>
+<td>deny</td>
+<td>allow</td>
+</tr>
+<tr>
+<td><code>readonly</code></td>
+<td>allow</td>
+<td>deny</td>
+<td>deny</td>
+<td>allow</td>
+</tr>
+<tr>
+<td><code>bypass</code></td>
+<td>allow</td>
+<td>allow</td>
+<td>allow</td>
+<td>allow</td>
+</tr>
+</tbody>
+</table>
+<p>¹ The commands that only look around — <code>ls</code>, <code>cat</code>, <code>grep</code>, <code>git status</code> and
+the like — go through without a question. The rest asks. See
+<a href="#the-shell">the shell</a> below.</p>
+<p>A rule file decides per tool and per pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/rules.yaml</span>
+<span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"pytest"</span>
+<span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
+<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">the test suite is safe to run</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">edit</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"src/**/*.py"</span>
+<span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="s">"*"</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"*"</span>
+<span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ask</span>
+</code></pre></div>
+<p><code>pattern</code> is a glob for the path tools (<code>*</code> in one segment, <code>**</code> across
+directories), a <strong>regular expression</strong> for <code>bash</code>, and the tool name for
+everything else. For <code>bash</code> the pattern is matched against the <strong>beginning of
+each part</strong> of the command: <code>git push</code> matches <code>git push origin main</code>, and it
+does not match <code>echo "git push"</code>.</p>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"run the tests"</span><span class="w"> </span>--permission-mode<span class="w"> </span>acceptEdits
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"how would you fix this?"</span><span class="w"> </span>--permission-mode<span class="w"> </span>plan
+</code></pre></div>
+<p><code>plan</code> and <code>readonly</code> put a note into the messages the model sees:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;permission_mode</span><span class="w"> </span><span class="na">mode=</span><span class="s">"plan"</span><span class="nt">&gt;</span>
+You<span class="w"> </span>are<span class="w"> </span>in<span class="w"> </span>plan<span class="w"> </span>mode.<span class="w"> </span>You<span class="w"> </span>may<span class="w"> </span>only<span class="w"> </span>look<span class="w"> </span>around:<span class="w"> </span>`read`,<span class="w"> </span>`glob`,<span class="w"> </span>`grep`<span class="w"> </span>and<span class="w"> </span>`ls`
+work,<span class="w"> </span>but<span class="w"> </span>every<span class="w"> </span>tool<span class="w"> </span>that<span class="w"> </span>changes<span class="w"> </span>something,<span class="w"> </span>`bash`<span class="w"> </span>included,<span class="w"> </span>is<span class="w"> </span>refused.
+Investigate<span class="w"> </span>the<span class="w"> </span>task<span class="w"> </span>and<span class="w"> </span>answer<span class="w"> </span>with<span class="w"> </span>the<span class="w"> </span>plan<span class="w"> </span>you<span class="w"> </span>would<span class="w"> </span>follow.<span class="w"> </span>The<span class="w"> </span>user
+decides<span class="w"> </span>whether<span class="w"> </span>it<span class="w"> </span>is<span class="w"> </span>executed.
+<span class="nt">&lt;/permission_mode&gt;</span>
+</code></pre></div>
+<p><code>Always allow</code> at an approval writes a rule into <code>~/.coderagent/rules.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest</span>
+<span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
+<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always allowed</span>
+</code></pre></div>
+<h3 id="when-something-goes-wrong_3">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error: permission denied for 'write'. '{path}' is outside the working directory {cwd}</code></td>
+<td>The agent tried to touch a path outside the working directory.</td>
+<td>Add the directory to <code>permissions.include_dirs</code>, or change the working directory.</td>
+</tr>
+<tr>
+<td><code>Error: the user denied 'write'.</code></td>
+<td>Somebody refused the approval.</td>
+<td>Allow it, or write a rule for it.</td>
+</tr>
+<tr>
+<td><code>Error: 'write' needs approval but no approver is available. Run with --permission-mode bypass to allow it.</code></td>
+<td>The run had no terminal (a script or a CI job) and the tool needed approval.</td>
+<td><code>--permission-mode bypass</code>, or a rule with <code>decision: allow</code>.</td>
+</tr>
+<tr>
+<td><code>{path}:{line}: invalid decision '{d}', expected one of allow, ask, deny</code></td>
+<td>The rule file has a wrong decision.</td>
+<td>Use <code>allow</code>, <code>ask</code> or <code>deny</code>.</td>
+</tr>
+<tr>
+<td><code>{path}:{line}: unknown rule keys: {keys}</code></td>
+<td>The rule has a key that does not exist.</td>
+<td>The keys are <code>tool</code>, <code>pattern</code>, <code>decision</code> and <code>reason</code>.</td>
+</tr>
+<tr>
+<td><code>{path}: invalid YAML: {error}</code></td>
+<td>The rule file cannot be parsed.</td>
+<td>Fix the YAML; the message has the line.</td>
+</tr>
+<tr>
+<td><code>{path}: \</code>rules` must be a list<code>| The</code>rules` key is not a list.</td>
+<td>Make it a list of mappings.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>Error: permission denied for 'bash'. '{path}' is outside the working directory {cwd}</code></td>
+<td>The command names a path outside the working directory.</td>
+<td>Use a path inside it, or open the directory with <code>permissions.include_dirs</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>A rule with <code>decision: allow</code> does <strong>not</strong> open the disk: a path outside the
+working directory stays outside, unless it is in <code>permissions.include_dirs</code>.
+The rules of the user cannot widen the bounds.</p>
+<p><code>permissions.deny_paths</code> adds a rule that denies everything that matches, and
+it is applied after the rule files, so it wins over an <code>allow</code> of the same
+path.</p>
+<h3 id="the-shell">The shell</h3>
+<p>The <code>bash</code> tool is the one that can do anything, so it has three boundaries.</p>
+<p><strong>The commands that only look around go through.</strong> <code>ls</code>, <code>cat</code>, <code>head</code>, <code>tail</code>,
+<code>grep</code>, <code>diff</code>, <code>wc</code>, <code>jq</code> and the reading commands of <code>git</code> (<code>status</code>, <code>diff</code>,
+<code>log</code>, <code>show</code>, …) are safe: they do not change anything and they do not reach
+the network. They do not ask.</p>
+<p><strong>The commands that destroy something or send it out ask.</strong> <code>rm</code>, <code>mv</code>, <code>cp</code>,
+<code>chmod</code>, <code>curl</code>, <code>wget</code>, <code>ssh</code>, <code>pip</code>, <code>npm</code>, <code>docker</code>, <code>git push</code> and the
+like. They are not refused — a person decides, and the approval says what the
+command does ("sends data out of the machine"). In <code>bypass</code> they go through
+like everything else, because nobody is there to ask.</p>
+<p><strong>A path outside the working directory is refused.</strong> <code>cat /etc/passwd</code>,
+<code>cat ../secret</code>, <code>cat ~/.ssh/id_rsa</code> and <code>cd ..</code> are denied in every mode,
+like the paths of the file tools. The programs of the system may be named
+(<code>/bin/ls</code>), the data may not leave the working directory. <code>permissions.include_dirs</code>
+opens a directory outside it.</p>
+<p>Every part of a command is judged on its own, and the strictest part wins: an
+allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-la<span class="w">                       </span><span class="c1"># goes through</span>
+git<span class="w"> </span>status<span class="w">                   </span><span class="c1"># goes through</span>
+curl<span class="w"> </span>http://example.com<span class="w">      </span><span class="c1"># asks: sends data out of the machine</span>
+pytest<span class="w"> </span>-q<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span>build<span class="w">    </span><span class="c1"># asks: the rm is dangerous</span>
+cat<span class="w"> </span>/etc/passwd<span class="w">              </span><span class="c1"># refused</span>
+</code></pre></div>
+<h2 id="the-sessions">The sessions</h2>
+<ul>
+<li><strong>New, listed, continued, copied</strong> — <code>--resume</code>, <code>--continue</code>, <code>--fork</code> and
+  <code>--list</code>.</li>
+<li><strong>The event log is the truth</strong> — every message, tool call, result and cost
+  is appended to a JSONL file. A session is rebuilt by replaying it.</li>
+<li><strong>Checkpoints</strong> — a snapshot of the file before every write. <code>/rewind</code> rolls
+  back to one.</li>
+<li><strong><code>/clear</code></strong> — starts a new session and keeps the old one in the log.</li>
+<li><strong>The money</strong> — tokens and cost per session, in the status bar, in <code>/cost</code>
+  and in the trace.</li>
+<li><strong>The trace</strong> — <code>coder export --format json|otel</code> writes the session out,
+  for a dashboard or for OpenTelemetry.</li>
+</ul>
+<h3 id="example_4">Example</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"first task"</span><span class="w">                     </span><span class="c1"># a new session</span>
+coder<span class="w"> </span>--list<span class="w">                              </span><span class="c1"># the sessions of this directory</span>
+coder<span class="w"> </span>--resume<span class="w"> </span><span class="m">20261109</span>-3f0a91<span class="w"> </span>-t<span class="w"> </span><span class="s2">"more"</span><span class="w">  </span><span class="c1"># continue that one</span>
+coder<span class="w"> </span>--continue<span class="w"> </span>-t<span class="w"> </span><span class="s2">"more"</span><span class="w">                </span><span class="c1"># continue the newest of this directory</span>
+coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261109</span>-3f0a91<span class="w"> </span>-t<span class="w"> </span><span class="s2">"other"</span><span class="w">   </span><span class="c1"># a copy, the original stays</span>
+</code></pre></div>
+<p>The files of a session live in <code>~/.coderagent/</code>:</p>
+<div class="highlight"><pre><span></span><code>~/.coderagent/sessions/20261109-3f0a91.jsonl        # the event log
+~/.coderagent/sessions/20261109-3f0a91.meta.json    # id, cwd, created_at, model_name
+~/.coderagent/checkpoints/20261109-3f0a91.json       # the snapshots of the writes
+</code></pre></div>
+<p>The event log is one JSON object per line, and the types are <code>user_message</code>,
+<code>assistant_message</code>, <code>tool_call</code>, <code>tool_result</code>, <code>compaction</code>, <code>error</code> and
+<code>turn_end</code>.</p>
+<p><code>/rewind</code> restores the <strong>files</strong> only — what a command did to the outside
+world stays done — and truncates the history of the session to the moment of
+the snapshot.</p>
+<h3 id="when-something-goes-wrong_4">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError: no checkpoint '&lt;id&gt;' in this session</code></td>
+<td><code>/rewind</code> was given an id that is not a checkpoint of this session.</td>
+<td><code>/rewind</code> without an id lists the checkpoints.</td>
+</tr>
+<tr>
+<td><code>/resume &lt;unknown id&gt;</code> starts a session with the directory <code>.</code></td>
+<td>A session id that is not in the log does not fail — it makes an empty session.</td>
+<td>Check the ids with <code>coder --list</code>.</td>
+</tr>
+<tr>
+<td>A turn ends with <code>stop_reason: max_turns</code></td>
+<td>The agent made 50 model calls (<code>agent.max_turns</code>) without finishing.</td>
+<td>Raise <code>agent.max_turns</code>, or make the task smaller.</td>
+</tr>
+<tr>
+<td>A turn ends with <code>stop_reason: cost_exceeded</code></td>
+<td>The turn cost more than <code>agent.cost_limit</code>. <code>0</code> means no limit.</td>
+<td>Raise <code>agent.cost_limit</code>.</td>
+</tr>
+<tr>
+<td>A turn ends with <code>stop_reason: token_limit</code></td>
+<td>The turn used more tokens than <code>agent.token_limit</code>. <code>0</code> means no limit. This is the budget of a model that has no price, where the money never moves.</td>
+<td>Raise <code>agent.token_limit</code>.</td>
+</tr>
+<tr>
+<td>A turn ends with <code>stop_reason: error</code></td>
+<td>The model call failed after the retries. The text of the error is in <code>error</code>.</td>
+<td>Look at <code>error</code>; it is the message of the provider.</td>
+</tr>
+<tr>
+<td>A turn ends with <code>stop_reason: interrupted</code></td>
+<td>Somebody pressed <code>ctrl+c</code>.</td>
+<td>The session is saved; continue it with <code>--resume</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>A turn that ended with <code>cost_exceeded</code> or <code>error</code> is <strong>not</strong> reflected on: the
+memory of the session keeps what was learned before the failure.</p>
+<h2 id="the-context">The context</h2>
+<ul>
+<li><strong>The tokens are counted</strong> — with tiktoken when it is installed, otherwise
+  an estimate.</li>
+<li><strong>The window follows the model</strong> — 64k for DeepSeek, 200k for Claude, 128k
+  for GPT, and so on. A configured <code>context_window</code> wins over the table.</li>
+<li><strong>Automatic compression</strong> — when the conversation reaches 80 % of the
+  window, it is summarized and the history is shortened. The summary is a
+  structure: goal, findings, decisions, files touched, open questions, next
+  steps, errors seen.</li>
+<li><strong>What is kept</strong> — the last turns, or the last 40 % of the tokens, whichever
+  is more.</li>
+<li><strong><code>/compact</code></strong> — compress on demand.</li>
+<li><strong>The order of the messages</strong> — system prompt, the instruction files, the
+  todo list, the summary of the session, then the history.</li>
+</ul>
+<h3 id="example_5">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">context</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">context_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64000</span>
+<span class="w">  </span><span class="nt">compact_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.8</span>
+<span class="w">  </span><span class="nt">keep_recent_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">keep_recent_token_ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.4</span>
+<span class="w">  </span><span class="nt">compact_every_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span>
+<span class="w">  </span><span class="nt">summarize_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
+</code></pre></div>
+<p>Without <code>context_window</code> in the configuration the window follows the name of
+the model: <code>gpt-</code> 128k, <code>claude</code> 200k, <code>deepseek</code> 64k, <code>qwen</code> 32k, <code>llama</code> 8k,
+<code>gemini</code> 1M, <code>mistral</code> 32k, <code>kimi</code> 256k, <code>minimax</code> 200k, and 200k for
+everything else.</p>
+<p>The summary is a JSON object with these keys:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"goal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fix the failing test in test_api.py"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"the timeout of the client is 5 seconds, the test needs 10"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"decisions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"raise the timeout in the fixture"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"files_touched"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"tests/test_api.py"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"open_questions"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"next_steps"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"run the suite again"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"errors_seen"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"TimeoutError after 5 seconds"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="when-something-goes-wrong_5">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>... (nothing left to compact)</code></td>
+<td>The turn failed because the context was too big and there was nothing left to shorten.</td>
+<td>Raise <code>context.context_window</code>, lower <code>context.reserved_output</code>, or <code>/clear</code> and start over.</td>
+</tr>
+<tr>
+<td>The summary is a fallback instead of the real thing</td>
+<td>The model answered with something that is not the JSON of the summary. It is tried twice, and the second time a conservative summary is used: the last five messages, with <code>next_steps: ["re-read the files that were mentioned to recover the details"]</code>.</td>
+<td>Nothing to do — the session continues. Ask the model again for the details it lost.</td>
+</tr>
+<tr>
+<td><code>recent_errors</code> is empty although the session had errors</td>
+<td>Only the tool messages that start with <code>Error:</code> are collected, and only the last three of them.</td>
+<td>Nothing to do.</td>
+</tr>
+</tbody>
+</table>
+<p>The token count is exact with tiktoken and an estimate without it:
+<code>int(chars / 3.6) + 4 * len(messages)</code>. An estimate that is too small delays
+the compression, so installing tiktoken is worth it for a long session.</p>
+<h2 id="the-memory">The memory</h2>
+<ul>
+<li><strong>The memory of the project</strong> — <code>.coderagent/memory</code>, written at the end of
+  a turn with what was learned about the project.</li>
+<li><strong>The memory of the user</strong> — <code>~/.coderagent/CLAUDE.md</code>, with the
+  preferences of the user.</li>
+<li><strong>Preferences wait for a confirmation</strong> — they land in
+  <code>pending-memory.md</code> first, and <code>/memory confirm</code> writes them.</li>
+<li><strong>The instruction files</strong> — <code>AGENTS.md</code> and <code>CLAUDE.md</code> of the project, and
+  the <code>CLAUDE.md</code> of the user, are read by the agent.</li>
+<li><strong>It can be switched off</strong> — <code>memory.enabled</code>.</li>
+</ul>
+<h3 id="example_6">Example</h3>
+<p>The three files:</p>
+<div class="highlight"><pre><span></span><code>.coderagent/memory/projects.md        # what the agent learned about the project
+.coderagent/pending-memory.md         # the preferences, waiting for a confirmation
+~/.coderagent/CLAUDE.md                # the preferences that were confirmed
+</code></pre></div>
+<p>At the end of a turn the agent looks at the last 40 messages and writes what
+it found:</p>
+<div class="highlight"><pre><span></span><code><span class="gh"># Project memory</span>
+
+<span class="k">-</span><span class="w"> </span>the tests of the API are run with <span class="sb">`pytest tests/`</span>, they need a postgres on localhost
+<span class="k">-</span><span class="w"> </span>the release is made with <span class="sb">`bump2version`</span>, not with a manual edit of setup.py
+</code></pre></div>
+<p>A preference of the user goes to <code>pending-memory.md</code> first:</p>
+<div class="highlight"><pre><span></span><code><span class="gh"># Preferences waiting for a confirmation</span>
+
+<span class="k">-</span><span class="w"> </span>always answer in Chinese
+</code></pre></div>
+<p>and only lands in <code>~/.coderagent/CLAUDE.md</code> after <code>/memory confirm</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gu">## Preferences</span>
+
+<span class="k">-</span><span class="w"> </span>always answer in Chinese
+</code></pre></div>
+<h3 id="when-something-goes-wrong_6">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>The memory was not written: {path} would grow past 200 lines; tidy it up first.</code></td>
+<td>The file would become longer than 200 lines.</td>
+<td>Shorten the file, or split it.</td>
+</tr>
+<tr>
+<td><code>The reflection of the session failed</code> (a warning in the log)</td>
+<td>The model did not answer with the expected JSON, so nothing was written. The session is not harmed.</td>
+<td>Nothing to do; the next turn tries again.</td>
+</tr>
+<tr>
+<td><code>Wrote 2 preference(s) to /Users/you/.coderagent/CLAUDE.md.</code></td>
+<td>The confirmation worked.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>Nothing like that in the memory.</code></td>
+<td><code>/memory forget</code> did not find the text.</td>
+<td>Check the text with <code>/memory</code>.</td>
+</tr>
+<tr>
+<td><code>Removed.</code></td>
+<td><code>/memory forget</code> removed the text.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>The memory can be switched off entirely:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">memory</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h2 id="the-extensions">The extensions</h2>
+<ul>
+<li><strong>Sub agents</strong> — <code>.coderagent/agents/*.md</code>: a name, a description, a system
+  prompt, a list of tools and a maximum number of turns. <code>code-explorer</code>,
+  <code>verifier</code> and <code>refactorer</code> come with the agent. The model sees the index
+  of them, so it can call them by name.</li>
+<li><strong>Skills</strong> — <code>.coderagent/skills/&lt;name&gt;/SKILL.md</code>: a package of steps,
+  scripts and templates for a kind of task. The agent loads one when it fits.</li>
+<li><strong>Plugins</strong> — <code>.coderagent/plugins</code>: a Python module that adds tools,
+  commands and hooks. A plugin has to be trusted once.</li>
+<li><strong>Hooks</strong> — six moments: <code>SessionStart</code>, <code>UserPromptSubmit</code>, <code>PreToolUse</code>,
+  <code>PostToolUse</code>, <code>Stop</code> and <code>SessionEnd</code>. A hook is a command that reads
+  JSON and answers JSON: allow, deny or block, with a reason, with extra
+  context or with rewritten arguments.</li>
+<li><strong>Your own commands</strong> — <code>.coderagent/commands/*.md</code>: a slash command with a
+  description, an argument hint, the tools it may use and its own model.</li>
+<li><strong>MCP servers</strong> — a server over stdio or over http. Its tools join the
+  tools of the agent, they ask for permission like every other tool, and the
+  connection is made again when it breaks.</li>
+</ul>
+<h3 id="example_7">Example</h3>
+<p>A sub agent, <code>.coderagent/agents/scout.md</code>:</p>
+<div class="highlight"><pre><span></span><code>---
+name: scout
+description: Finds the place where a feature is implemented
+tools: read, grep, glob, ls
+model_purpose: cheap
+<span class="gu">max_turns: 15</span>
+<span class="gu">---</span>
+
+You look for code. You never change anything. You answer with the files and
+the line numbers.
+</code></pre></div>
+<p>The model calls it as a tool:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"task"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"subagent_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"scout"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"where is the auth?"</span><span class="p">,</span><span class="w"> </span><span class="nt">"prompt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"find the auth code"</span><span class="p">}}</span>
+</code></pre></div>
+<p>and the answer is a JSON object:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ok"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"summary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The auth is in src/auth/session.py."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"src/auth/session.py:42 defines create_session"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"files_touched"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0004</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"turns"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cheap"</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>A skill, <code>.coderagent/skills/release/SKILL.md</code>:</p>
+<div class="highlight"><pre><span></span><code>---
+name: release
+<span class="gu">description: How to make a release of this project</span>
+<span class="gu">---</span>
+
+<span class="k">1.</span> Run the test suite.
+<span class="k">2.</span> Run <span class="sb">`bump2version patch`</span>.
+<span class="k">3.</span> Push the tag.
+</code></pre></div>
+<p>A hook, in the configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">events</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">PreToolUse</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">matcher</span><span class="p">:</span><span class="w"> </span><span class="s">"bash"</span>
+<span class="w">        </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command</span>
+<span class="w">            </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./.coderagent/hooks/check_secrets.sh</span>
+<span class="w">            </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">            </span><span class="nt">strict</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<p>The hook reads JSON on stdin and answers JSON on stdout:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"decision"</span><span class="p">:</span><span class="w"> </span><span class="s2">"block"</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"the command writes a secret"</span><span class="p">}</span>
+</code></pre></div>
+<p><code>decision</code> is <code>allow</code>, <code>deny</code> or <code>block</code>; the hook may also add
+<code>additionalContext</code> or rewrite the call with <code>updatedInput</code>. For a tool the
+new input is a mapping of arguments; the <code>UserPromptSubmit</code> hook rewrites the
+prompt of the user with a string.</p>
+<p>A custom command, <code>.coderagent/commands/commit.md</code>:</p>
+<div class="highlight"><pre><span></span><code>---
+description: Make a commit of the changes
+argument-hint: [message]
+allowed-tools: bash, read
+<span class="gu">model: cheap</span>
+<span class="gu">---</span>
+
+Commit everything with the message: $ARGUMENTS
+</code></pre></div>
+<h3 id="when-something-goes-wrong_7">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error: unknown sub agent 'scout'. Available sub agents: code-explorer, refactorer, verifier.</code></td>
+<td>The name of the sub agent is not in the index.</td>
+<td>Use one of the listed names; the index of the custom ones is in the system prompt.</td>
+</tr>
+<tr>
+<td><code>Error: the sub agents are not available in this session.</code></td>
+<td>The <code>task</code> tool is not registered — <code>tools.enabled</code> was narrowed.</td>
+<td>Put <code>task</code> back into <code>tools.enabled</code>.</td>
+</tr>
+<tr>
+<td><code>Error: unknown skill 'release'. Available skills: {...}.</code></td>
+<td>The skill does not exist.</td>
+<td>The skills are <code>.coderagent/skills/&lt;name&gt;/SKILL.md</code>.</td>
+</tr>
+<tr>
+<td><code>Trusted 'x'. It is loaded the next time the agent starts.</code></td>
+<td>The answer of <code>/plugins trust x</code>.</td>
+<td>The plugin is used from the next session.</td>
+</tr>
+<tr>
+<td><code>Error: the hook blocked 'bash'. the command writes a secret</code></td>
+<td>A <code>PreToolUse</code> hook refused the call.</td>
+<td>Fix the command, or fix the hook.</td>
+</tr>
+<tr>
+<td><code>Hook 'check_secrets.sh' timed out, ignoring it</code></td>
+<td>The hook took longer than its timeout. The call goes through.</td>
+<td>Raise the <code>timeout</code>, or make the hook faster.</td>
+</tr>
+<tr>
+<td><code>Hook 'check_secrets.sh' failed with RuntimeError: ...</code></td>
+<td>The hook crashed. The call goes through.</td>
+<td>Fix the hook. With <code>strict: true</code> the call is blocked instead.</td>
+</tr>
+<tr>
+<td><code>Error: the MCP server 'echo' is not connected.</code></td>
+<td>The server is not running.</td>
+<td>Check the <code>command</code> of the server; <code>/mcp</code> says <code>not connected</code> or <code>failed: &lt;error&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>Error: the MCP tool 'mcp__echo__echo' failed: RuntimeError: ...</code></td>
+<td>The server answered with an error.</td>
+<td>The message of the server is in the answer.</td>
+</tr>
+</tbody>
+</table>
+<p>The custom commands are looked up in <code>&lt;cwd&gt;/.coderagent/commands/*.md</code> only —
+the agent does not walk up the directories to find them.</p>
+<h2 id="the-sandbox">The sandbox</h2>
+<ul>
+<li><strong>Local by default</strong> — the commands run in the working directory.</li>
+<li><strong>Or in a container</strong> — <code>docker</code>, <code>singularity</code>, <code>bubblewrap</code>, <code>contree</code>,
+  and the remote sandboxes of SWE-rex. The same environments as
+  mini-swe-agent.</li>
+<li><strong>Only <code>bash</code> goes into the sandbox</strong> — the file tools stay in the working
+  directory.</li>
+<li><strong><code>/sandbox</code></strong> — says where the commands run.</li>
+</ul>
+<h3 id="example_8">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swerex_docker</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.11</span>
+</code></pre></div>
+<p>The seven types are <code>local</code>, <code>docker</code>, <code>singularity</code>, <code>bubblewrap</code>, <code>contree</code>,
+<code>swerex_docker</code> and <code>swerex_modal</code>. The options that the environment does not
+know are ignored, so one file can carry the settings of several of them.</p>
+<p><code>/sandbox</code> answers with the environment that is in use:</p>
+<div class="highlight"><pre><span></span><code>local
+</code></pre></div>
+<h3 id="when-something-goes-wrong_8">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError: Unknown environment type: nope (resolved to nope, available: {...})</code></td>
+<td>The type is not one of the seven.</td>
+<td>Use one of the names above.</td>
+</tr>
+<tr>
+<td><code>CalledProcessError: Command '[...]' returned non-zero exit status 1.</code></td>
+<td>The container could not be started, or the image could not be pulled.</td>
+<td>Check the image name and that docker runs.</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError: [Errno 2] No such file or directory: 'singularity'</code></td>
+<td>The binary of the environment is not installed.</td>
+<td>Install it, or use another type.</td>
+</tr>
+<tr>
+<td>The file tools touch the files of the host</td>
+<td>Only <code>bash</code> goes into the sandbox.</td>
+<td>That is by design: <code>read</code>, <code>edit</code> and friends work on the working directory of the session.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-verification">The verification</h2>
+<ul>
+<li><strong>Off by default</strong> — nothing is checked unless <code>verify.commands</code> is set.</li>
+<li><strong>The agent has to make the check pass</strong> — when the model wants to stop, the
+  commands run; if one of them fails, the agent gets the output and tries again.</li>
+<li><strong>The commands run in the session</strong> — in the sandbox when there is one, so the
+  check sees the same world the agent works in. They do not ask for approval.</li>
+<li><strong>A bounded number of rounds</strong> — <code>verify.max_rounds</code> (3 by default). When the
+  rounds are used up, the turn ends with <code>stop_reason: verify_failed</code>.</li>
+<li><strong>The result is in the log</strong> — an event of the type <code>verify</code> holds the commands
+  and the ones that did not pass.</li>
+</ul>
+<h3 id="example_9">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">verify</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">commands</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python -m pytest -q</span>
+<span class="w">  </span><span class="nt">max_rounds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+</code></pre></div>
+<p>When the model says it is done and the tests do not pass, the agent gets this
+back and keeps working:</p>
+<div class="highlight"><pre><span></span><code>[verify] These commands did not pass. Fix the problem and try again.
+
+$ python -m pytest -q
+2 failed, 1 passed
+[exit code 1]
+</code></pre></div>
+<h3 id="when-something-goes-wrong_9">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The turn ends with <code>stop_reason: verify_failed</code></td>
+<td>The commands still failed after <code>verify.max_rounds</code> rounds.</td>
+<td>Read the output of the last round in the event log.</td>
+</tr>
+<tr>
+<td>The check runs in the sandbox and cannot find the files</td>
+<td>The sandbox does not have the working directory of the session.</td>
+<td>Give the environment a working directory, or use <code>local</code>.</td>
+</tr>
+<tr>
+<td>The check takes too long</td>
+<td>The command was killed after <code>verify.timeout</code> seconds.</td>
+<td>Raise <code>verify.timeout</code>.</td>
+</tr>
+<tr>
+<td>The agent keeps fixing the same thing</td>
+<td>The check needs something the agent cannot do.</td>
+<td>Fix the check or the task.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-terminal-interface">The terminal interface</h2>
+<ul>
+<li><strong>The answer streams in</strong> — the text and the reasoning.</li>
+<li><strong>The status bar</strong> — the model, the tokens, the cost, the directory and the
+  permission mode.</li>
+<li><strong>The tool cards</strong> — the call, the output and the diff of the change.</li>
+<li><strong>The approval</strong> — <code>y</code>, <code>n</code> and <code>a</code>, or the arrow keys on a numbered list.</li>
+<li><strong>Long output is folded away</strong> — the interesting part stays visible.</li>
+<li><strong>The todo panel</strong> — the task list of the current work.</li>
+</ul>
+<h3 id="example_10">Example</h3>
+<p>The status bar looks like this:</p>
+<div class="highlight"><pre><span></span><code>deepseek/deepseek-flash | 1.5k/64k | $0.0000 | ~/work/project | default
+</code></pre></div>
+<p>An approval is a numbered list, and the selected one is marked:</p>
+<div class="highlight"><pre><span></span><code>1 [*] y allow
+2 [-] n deny
+3 [-] a always allow
+</code></pre></div>
+<p><code>←</code>/<code>→</code> move the cursor, <code>↑</code>/<code>↓</code> do the same, the digits jump to a line, the
+space toggles a multiple choice, <code>enter</code> confirms, and <code>y</code>, <code>n</code> and <code>a</code> answer
+directly. <code>ctrl+c</code> interrupts the turn, <code>ctrl+q</code> settles the session and quits.</p>
+<p>The todo panel marks the state of a task with <code>◉</code> (in progress), <code>◐</code> (pending)
+and <code>○</code> (completed).</p>
+<h3 id="when-something-goes-wrong_10">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nothing happens when a tool wants approval</td>
+<td>The terminal is not there — the run is headless.</td>
+<td>The call is denied. Use <code>--permission-mode bypass</code> or a rule.</td>
+</tr>
+<tr>
+<td><code>▸ 42 more lines</code> under the output of a tool</td>
+<td>The output was longer than the card.</td>
+<td>The interesting part is visible; open the file, or run the command again with less output.</td>
+</tr>
+<tr>
+<td>The interface does not start</td>
+<td><code>coder</code> without a task in a terminal starts the interface; without a terminal it prints <code>no task given</code>.</td>
+<td>Use <code>coder --tui</code> to force it.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-web-interface">The web interface</h2>
+<ul>
+<li><strong>The chat page</strong> — three columns: the sessions and the files on the left,
+  the conversation in the middle, the status, the changes and the file on the
+  right.</li>
+<li><strong>The answer streams in</strong> — over a server sent event stream, and a browser
+  that comes late reads the whole answer.</li>
+<li><strong>The settings page</strong> — the model as a form, the layer every field comes
+  from, the preview of all the layers with the secrets taken out.</li>
+<li><strong>Test the connection</strong> — one cheap call, and it says whether the model
+  calls the tools at all.</li>
+<li><strong>Test a model</strong> — a panel for an endpoint, a key and a model name, without
+  writing anything.</li>
+<li><strong>The permissions in two places</strong> — the settings page for the next
+  session, the chat page for the session that is running, right away.</li>
+<li><strong>The approvals in the browser</strong> — the same three answers.</li>
+<li><strong>The languages</strong> — English and Chinese. The switch in the top bar changes
+  the whole page without a reload, and the choice is remembered in the
+  browser and in a cookie. The region of the address decides when the
+  visitor has not chosen.</li>
+<li><strong>The security model</strong> — no authentication, <code>127.0.0.1</code> by default, a
+  header that a cross site request cannot send, a path that cannot leave the
+  working directory, and a key that is only shown when it is asked for.</li>
+</ul>
+<h3 id="example_11">Example</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>web<span class="w"> </span>--cwd<span class="w"> </span>.<span class="w"> </span>--port<span class="w"> </span><span class="m">8765</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>coder web: http://127.0.0.1:8765
+</code></pre></div>
+<p>The API is plain HTTP. A message to a session:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:8765/api/sessions/20261109-3f0a91/messages<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">'X-Coder-Client: 1'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"text": "run the tests"}'</span>
+</code></pre></div>
+<p>The stream of the events of a session:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-N<span class="w"> </span>http://127.0.0.1:8765/api/sessions/20261109-3f0a91/stream
+</code></pre></div>
+<p>The endpoints of the API:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/sessions</code></td>
+<td>The sessions of the working directory</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions</code></td>
+<td>A new session</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}</code></td>
+<td>One session</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/events</code></td>
+<td>The events of the session</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/items</code></td>
+<td>The items of the session after a sequence number</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/stream</code></td>
+<td>The stream of the events (SSE)</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/status</code></td>
+<td>The state, the model, the tokens, the cost</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/metrics</code></td>
+<td>The metrics of the session</td>
+</tr>
+<tr>
+<td><code>GET /api/sessions/{id}/changes</code></td>
+<td>The files that were changed</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/{id}/resume</code></td>
+<td>Continue the session</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/{id}/fork</code></td>
+<td>A copy of the session</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/{id}/messages</code></td>
+<td>Send a message</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/{id}/interrupt</code></td>
+<td>Interrupt the turn</td>
+</tr>
+<tr>
+<td><code>POST /api/sessions/{id}/mode</code></td>
+<td>Change the permission mode of the session</td>
+</tr>
+<tr>
+<td><code>POST /api/approvals/{id}</code></td>
+<td>Answer an approval</td>
+</tr>
+<tr>
+<td><code>GET /api/commands</code></td>
+<td>The slash commands</td>
+</tr>
+<tr>
+<td><code>GET /api/config</code></td>
+<td>The configuration and its layers</td>
+</tr>
+<tr>
+<td><code>PUT /api/config/model</code></td>
+<td>Write the model to the user level file</td>
+</tr>
+<tr>
+<td><code>GET /api/config/model/key</code></td>
+<td>The key of the endpoint</td>
+</tr>
+<tr>
+<td><code>PUT /api/config/permissions</code></td>
+<td>Write the permissions to the user level file</td>
+</tr>
+<tr>
+<td><code>POST /api/config/model/test</code></td>
+<td>One cheap call to test the model</td>
+</tr>
+<tr>
+<td><code>GET /api/files</code></td>
+<td>The files of the working directory</td>
+</tr>
+<tr>
+<td><code>GET /api/file</code></td>
+<td>One file</td>
+</tr>
+<tr>
+<td><code>GET /api/diff</code></td>
+<td>The diff of one file</td>
+</tr>
+<tr>
+<td><code>GET /api/i18n/{language}</code></td>
+<td>The strings of a language</td>
+</tr>
+</tbody>
+</table>
+<h3 id="when-something-goes-wrong_11">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Message</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>403</td>
+<td><code>the X-Coder-Client header is missing</code></td>
+<td>A write without the header. A browser on another site cannot send it.</td>
+<td>Add <code>-H 'X-Coder-Client: 1'</code>.</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>there is no session with the id {id}</code></td>
+<td>The id is unknown.</td>
+<td><code>GET /api/sessions</code> for the list.</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>no approval is waiting for the id {id}</code></td>
+<td>The approval was answered already, or it timed out.</td>
+<td>Nothing to do.</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>unknown language</code></td>
+<td>The language of <code>/api/i18n/{language}</code> is not one of the ones that are on.</td>
+<td>Use <code>en</code> or <code>zh</code>.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>the message is empty</code></td>
+<td>The message has no text.</td>
+<td>Send a text.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>unknown permission mode '{value}'</code></td>
+<td>The mode is not one of the five.</td>
+<td>Use <code>default</code>, <code>acceptEdits</code>, <code>plan</code>, <code>readonly</code> or <code>bypass</code>.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>the decision must be allow, deny or always</code></td>
+<td>The answer of an approval is wrong.</td>
+<td>Use <code>allow</code>, <code>deny</code> or <code>always</code>.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>'{path}' is not a directory</code></td>
+<td>A path of the file API is a file.</td>
+<td>Use a directory.</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>'{path}' is outside the working directory {cwd}</code></td>
+<td>The path leaves the working directory.</td>
+<td>Nothing — that is the boundary.</td>
+</tr>
+<tr>
+<td>409</td>
+<td><code>the session {id} is running</code></td>
+<td>The session is busy, so it cannot be forked or resumed.</td>
+<td>Wait for the turn to end, or interrupt it.</td>
+</tr>
+</tbody>
+</table>
+<p>The approval that nobody answered is denied after <code>ui.approval_timeout</code>
+seconds, and the browser is told <code>timed_out: true</code>.</p>
+<p>An approval of a tool that changes a file writes a rule into
+<code>~/.coderagent/rules.yaml</code> — the same file the terminal uses.</p>
+<p>The address of the server is printed on the start. With <code>--host 0.0.0.0</code> the
+server warns:</p>
+<div class="highlight"><pre><span></span><code>The web interface listens on 0.0.0.0: everybody who can reach that address can drive the agent.
+</code></pre></div>
+<h2 id="the-configuration">The configuration</h2>
+<ul>
+<li><strong>Four layers</strong> — the defaults of the package, the project file
+  <code>.coderagent/config.yaml</code>, the user file <code>~/.coderagent/config.yaml</code>, and
+  the overrides of the command line (<code>-c key=value</code>). The later wins.</li>
+<li><strong>The sections</strong> — <code>model</code>, <code>agent</code>, <code>tools</code>, <code>permissions</code>, <code>context</code>,
+  <code>memory</code>, <code>checkpoint</code>, <code>mcp</code>, <code>hooks</code>, <code>ui</code>, <code>sandbox</code> and <code>verify</code>.</li>
+<li><strong>The paths</strong> — <code>MSWEA_CODER_HOME</code> moves the user level files somewhere
+  else.</li>
+<li><strong>The settings page writes the user file only</strong> — the project file is in
+  the repository and is never written.</li>
+</ul>
+<h3 id="example_12">Example</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># A file.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-c<span class="w"> </span>myconf.yaml
+<span class="c1"># Overrides, repeatable.</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>-c<span class="w"> </span>model.model_name<span class="o">=</span>deepseek/deepseek-chat<span class="w"> </span>-c<span class="w"> </span>agent.max_turns<span class="o">=</span><span class="m">20</span>
+</code></pre></div>
+<p>The layers, from the lowest to the highest priority:</p>
+<ol>
+<li>the defaults of the package (<code>src/coderagent/config/defaults.yaml</code>),</li>
+<li><code>.coderagent/config.yaml</code> of the project,</li>
+<li><code>~/.coderagent/config.yaml</code> of the user,</li>
+<li>the <code>-c</code> of the command line.</li>
+</ol>
+<p>The model name is looked up in this order: the <code>-c</code> of the command line, the
+project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
+<code>anthropic/claude-sonnet-4-5</code>.</p>
+<p>The sections and what they hold:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>The keys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code>model_name</code>, <code>model_kwargs</code>, <code>max_retries</code>, <code>litellm_config</code>, <code>routing</code>, <code>routing_rules</code>, <code>set_cache_control</code></td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td><code>system_prompt</code>, <code>max_turns</code>, <code>cost_limit</code>, <code>token_limit</code></td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td><code>enabled</code>, <code>disabled</code>, <code>bash_timeout</code>, <code>max_output_tokens</code>, <code>schema_budget_tokens</code></td>
+</tr>
+<tr>
+<td><code>permissions</code></td>
+<td><code>mode</code>, <code>rules</code>, <code>deny_paths</code>, <code>include_dirs</code></td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td><code>context_window</code>, <code>reserved_output</code>, <code>compact_threshold</code>, <code>keep_recent_turns</code>, <code>keep_recent_token_ratio</code>, <code>compact_every_turns</code>, <code>auto_compact</code>, <code>summarize_model</code></td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td><code>project_path</code>, <code>user_path</code>, <code>enabled</code></td>
+</tr>
+<tr>
+<td><code>checkpoint</code></td>
+<td><code>enabled</code>, <code>keep</code></td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td><code>servers</code>, <code>timeout</code></td>
+</tr>
+<tr>
+<td><code>hooks</code></td>
+<td><code>events</code></td>
+</tr>
+<tr>
+<td><code>ui</code></td>
+<td><code>theme</code>, <code>show_reasoning</code>, <code>approval_timeout</code></td>
+</tr>
+<tr>
+<td><code>sandbox</code></td>
+<td><code>type</code> and the options of the environment</td>
+</tr>
+<tr>
+<td><code>verify</code></td>
+<td><code>commands</code>, <code>max_rounds</code>, <code>timeout</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="when-something-goes-wrong_12">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nothing happens, the setting is ignored</td>
+<td>A key that does not exist is ignored, silently.</td>
+<td>Check the spelling against the table above.</td>
+</tr>
+<tr>
+<td><code>yaml.scanner.ScannerError</code></td>
+<td>The YAML of a layer cannot be parsed.</td>
+<td>Fix the YAML; the message has the line.</td>
+</tr>
+<tr>
+<td><code>pydantic_core.ValidationError</code></td>
+<td>A value has the wrong type — a string where a number belongs.</td>
+<td>The message names the field.</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError: Could not find config file for ... (tried: [...])</code></td>
+<td><code>-c myconf.yml</code> was given, but the file that is looked for is <code>myconf.yaml</code>.</td>
+<td>Use the name with <code>.yaml</code>, or give the full path.</td>
+</tr>
+<tr>
+<td>The model is not the one in the file</td>
+<td>A layer above the file wins.</td>
+<td>Remember the order; <code>--list</code> of the layers is on the settings page.</td>
+</tr>
+<tr>
+<td><code>ui.show_reasoning</code> has no effect</td>
+<td>The key exists, but nothing reads it yet.</td>
+<td>The reasoning of the model is always shown in the terminal.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-commands">The commands</h2>
+<p>Twenty-five built-in commands: <code>/help</code>, <code>/model</code>, <code>/mode</code>, <code>/plan</code>,
+<code>/compact</code>, <code>/clear</code>, <code>/resume</code>, <code>/fork</code>, <code>/rewind</code>, <code>/diff</code>, <code>/init</code>,
+<code>/cost</code>, <code>/todos</code>, <code>/mcp</code>, <code>/permissions</code>, <code>/hooks</code>, <code>/agents</code>, <code>/skills</code>,
+<code>/plugins</code>, <code>/memory</code>, <code>/status</code>, <code>/sandbox</code>, <code>/export</code>, <code>/context</code> and
+<code>/exit</code> (also <code>/quit</code>).</p>
+<p>Your own commands live in <code>.coderagent/commands/*.md</code> and join them.</p>
+<h3 id="example_13">Example</h3>
+<div class="highlight"><pre><span></span><code>coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/cost"</span><span class="w">          </span><span class="c1"># a command in the terminal</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/model deepseek/deepseek-chat"</span>
+coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"/mode plan"</span>
+</code></pre></div>
+<p>A command that takes arguments is the rest of the line:</p>
+<div class="highlight"><pre><span></span><code>/model deepseek/deepseek-chat
+/rewind 20261109-3f0a91
+</code></pre></div>
+<p>In the browser the commands are in the palette of the chat page, and the list
+comes from <code>GET /api/commands</code>.</p>
+<h3 id="when-something-goes-wrong_13">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Unknown command '/foo'. Try /help.</code></td>
+<td>There is no such command.</td>
+<td><code>/help</code> lists them; <code>/help &lt;name&gt;</code> explains one.</td>
+</tr>
+<tr>
+<td><code>Unknown mode 'bogus'. Use one of: default, acceptEdits, plan, bypass, readonly.</code></td>
+<td><code>/mode</code> was given a mode that does not exist. The mode of the session is unchanged.</td>
+<td>Use one of the five.</td>
+</tr>
+<tr>
+<td><code>/rewind</code> with an id that is not a checkpoint</td>
+<td><code>ValueError: no checkpoint '&lt;id&gt;' in this session</code></td>
+<td><code>/rewind</code> without an id lists the checkpoints.</td>
+</tr>
+<tr>
+<td><code>Not a git repository: {cwd}</code></td>
+<td><code>/diff</code> runs <code>git diff</code>, and this directory is not a repository.</td>
+<td>Run it in a repository, or use the changes of the web page.</td>
+</tr>
+<tr>
+<td><code>{path} already exists.</code></td>
+<td><code>/init</code> does not overwrite an <code>AGENTS.md</code>.</td>
+<td>Edit the file yourself.</td>
+</tr>
+<tr>
+<td><code>No sessions yet.</code></td>
+<td><code>/resume</code> without an id found nothing in this directory.</td>
+<td>Run a turn first.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-benchmark-part-of-mini-swe-agent">The benchmark part of mini-swe-agent</h2>
+<ul>
+<li><strong><code>mini</code></strong> — a run script: a task, a model, an environment, and a
+  trajectory file.</li>
+<li><strong>SWE-bench</strong> — the whole dataset, in parallel, with a slice and a filter.</li>
+<li><strong>SWE-bench, one instance</strong> — for a single problem.</li>
+<li><strong>ProgramBench</strong> — the programming benchmark.</li>
+<li><strong>The inspector</strong> — reads a trajectory file and shows what the agent did.</li>
+<li><strong>The environments</strong> — local, docker, singularity, bubblewrap, contree,
+  SWE-rex docker and SWE-rex modal.</li>
+<li><strong>The models</strong> — litellm for most providers, and portkey, openrouter,
+  requesty, the text based models and the roulette model besides.</li>
+</ul>
+<h3 id="example_14">Example</h3>
+<div class="highlight"><pre><span></span><code>mini<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--environment<span class="w"> </span>docker<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="w"> </span><span class="s2">"the failing test is in test_api.py"</span>
+
+mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--slice<span class="w"> </span><span class="m">0</span>:100
+</code></pre></div>
+<p>The trajectory of a run is a JSON file with the messages, the tool calls and
+the cost of every step; <code>inspector</code> reads it.</p>
+<h3 id="when-something-goes-wrong_14">When something goes wrong</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The environment cannot be built</td>
+<td>The image is missing or the binary of the environment is not installed.</td>
+<td>The same errors as the sandbox of the coding agent.</td>
+</tr>
+<tr>
+<td>The model answers without a tool call</td>
+<td>The model of the benchmark is a text based one, or the format of the answer is wrong.</td>
+<td>Use a model that speaks the tool protocol, or a model class of the benchmark that wraps it.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="where-the-details-are">Where the details are</h2>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>What is in it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../coderagent/">The coding agent</a></td>
+<td>The whole thing, from the first session to the files</td>
+</tr>
+<tr>
+<td><a href="../coderagent_commands/">The commands</a></td>
+<td>Every command and the ones of your own</td>
+</tr>
+<tr>
+<td><a href="../coderagent_web/">The web interface</a></td>
+<td>The chat page, the settings page, the API</td>
+</tr>
+<tr>
+<td><a href="../coderagent_subagents/">Sub agents</a></td>
+<td>Writing a sub agent</td>
+</tr>
+<tr>
+<td><a href="../coderagent_skills/">Skills</a></td>
+<td>Writing a skill</td>
+</tr>
+<tr>
+<td><a href="../coderagent_hooks/">Hooks</a></td>
+<td>The six moments and what a hook answers</td>
+</tr>
+<tr>
+<td><a href="../coderagent_plugins/">Plugins</a></td>
+<td>Writing a plugin</td>
+</tr>
+<tr>
+<td><a href="../coderagent_mcp/">MCP servers</a></td>
+<td>The configuration of a server</td>
+</tr>
+<tr>
+<td><a href="../coderagent_memory/">The memory</a></td>
+<td>The files and the confirmation</td>
+</tr>
+<tr>
+<td><a href="../coderagent_routing/">Model routing</a></td>
+<td>The purposes and the rules</td>
+</tr>
+<tr>
+<td><a href="../coderagent_sandbox/">The sandbox</a></td>
+<td>The environments</td>
+</tr>
+<tr>
+<td><a href="../coderagent_export/">Trace export</a></td>
+<td>The trace of a session</td>
+</tr>
+<tr>
+<td><a href="../coderagent_quickstart/">Quick start</a></td>
+<td>The first ten minutes (中文)</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+
+
+<div class="floating-bubbles">
+<div class="floating-bubbles-title">Our projects</div>
+  <a href="https://swe-agent.com/" class="bubble" title="SWE-agent">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sweagent_logo.svg" alt="SWE-agent">
+    <span class="bubble-tooltip">SWE-agent</span>
+  </a>
+  <a href="https://swe-rex.com/" class="bubble" title="SWE-rex">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swerex_logo.svg" alt="SWE-rex">
+    <span class="bubble-tooltip">SWE-ReX</span>
+  </a>
+  <a href="https://swesmith.com" class="bubble" title="SWE-smith">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swesmith_logo.png" alt="SWE-smith">
+    <span class="bubble-tooltip">SWE-smith</span>
+  </a>
+  <a href="https://swebench.com" class="bubble" title="SWE-bench">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swebench_logo.png" alt="SWE-bench">
+    <span class="bubble-tooltip">SWE-bench</span>
+  </a>
+  <a href="https://codeclash.ai" class="bubble" title="CodeClash">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/codeclash_logo.svg" alt="CodeClash">
+    <span class="bubble-tooltip">CodeClash</span>
+  </a>
+  <a href="https://www.swebench.com/sb-cli/" class="bubble" title="sb-cli">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sbcli_logo.svg" alt="sb-cli">
+    <span class="bubble-tooltip">sb-cli</span>
+  </a>
+</div>
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer">
+        
+          
+          <a href="../coderagent/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../coderagent_web/" class="md-footer__link md-footer__link--next" aria-label="Next: Web interface">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Web interface
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.top", "content.action.edit", "navigation.footer", "content.code.copy", "content.footnote.tooltips", "header.autohide", "announce.dismiss", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../assets/js/sh-annotation.js"></script>
+      
+        <script src="../../assets/js/gif-controls.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html><!-- Floating Bubbles -->
