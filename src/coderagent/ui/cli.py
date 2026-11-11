@@ -1,6 +1,10 @@
 """Command line interface."""
 
+import os
+import shutil
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 import litellm
@@ -159,6 +163,76 @@ def web(
     if model_name:
         spec.append(f"model.model_name={model_name}")
     serve(cwd=cwd, host=host, port=port, config_spec=spec, permission_mode=permission_mode or None)
+
+
+@app.command("eval")
+def eval_suite(
+    suite: Path = typer.Argument(..., help="The directory of the suite"),
+    model_name: str = typer.Option("", "-m", "--model", help="Model to use"),
+    config_spec: list[str] = typer.Option([], "-c", "--config", help="Config file or key=value overrides"),
+    only: list[str] = typer.Option([], "--only", help="Only the tasks with these ids"),
+    tag: list[str] = typer.Option([], "--tag", help="Only the tasks with these tags"),
+    output_format: str = typer.Option("text", "--format", help="text|json"),
+    out: str = typer.Option("", "--out", help="The file to write the report to"),
+    keep: bool = typer.Option(False, "--keep", help="Keep the working directories and the sessions"),
+    label: str = typer.Option("", "--label", help="The name of this run"),
+    run_dir: str = typer.Option("", "--run-dir", help="Where the working directories and the sessions live"),
+    permission_mode: str = typer.Option("bypass", "--permission-mode", help="default|bypass"),
+) -> None:
+    """Run a suite of tasks and report what the agent did.
+
+    Every task runs in its own working directory, with its own session. The
+    sessions and the working directories live in a temporary directory, unless
+    `--run-dir` or `--keep` says otherwise.
+    """
+    from coderagent.eval.report import Report, fingerprint, fingerprint_inputs
+    from coderagent.eval.runner import run_suite
+    from coderagent.eval.task import load_suite
+
+    cwd = Path.cwd()
+    config = load_config(config_spec, cwd=cwd)
+    """The configuration of the user is read before the isolation, it holds the model."""
+    if model_name:
+        config.model.model_name = model_name
+    tasks = [task for task in load_suite(suite) if _wanted(task, only, tag)]
+    root = Path(run_dir) if run_dir else Path(tempfile.mkdtemp(prefix="coderagent-eval-"))
+    home = root / "home"
+    home.mkdir(parents=True, exist_ok=True)
+    os.environ["MSWEA_CODER_HOME"] = str(home)
+    """From here on, every user level path of the agent is inside the run."""
+    store = SessionStore(root=home / "sessions")
+    started = time.time()
+    results = run_suite(
+        tasks,
+        config,
+        root=root / "work",
+        store=store,
+        permission_mode=permission_mode,
+        user_home=home,
+    )
+    report = Report(
+        label=label,
+        suite=str(suite),
+        model=config.model.model_name,
+        fingerprint=fingerprint(config, config.model.model_name, permission_mode, tasks),
+        config=fingerprint_inputs(config, config.model.model_name, permission_mode, tasks),
+        started_at=started,
+        duration_seconds=time.time() - started,
+        tasks=results,
+    )
+    typer.echo(report.to_json() if output_format == "json" else report.to_text())
+    if out:
+        Path(out).write_text(report.to_json(), encoding="utf-8")
+        typer.echo(f"Wrote {out}")
+    if not keep and not run_dir:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def _wanted(task, only: list[str], tag: list[str]) -> bool:
+    """Whether a task is part of the run."""
+    if only and task.id not in only:
+        return False
+    return not tag or bool(set(tag) & set(task.tags))
 
 
 @app.command()
