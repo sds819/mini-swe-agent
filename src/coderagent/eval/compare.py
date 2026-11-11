@@ -17,6 +17,8 @@ class Comparison:
     after_fingerprint: str
     compared: list[str] = field(default_factory=list)
     """The tasks both runs have."""
+    graded: list[str] = field(default_factory=list)
+    """The tasks of both runs that are a rate, the guards excluded."""
     regressions: list[str] = field(default_factory=list)
     """The tasks that passed before and do not pass any more."""
     improvements: list[str] = field(default_factory=list)
@@ -61,6 +63,7 @@ def compare(before: dict[str, Any], after: dict[str, Any]) -> Comparison:
         else:
             comparison.compared.append(task_id)
     graded = [task_id for task_id in comparison.compared if _expectation(old[task_id], new[task_id]) == "pass"]
+    comparison.graded = graded
     comparison.before_pass_rate = _rate(old, graded)
     comparison.after_pass_rate = _rate(new, graded)
     for task_id in comparison.compared:
@@ -134,11 +137,12 @@ def render(comparison: Comparison) -> str:
     if comparison.compared:
         lines.append(
             f"pass rate: {comparison.before_pass_rate:.3f} -> {comparison.after_pass_rate:.3f} "
-            f"over {len(comparison.compared)} tasks of both runs"
+            f"over {len(comparison.graded)} tasks of both runs"
         )
         for title, ids in (
             ("regressions", comparison.regressions),
             ("improvements", comparison.improvements),
+            ("guards", [task_id for task_id in comparison.compared if task_id not in comparison.graded]),
             ("only in the first run", comparison.only_before),
             ("only in the second run", comparison.only_after),
         ):

@@ -272,6 +272,7 @@ def eval_compare(
             "drop": comparison.drop,
             "regressions": comparison.regressions,
             "improvements": comparison.improvements,
+            "graded": comparison.graded,
             "unexpected": comparison.unexpected,
             "problems": problems,
         }

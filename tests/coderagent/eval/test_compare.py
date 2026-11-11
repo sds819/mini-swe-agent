@@ -52,6 +52,7 @@ def test_a_task_that_must_fail_is_not_a_rate():
     assert comparison.before_pass_rate == 1.0
     assert comparison.after_pass_rate == 1.0
     assert comparison.regressions == []
+    assert comparison.graded == ["one"]
 
 
 def test_the_expectation_of_the_newer_run_wins():
@@ -99,6 +100,15 @@ def test_the_comparison_is_readable():
     assert "the configuration changed between the two runs" in text
     assert "regressions: one" in text
     assert "pass rate: 1.000 -> 0.000" in text
+
+
+def test_the_comparison_names_the_guards():
+    """A task that must fail is not a rate, the text says which one it is."""
+    before = _report("base", "sha256:a", [_task("one", True), _task("guard", False, "fail")])
+    after = _report("head", "sha256:a", [_task("one", True), _task("guard", False, "fail")])
+    text = render(compare(before, after))
+    assert "pass rate: 1.000 -> 1.000 over 1 tasks of both runs" in text
+    assert "guards: guard" in text
 
 
 def test_the_comparison_can_be_written_as_json():
