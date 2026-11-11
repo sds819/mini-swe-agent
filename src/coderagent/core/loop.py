@@ -129,13 +129,15 @@ class AgentLoop:
         if self.hooks:
             hook = self.hooks.apply("UserPromptSubmit", {"prompt": user_input})
             if hook.blocked:
-                self._publish(EventType.ERROR, {"error": hook.reason or "the prompt was blocked"})
+                reason = hook.reason or "the prompt was blocked"
+                self._publish(EventType.ERROR, {"error": reason})
+                self._publish(EventType.TURN_END, {"stop_reason": "error", "error": reason, "calls": 0, "cost": 0.0})
                 return TurnResult(
                     session_id=self.session.id,
                     turn_count=self.session.turn_count,
                     cost=0.0,
                     stop_reason="error",
-                    error=hook.reason or "the prompt was blocked",
+                    error=reason,
                 )
             if isinstance(hook.updated_input, str):
                 """The hook rewrote the prompt. What the user typed is kept aside."""
@@ -197,7 +199,11 @@ class AgentLoop:
 
         # What the turn cost: everything the agent spent, the sub agents and the summaries included.
         cost = self.session.total_cost - base
-        self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE)
+        self._publish(
+            EventType.TURN_END,
+            {"stop_reason": stop_reason, "error": error, "calls": n_calls, "cost": cost},
+        )
+        self._set_state(SessionState.ERROR if stop_reason == "error" else SessionState.DONE, stop_reason=stop_reason)
         self._session_end()
         return TurnResult(
             session_id=self.session.id,
@@ -312,6 +318,6 @@ class AgentLoop:
         self.bus.publish(event)
         self.store.append(self.session.id, event)
 
-    def _set_state(self, state: SessionState) -> None:
+    def _set_state(self, state: SessionState, **extra) -> None:
         self.session.state = state
-        self._publish(EventType.STATE_CHANGE, {"state": state.value})
+        self._publish(EventType.STATE_CHANGE, {"state": state.value, **extra})

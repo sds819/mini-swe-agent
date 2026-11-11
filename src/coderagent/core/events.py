@@ -20,6 +20,8 @@ class EventType(str, Enum):
     APPROVAL_REQUEST = "approval_request"
     APPROVAL_RESPONSE = "approval_response"
     STATE_CHANGE = "state_change"
+    TURN_END = "turn_end"
+    """Why a turn ended. Without it the log cannot say how a round stopped."""
     COMPACTION = "compaction"
     REFLECTION = "reflection"
     """What the model thought was worth remembering at the end of the session."""

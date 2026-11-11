@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from coderagent.core.events import Event, EventType
+from coderagent.core.session import SessionState
 from coderagent.tools.base import ToolContext, ToolResult
 from coderagent.tools.permissions import (
     WRITE_TOOLS,
@@ -82,13 +83,13 @@ class ToolExecutor:
         if not actions:
             return []
         ctx = self.ctx_factory()
-        prepared = [self._prepare(action) for action in actions]
+        prepared = [self._prepare(action, ctx) for action in actions]
         if any(action["tool"] in SEQUENTIAL_TOOLS for action in prepared) or len(prepared) == 1:
             return [self._run(action, ctx) for action in prepared]
         with ThreadPoolExecutor(max_workers=len(prepared)) as pool:
             return list(pool.map(lambda action: self._run(action, ctx), prepared))
 
-    def _prepare(self, action: dict) -> dict:
+    def _prepare(self, action: dict, ctx: ToolContext) -> dict:
         """Resolve permissions before running anything."""
         if action.get("error"):
             return action
@@ -119,13 +120,24 @@ class ToolExecutor:
                     "Run with --permission-mode bypass to allow it."
                 )
                 return action
-            answer = approver.request(action["tool"], action["args"], decision.reason)
+            answer = self._ask(action, ctx, approver, decision.reason)
             if answer == ApprovalDecision.DENY:
                 action["error"] = f"Error: the user denied '{action['tool']}'."
                 return action
             if answer == ApprovalDecision.ALWAYS:
                 self._remember(action["tool"], action["args"])
         return action
+
+    def _ask(self, action: dict, ctx: ToolContext, approver: Approver, reason: str) -> ApprovalDecision:
+        """Ask a human. The session waits for the answer.
+
+        The request itself is published by the approver, which is the one that
+        talks to the interface. The executor only says what the session is doing.
+        """
+        self._state(ctx, SessionState.AWAITING_APPROVAL)
+        answer = approver.request(action["tool"], action["args"], reason)
+        self._state(ctx, SessionState.EXECUTING)
+        return answer
 
     def _remember(self, tool: str, params: dict) -> None:
         """Persist an 'always allow' decision in the user rule file."""
@@ -181,4 +193,16 @@ class ToolExecutor:
         ctx.bus.publish(event)
         if self.store is not None:
             """The log keeps the result, so that the replay shows the diff of the change."""
+            self.store.append(ctx.session.id, event)
+
+    def _state(self, ctx: ToolContext, state: SessionState) -> None:
+        """The state of the session follows what the agent is doing."""
+        ctx.session.state = state
+        self._log(ctx, EventType.STATE_CHANGE, {"state": state.value})
+
+    def _log(self, ctx: ToolContext, event_type: EventType, payload: dict) -> None:
+        """Put an event in the log of the session."""
+        event = Event(type=event_type, session_id=ctx.session.id, timestamp=time.time(), payload=payload)
+        ctx.bus.publish(event)
+        if self.store is not None:
             self.store.append(ctx.session.id, event)

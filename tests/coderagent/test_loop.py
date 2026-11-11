@@ -6,8 +6,9 @@ from coderagent.core.events import EventBus, EventType
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway
-from coderagent.testing.factory import build_context, build_executor
+from coderagent.testing.factory import AllowAllApprover, build_context, build_executor
 from coderagent.testing.scripted_model import ScriptedModel
+from coderagent.tools.permissions import PermissionMode, PermissionPolicy
 
 
 def _bash_call(command: str, call_id: str = "call_1") -> dict:
@@ -68,10 +69,12 @@ def test_turn_executes_tool_call_and_finishes(tmp_path):
         EventType.TOOL_RESULT,
         EventType.STATE_CHANGE,
         EventType.ASSISTANT_MESSAGE,
+        EventType.TURN_END,
         EventType.STATE_CHANGE,
     ]
     """The result of the tool is in the log twice: once with the tool and the diff, once with the message."""
     assert store.rebuild(session.id).state == SessionState.DONE
+    assert store.rebuild(session.id).metadata["stop_reason"] == "end_turn"
 
 
 def test_max_turns_stops_the_loop(tmp_path):
@@ -82,6 +85,54 @@ def test_max_turns_stops_the_loop(tmp_path):
     )
     result = loop.run_turn("loop forever")
     assert result.stop_reason == "max_turns"
+
+
+def test_the_reason_a_turn_ended_is_in_the_log(tmp_path):
+    loop, store, session, _ = _loop(
+        tmp_path,
+        [_assistant(tool_calls=[_bash_call("echo hi")]) for _ in range(5)],
+        max_turns=2,
+    )
+    loop.run_turn("loop forever")
+
+    ends = [event for event in store.events(session.id) if event.type == EventType.TURN_END]
+    assert [event.payload["stop_reason"] for event in ends] == ["max_turns"]
+    assert store.rebuild(session.id).metadata["stop_reason"] == "max_turns"
+
+
+def test_an_interrupted_turn_says_so_in_the_log(tmp_path):
+    loop, store, session, _ = _loop(tmp_path, [_assistant(content="never reached")])
+    loop.cancel = lambda: True
+    loop.run_turn("stop me")
+
+    ends = [event for event in store.events(session.id) if event.type == EventType.TURN_END]
+    assert [event.payload["stop_reason"] for event in ends] == ["interrupted"]
+
+
+def test_the_session_waits_for_the_approval(tmp_path):
+    store = SessionStore(tmp_path)
+    session = store.create(tmp_path)
+    bus = EventBus()
+    policy = PermissionPolicy(PermissionMode.DEFAULT, [], cwd=tmp_path)
+    executor = build_executor(
+        tmp_path,
+        approver=AllowAllApprover(),
+        store=store,
+        context=build_context(tmp_path, session=session, bus=bus, policy=policy),
+    )
+    loop = AgentLoop(
+        ModelGateway(ScriptedModel([_assistant(tool_calls=[_bash_call("echo hi")]), _assistant(content="done")])),
+        executor,
+        session,
+        store,
+        bus,
+        tools=executor.registry.schemas(),
+    )
+    loop.run_turn("run it")
+
+    states = [event.payload.get("state") for event in store.events(session.id) if event.type == EventType.STATE_CHANGE]
+    assert "awaiting_approval" in states
+    assert states.index("awaiting_approval") < len(states) - 1
 
 
 def test_cost_limit_stops_the_loop(tmp_path):

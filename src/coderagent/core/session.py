@@ -120,6 +120,8 @@ class SessionStore:
                 session.turn_count += 1
             elif event.type == EventType.TOOL_RESULT and payload.get("todos"):
                 session.metadata["todos"] = payload["todos"]
+            elif event.type == EventType.TURN_END:
+                session.metadata["stop_reason"] = payload.get("stop_reason", "")
             session.updated_at = event.timestamp
         # The cost of the session is the cost of every call in the log, the sub agents included.
         session.total_cost = collect(events).total_cost
