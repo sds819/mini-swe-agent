@@ -53,7 +53,7 @@ coder --list
 }
 ```
 
-`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`error`、
+`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`verify_failed`、`error`、
 `interrupted` 之一。
 
 ### 出错时怎么办
@@ -673,6 +673,46 @@ local
 | `FileNotFoundError: [Errno 2] No such file or directory: 'singularity'` | 这个环境的二进制没装。 | 装上，或者换一个类型。 |
 | 文件工具动到了宿主机的文件 | 只有 `bash` 进沙箱。 | 这是设计如此：`read`、`edit` 这些工具动的是会话的工作目录。 |
 
+## 校验
+
+- **默认不开**——不配 `verify.commands` 就什么都不查。
+- **agent 必须把检查跑通**——模型想停下的时候命令会跑一遍；有一条没过，就把输出还给
+  agent，让它接着改。
+- **命令在会话的环境里跑**——有沙箱就在沙箱里，所以检查看到的世界和 agent 干活的
+  世界是同一个。这些命令不ask要审批。
+- **轮数有限**——`verify.max_rounds`（默认 3）。轮数用完，这一轮就以
+  `stop_reason: verify_failed` 结束。
+- **结果进事件日志**——一条 `verify` 事件记着命令和没过的那几条。
+
+### 用法例子
+
+```yaml
+verify:
+  commands:
+    - python -m pytest -q
+  max_rounds: 3
+  timeout: 300
+```
+
+模型说做完了、而测试没过的时候，agent 会收到这样一段：
+
+```
+[verify] These commands did not pass. Fix the problem and try again.
+
+$ python -m pytest -q
+2 failed, 1 passed
+[exit code 1]
+```
+
+### 出错时怎么办
+
+| 你看到的 | 什么意思 | 怎么办 |
+|---|---|---|
+| 这一轮以 `stop_reason: verify_failed` 结束 | `verify.max_rounds` 轮用完了，命令还是没过。 | 在事件日志里看最后一轮的输出。 |
+| 检查在沙箱里跑，但找不到文件 | 沙箱里没有会话的工作目录。 | 给环境配一个工作目录，或者用 `local`。 |
+| 检查跑太久 | 命令超过 `verify.timeout` 秒被杀掉了。 | 调大 `verify.timeout`。 |
+| agent 反复改同一处 | 检查要的东西 agent 做不到。 | 改检查，或者改任务。 |
+
 ## 终端界面
 
 - **答案是流式出来的**——正文和思考过程都是。
@@ -814,7 +854,7 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
 - **四层**——包里的默认值、项目文件 `.coderagent/config.yaml`、用户文件
   `~/.coderagent/config.yaml`、命令行的覆盖（`-c key=value`）。后面的赢。
 - **有哪些段**——`model`、`agent`、`tools`、`permissions`、`context`、
-  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`。
+  `memory`、`checkpoint`、`mcp`、`hooks`、`ui`、`sandbox`、`verify`。
 - **路径**——`MSWEA_CODER_HOME` 可以把用户级文件挪到别处。
 - **设置页只写用户级文件**——项目级那份在仓库里，永远不写。
 

@@ -10,10 +10,15 @@ from coderagent.core.context import ContextEngine
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.protocols import ToolExecutor
 from coderagent.core.session import Session, SessionState, SessionStore
+from coderagent.core.tokens import trim_text
 from coderagent.models.gateway import ModelGateway, is_context_overflow
 from coderagent.models.streaming import ModelEvent, message_from_events
+from minisweagent.environments.local import LocalEnvironment
 
 logger = logging.getLogger("coderagent.core.loop")
+
+VERIFY_OUTPUT_TOKENS = 2000
+"""The tokens of the output of a check that go back to the model."""
 
 
 @dataclass
@@ -56,6 +61,7 @@ class AgentLoop:
         plugins=None,
         sandbox=None,
         schema_budget: int | None = None,
+        verify=None,
     ) -> None:
         self.model = model
         self.executor = executor
@@ -85,6 +91,8 @@ class AgentLoop:
         """The environment the commands run in."""
         self.schema_budget = schema_budget
         """The tokens the schemas of the tools may take. None means no limit."""
+        self.verify = verify
+        """The commands that check the work of the agent. None means: no verification."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
         self._warned_unpriced = False
@@ -162,6 +170,7 @@ class AgentLoop:
         cost = 0.0
         n_calls = 0
         stop_blocks = 0
+        verify_rounds = 0
         base = self.session.total_cost
         before = (self.model.total_cost, self.model.total_tokens)
         while True:
@@ -199,6 +208,17 @@ class AgentLoop:
                 if stop_blocks < 3 and self._stop_blocked(response):
                     stop_blocks += 1
                     continue
+                failure, exhausted = self._verify(verify_rounds)
+                if failure:
+                    """The work does not pass the check: the agent gets to try again."""
+                    verify_rounds += 1
+                    self.context.append({"role": "user", "content": failure})
+                    turn_messages.append({"role": "user", "content": failure})
+                    if exhausted:
+                        stop_reason = "verify_failed"
+                        error = failure
+                        break
+                    continue
                 break
             self._set_state(SessionState.EXECUTING)
             actions = self.executor.plan(tool_calls)
@@ -224,6 +244,57 @@ class AgentLoop:
             messages=turn_messages,
             error=error,
         )
+
+    def _verify(self, rounds: int) -> tuple[str, bool]:
+        """Run the commands that check the work.
+
+        Returns the message for the agent and whether the rounds are used up.
+        The message is empty when the work passes, or when there is nothing to
+        check.
+        """
+        if not self.verify or not self.verify.commands:
+            return "", False
+        failures = []
+        for command in self.verify.commands:
+            result = self._run_verify_command(command)
+            if result["returncode"] != 0:
+                failures.append(result)
+        self._publish(
+            EventType.VERIFY,
+            {
+                "commands": list(self.verify.commands),
+                "failed": [failure["command"] for failure in failures],
+                "round": rounds + 1,
+            },
+        )
+        if not failures:
+            return "", False
+        message = "\n\n".join(
+            [
+                "[verify] These commands did not pass. Fix the problem and try again.",
+                *[
+                    f"$ {failure['command']}\n{failure['output']}\n[exit code {failure['returncode']}]"
+                    for failure in failures
+                ],
+            ]
+        )
+        return message, rounds + 1 >= self.verify.max_rounds
+
+    def _run_verify_command(self, command: str) -> dict:
+        """Run one check in the environment of the session."""
+        from coderagent.tools.builtin.shell import CodingEnvironment
+
+        environment = self.sandbox or CodingEnvironment(cwd=str(self.session.cwd))
+        cwd = str(self.session.cwd) if isinstance(environment, LocalEnvironment) else ""
+        result = environment.execute({"command": command}, cwd=cwd, timeout=self.verify.timeout)
+        output = str(result.get("output", ""))
+        if result.get("exception_info"):
+            output = f"{output}\n{result['exception_info']}".strip()
+        return {
+            "command": command,
+            "output": trim_text(output, VERIFY_OUTPUT_TOKENS)[0],
+            "returncode": int(result.get("returncode", 0)),
+        }
 
     def _bill(self, before: tuple[float, int]) -> tuple[float, int]:
         """Put what the gateway spent on the bill of this session.

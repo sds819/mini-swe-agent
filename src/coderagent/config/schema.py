@@ -152,6 +152,15 @@ class SandboxConfig(BaseModel):
     """The kind of environment. `local` or one of the environments of mini-swe-agent."""
 
 
+class VerifyConfig(BaseModel):
+    commands: list[str] = Field(default_factory=list)
+    """The commands that check the work of the agent. Empty means: no verification."""
+    max_rounds: int = 3
+    """How many times the agent may try to make the commands pass."""
+    timeout: int = 300
+    """The seconds one command may take."""
+
+
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
@@ -164,4 +173,5 @@ class Config(BaseModel):
     hooks: HookConfig = Field(default_factory=HookConfig)
     ui: UIConfig = Field(default_factory=UIConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
+    verify: VerifyConfig = Field(default_factory=VerifyConfig)
     cwd: Path = Field(default_factory=Path.cwd)

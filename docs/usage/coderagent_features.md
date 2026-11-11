@@ -55,8 +55,8 @@ The JSON of one turn has the fields `session_id`, `messages`, `cost`, `usage`,
 }
 ```
 
-`stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `error` and
-`interrupted`.
+`stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `verify_failed`,
+`error` and `interrupted`.
 
 ### When something goes wrong
 
@@ -710,6 +710,48 @@ local
 | `FileNotFoundError: [Errno 2] No such file or directory: 'singularity'` | The binary of the environment is not installed. | Install it, or use another type. |
 | The file tools touch the files of the host | Only `bash` goes into the sandbox. | That is by design: `read`, `edit` and friends work on the working directory of the session. |
 
+## The verification
+
+- **Off by default** — nothing is checked unless `verify.commands` is set.
+- **The agent has to make the check pass** — when the model wants to stop, the
+  commands run; if one of them fails, the agent gets the output and tries again.
+- **The commands run in the session** — in the sandbox when there is one, so the
+  check sees the same world the agent works in. They do not ask for approval.
+- **A bounded number of rounds** — `verify.max_rounds` (3 by default). When the
+  rounds are used up, the turn ends with `stop_reason: verify_failed`.
+- **The result is in the log** — an event of the type `verify` holds the commands
+  and the ones that did not pass.
+
+### Example
+
+```yaml
+verify:
+  commands:
+    - python -m pytest -q
+  max_rounds: 3
+  timeout: 300
+```
+
+When the model says it is done and the tests do not pass, the agent gets this
+back and keeps working:
+
+```
+[verify] These commands did not pass. Fix the problem and try again.
+
+$ python -m pytest -q
+2 failed, 1 passed
+[exit code 1]
+```
+
+### When something goes wrong
+
+| What you see | What it means | What to do |
+|---|---|---|
+| The turn ends with `stop_reason: verify_failed` | The commands still failed after `verify.max_rounds` rounds. | Read the output of the last round in the event log. |
+| The check runs in the sandbox and cannot find the files | The sandbox does not have the working directory of the session. | Give the environment a working directory, or use `local`. |
+| The check takes too long | The command was killed after `verify.timeout` seconds. | Raise `verify.timeout`. |
+| The agent keeps fixing the same thing | The check needs something the agent cannot do. | Fix the check or the task. |
+
 ## The terminal interface
 
 - **The answer streams in** — the text and the reasoning.
@@ -863,7 +905,7 @@ The web interface listens on 0.0.0.0: everybody who can reach that address can d
   `.coderagent/config.yaml`, the user file `~/.coderagent/config.yaml`, and
   the overrides of the command line (`-c key=value`). The later wins.
 - **The sections** — `model`, `agent`, `tools`, `permissions`, `context`,
-  `memory`, `checkpoint`, `mcp`, `hooks`, `ui` and `sandbox`.
+  `memory`, `checkpoint`, `mcp`, `hooks`, `ui`, `sandbox` and `verify`.
 - **The paths** — `MSWEA_CODER_HOME` moves the user level files somewhere
   else.
 - **The settings page writes the user file only** — the project file is in
@@ -904,6 +946,7 @@ The sections and what they hold:
 | `hooks` | `events` |
 | `ui` | `theme`, `show_reasoning`, `approval_timeout` |
 | `sandbox` | `type` and the options of the environment |
+| `verify` | `commands`, `max_rounds`, `timeout` |
 
 ### When something goes wrong
 

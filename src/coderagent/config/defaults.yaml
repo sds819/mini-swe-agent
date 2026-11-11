@@ -57,3 +57,8 @@ ui:
 
 sandbox:
   type: local
+
+verify:
+  commands: []
+  max_rounds: 3
+  timeout: 300

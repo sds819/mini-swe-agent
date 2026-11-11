@@ -224,6 +224,7 @@ def build_loop(
         router=router,
         plugins=plugins,
         sandbox=environment,
+        verify=config.verify,
     )
 
 

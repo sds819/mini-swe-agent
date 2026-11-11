@@ -240,6 +240,9 @@ function render(item) {
     case "compaction":
       bubble("separator", t("compacted", { tokens: item.tokens }));
       break;
+    case "verify":
+      bubble("separator", t("verified", { failed: (item.failed || []).length }));
+      break;
     case "reflection":
       bubble("separator", t("settled", { cost: (item.cost || 0).toFixed(5) }));
       break;

@@ -22,6 +22,8 @@ class EventType(str, Enum):
     STATE_CHANGE = "state_change"
     TURN_END = "turn_end"
     """Why a turn ended. Without it the log cannot say how a round stopped."""
+    VERIFY = "verify"
+    """The commands that check the work of the agent, and what they said."""
     COMPACTION = "compaction"
     REFLECTION = "reflection"
     """What the model thought was worth remembering at the end of the session."""
