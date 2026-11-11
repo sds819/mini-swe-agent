@@ -90,6 +90,8 @@ class ModelRouter:
         """Why the main loop would use another model."""
         if context.get("budget") and float(context.get("cost") or 0.0) >= context["budget"] * BUDGET_SHARE:
             return "the budget is nearly used up"
+        if _token_budget_tight(context):
+            return "the token budget is nearly used up"
         if float(context.get("tokens") or 0) > STRONG_TOKENS:
             return "the context has grown"
         if int(context.get("turns") or 0) > STRONG_TURNS:
@@ -121,11 +123,20 @@ class ModelRouter:
         budget = float(context.get("budget") or 0.0)
         if budget and float(context.get("cost") or 0.0) >= budget * BUDGET_SHARE:
             return CHEAP_PURPOSE
+        if _token_budget_tight(context):
+            """A model without a price spends no money, so the token budget is the budget."""
+            return CHEAP_PURPOSE
         if float(context.get("tokens") or 0) > STRONG_TOKENS:
             return STRONG_PURPOSE
         if int(context.get("turns") or 0) > STRONG_TURNS:
             return STRONG_PURPOSE
         return "main"
+
+
+def _token_budget_tight(context: dict) -> bool:
+    """True when the tokens of the session are close to the token budget."""
+    budget = float(context.get("token_budget") or 0.0)
+    return bool(budget) and float(context.get("tokens_used") or 0.0) >= budget * BUDGET_SHARE
 
 
 __all__ = ["CHEAP_PURPOSE", "RoutingRule", "STRONG_PURPOSE", "ModelRouter"]

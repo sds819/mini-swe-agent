@@ -58,6 +58,17 @@ def test_a_budget_that_is_still_fine_keeps_the_stronger_model():
     assert ModelRouter(_config()).resolve("main", context) == "strong/model"
 
 
+def test_a_tight_token_budget_moves_to_the_cheaper_model():
+    """A model without a price spends no money, so the token budget is the budget."""
+    context = {"tokens": 100, "cost": 0.0, "budget": 0.0, "token_budget": 1000, "tokens_used": 900}
+    assert ModelRouter(_config()).resolve("main", context) == "cheap/model"
+
+
+def test_a_token_budget_that_is_still_fine_keeps_the_main_model():
+    context = {"tokens": 100, "cost": 0.0, "budget": 0.0, "token_budget": 1000, "tokens_used": 100}
+    assert ModelRouter(_config()).resolve("main", context) == "main/model"
+
+
 def test_a_rule_wins_over_the_default_policy():
     config = _config(routing_rules=[RoutingRuleConfig(when="calls > 5", purpose="cheap")])
     assert ModelRouter(config).resolve("main", {"calls": 6}) == "cheap/model"
@@ -82,6 +93,7 @@ def test_a_rule_on_a_string_value_is_ignored():
 def test_the_router_says_why_the_model_changed():
     router = ModelRouter(_config())
     assert "budget" in router.explain({"cost": 0.9, "budget": 1.0})
+    assert "token budget" in router.explain({"token_budget": 1000, "tokens_used": 900})
     assert "context" in router.explain({"tokens": 60000})
     assert "turns" in router.explain({"turns": 40})
 

@@ -101,6 +101,7 @@ def fingerprint_inputs(config: Config, model: str, permission_mode: str = "", ta
         "agent.system_prompt": config.agent.system_prompt,
         "agent.max_turns": config.agent.max_turns,
         "agent.cost_limit": config.agent.cost_limit,
+        "agent.token_limit": config.agent.token_limit,
         "tools.enabled": config.tools.enabled,
         "tools.disabled": config.tools.disabled,
         "permissions.mode": permission_mode or config.permissions.mode,

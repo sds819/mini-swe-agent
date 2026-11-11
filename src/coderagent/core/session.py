@@ -36,6 +36,8 @@ class Session:
     permission_mode: str = "default"
     turn_count: int = 0
     total_cost: float = 0.0
+    total_tokens: int = 0
+    """The tokens of the session, in and out. The budget of a model that has no price."""
     metadata: dict = field(default_factory=dict)
 
 
@@ -124,7 +126,9 @@ class SessionStore:
                 session.metadata["stop_reason"] = payload.get("stop_reason", "")
             session.updated_at = event.timestamp
         # The cost of the session is the cost of every call in the log, the sub agents included.
-        session.total_cost = collect(events).total_cost
+        metrics = collect(events)
+        session.total_cost = metrics.total_cost
+        session.total_tokens = metrics.total_tokens_in + metrics.total_tokens_out
         return session
 
     def list(self, cwd: Path | None = None) -> list[Session]:

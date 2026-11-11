@@ -170,6 +170,7 @@ def _cost(context: CommandContext, argument: str) -> None:
         f"model: {context.config.model.model_name}\n"
         f"calls: {metrics.model_calls}\n"
         f"tokens in the context: {loop.context.estimated_tokens()}\n"
+        f"tokens spent: {loop.session.total_tokens}\n"
         f"cost so far: ${loop.session.total_cost:.4f}\n" + metrics.report()
     )
 

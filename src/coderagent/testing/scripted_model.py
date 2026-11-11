@@ -33,7 +33,17 @@ class ScriptedModel:
             yield ModelEvent(type="text", content=message["content"])
         for call in message.get("tool_calls") or []:
             yield ModelEvent(type="tool_call_done", tool_call=call)
-        yield ModelEvent(type="usage", cost=message.get("extra", {}).get("cost", 0.0))
+        extra = message.get("extra") or {}
+        yield ModelEvent(
+            type="usage",
+            cost=extra.get("cost", 0.0),
+            raw={
+                "usage": {
+                    "prompt_tokens": extra.get("tokens_in", 0),
+                    "completion_tokens": extra.get("tokens_out", 0),
+                }
+            },
+        )
 
     def get_template_vars(self) -> dict[str, Any]:
         return {"model_name": "scripted"}

@@ -1,4 +1,5 @@
 import json
+import logging
 
 import pytest
 
@@ -19,8 +20,13 @@ def _bash_call(command: str, call_id: str = "call_1") -> dict:
     }
 
 
-def _assistant(content: str = "", tool_calls: list[dict] | None = None, cost: float = 0.0) -> dict:
-    return {"role": "assistant", "content": content, "tool_calls": tool_calls or [], "extra": {"cost": cost}}
+def _assistant(content: str = "", tool_calls: list[dict] | None = None, cost: float = 0.0, tokens: int = 0) -> dict:
+    return {
+        "role": "assistant",
+        "content": content,
+        "tool_calls": tool_calls or [],
+        "extra": {"cost": cost, "tokens_in": tokens, "tokens_out": 0},
+    }
 
 
 def _loop(tmp_path, responses, **kwargs):
@@ -143,6 +149,40 @@ def test_cost_limit_stops_the_loop(tmp_path):
     )
     result = loop.run_turn("spend money")
     assert result.stop_reason == "cost_exceeded"
+
+
+def test_the_token_budget_stops_a_model_that_has_no_price(tmp_path):
+    """The money of a model without a price never moves, so the tokens are the budget."""
+    loop, store, session, _ = _loop(
+        tmp_path,
+        [_assistant(tool_calls=[_bash_call("echo hi")], tokens=100) for _ in range(5)],
+        token_limit=150,
+    )
+    result = loop.run_turn("spend tokens")
+    assert result.stop_reason == "token_limit"
+    assert store.rebuild(session.id).total_tokens == 200
+
+
+def test_a_cost_limit_that_cannot_be_enforced_is_reported(tmp_path, caplog):
+    loop, _, _, _ = _loop(
+        tmp_path,
+        [_assistant(content="done", tokens=100)],
+        cost_limit=1.0,
+    )
+    with caplog.at_level(logging.WARNING):
+        loop.run_turn("spend money")
+    assert "token_limit" in caplog.text
+
+
+def test_no_warning_when_the_model_has_a_price(tmp_path, caplog):
+    loop, _, _, _ = _loop(
+        tmp_path,
+        [_assistant(content="done", cost=0.5, tokens=100)],
+        cost_limit=1.0,
+    )
+    with caplog.at_level(logging.WARNING):
+        loop.run_turn("spend money")
+    assert "token_limit" not in caplog.text
 
 
 def test_model_error_is_reported(tmp_path):

@@ -97,7 +97,7 @@ def message_from_events(events) -> dict:
             tool_calls.append(event.tool_call)
         elif event.type == "usage":
             cost += event.cost
-            prompt, completion = _tokens(event.raw.get("usage"))
+            prompt, completion = usage_tokens(event.raw.get("usage"))
             tokens_in += prompt
             tokens_out += completion
     message: dict[str, Any] = {
@@ -113,7 +113,7 @@ def message_from_events(events) -> dict:
     return message
 
 
-def _tokens(usage) -> tuple[int, int]:
+def usage_tokens(usage) -> tuple[int, int]:
     """The tokens of a usage object, which is a dict or a model."""
     if usage is None:
         return 0, 0

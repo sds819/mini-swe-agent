@@ -55,7 +55,7 @@ The JSON of one turn has the fields `session_id`, `messages`, `cost`, `usage`,
 }
 ```
 
-`stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `error` and
+`stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `error` and
 `interrupted`.
 
 ### When something goes wrong
@@ -411,6 +411,7 @@ the snapshot.
 | `/resume <unknown id>` starts a session with the directory `.` | A session id that is not in the log does not fail — it makes an empty session. | Check the ids with `coder --list`. |
 | A turn ends with `stop_reason: max_turns` | The agent made 50 model calls (`agent.max_turns`) without finishing. | Raise `agent.max_turns`, or make the task smaller. |
 | A turn ends with `stop_reason: cost_exceeded` | The turn cost more than `agent.cost_limit`. `0` means no limit. | Raise `agent.cost_limit`. |
+| A turn ends with `stop_reason: token_limit` | The turn used more tokens than `agent.token_limit`. `0` means no limit. This is the budget of a model that has no price, where the money never moves. | Raise `agent.token_limit`. |
 | A turn ends with `stop_reason: error` | The model call failed after the retries. The text of the error is in `error`. | Look at `error`; it is the message of the provider. |
 | A turn ends with `stop_reason: interrupted` | Somebody pressed `ctrl+c`. | The session is saved; continue it with `--resume`. |
 
@@ -887,7 +888,7 @@ The sections and what they hold:
 | Section | The keys |
 |---|---|
 | `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control` |
-| `agent` | `system_prompt`, `max_turns`, `cost_limit` |
+| `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs` |
 | `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model` |

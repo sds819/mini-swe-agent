@@ -1,5 +1,6 @@
 """The main loop: user input -> model -> tools -> model, until the model stops."""
 
+import logging
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -12,6 +13,8 @@ from coderagent.core.session import Session, SessionState, SessionStore
 from coderagent.models.gateway import ModelGateway, is_context_overflow
 from coderagent.models.streaming import ModelEvent, message_from_events
 
+logger = logging.getLogger("coderagent.core.loop")
+
 
 @dataclass
 class TurnResult:
@@ -21,7 +24,7 @@ class TurnResult:
     cost: float
     """What this turn cost."""
     stop_reason: str
-    """One of `end_turn`, `max_turns`, `cost_exceeded`, `error`."""
+    """One of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `error`."""
     messages: list[dict] = field(default_factory=list)
     """Messages added during this turn."""
     error: str = ""
@@ -44,6 +47,7 @@ class AgentLoop:
         system_prompt: str = "",
         max_turns: int = 50,
         cost_limit: float = 0.0,
+        token_limit: int = 0,
         checkpoints=None,
         hooks=None,
         mcp=None,
@@ -64,6 +68,8 @@ class AgentLoop:
         self.system_prompt = system_prompt
         self.max_turns = max_turns
         self.cost_limit = cost_limit
+        self.token_limit = token_limit
+        """Stop after this many tokens. The budget of a model that has no price."""
         self.checkpoints = checkpoints
         self.hooks = hooks
         """The hook runner, when the session has hooks."""
@@ -81,6 +87,7 @@ class AgentLoop:
         """The tokens the schemas of the tools may take. None means no limit."""
         self.cancel = None
         """A callable that says whether the turn should stop. The interface sets it."""
+        self._warned_unpriced = False
         self.context = context or ContextEngine(
             session,
             store,
@@ -156,7 +163,7 @@ class AgentLoop:
         n_calls = 0
         stop_blocks = 0
         base = self.session.total_cost
-        before = self.model.total_cost
+        before = (self.model.total_cost, self.model.total_tokens)
         while True:
             # The tools of the last round may have spent money too.
             before = self._bill(before)
@@ -168,6 +175,9 @@ class AgentLoop:
                 break
             if self.cost_limit and self.session.total_cost >= self.cost_limit:
                 stop_reason = "cost_exceeded"
+                break
+            if self.token_limit and self.session.total_tokens >= self.token_limit:
+                stop_reason = "token_limit"
                 break
             self.context.maybe_compact()
             self._route()
@@ -181,6 +191,7 @@ class AgentLoop:
             response.setdefault("extra", {}).update(
                 {"purpose": "main", "model": getattr(self.model.backend, "model_name", "")}
             )
+            self._warn_unpriced(response)
             self.context.append(response)
             turn_messages.append(response)
             tool_calls = response.get("tool_calls") or []
@@ -214,14 +225,27 @@ class AgentLoop:
             error=error,
         )
 
-    def _bill(self, before: float) -> float:
+    def _bill(self, before: tuple[float, int]) -> tuple[float, int]:
         """Put what the gateway spent on the bill of this session.
 
         The gateway is shared by all the sessions of the process, the bill is not: a
         session pays for its own calls only.
         """
-        self.session.total_cost += self.model.total_cost - before
-        return self.model.total_cost
+        self.session.total_cost += self.model.total_cost - before[0]
+        self.session.total_tokens += self.model.total_tokens - before[1]
+        return (self.model.total_cost, self.model.total_tokens)
+
+    def _warn_unpriced(self, response: dict) -> None:
+        """A model without a price spends no money, so a cost limit cannot be enforced."""
+        if not self.cost_limit or self._warned_unpriced:
+            return
+        extra = response.get("extra") or {}
+        if extra.get("tokens_in") and not extra.get("cost"):
+            logger.warning(
+                "The model %s has no price, so the cost limit cannot be enforced. Use agent.token_limit instead.",
+                getattr(self.model.backend, "model_name", ""),
+            )
+            self._warned_unpriced = True
 
     def _route(self) -> None:
         """Pick the model of this turn. A change is announced in the event stream."""
@@ -254,6 +278,8 @@ class AgentLoop:
             "calls": self.model.n_calls,
             "cost": self.session.total_cost,
             "budget": self.cost_limit,
+            "tokens_used": self.session.total_tokens,
+            "token_budget": self.token_limit,
         }
 
     def _route_reason(self) -> str:

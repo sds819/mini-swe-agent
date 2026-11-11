@@ -204,6 +204,8 @@ def _sub_agent_cost(metrics: Metrics, tool: str, content: str) -> None:
     cost = float(result.get("cost") or 0.0)
     purpose = str(result.get("purpose") or "subagent")
     metrics.total_cost += cost
+    metrics.total_tokens_in += int(result.get("tokens_in") or 0)
+    metrics.total_tokens_out += int(result.get("tokens_out") or 0)
     metrics.per_purpose_cost[purpose] = metrics.per_purpose_cost.get(purpose, 0.0) + cost
 
 

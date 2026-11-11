@@ -86,7 +86,7 @@ coder --task "..." --output-format json
 }
 ```
 
-`stop_reason` is `end_turn`, `max_turns`, `cost_exceeded`, `interrupted` or
+`stop_reason` is `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `interrupted` or
 `error`. `error` is empty unless the turn failed.
 
 ### The trace of a session

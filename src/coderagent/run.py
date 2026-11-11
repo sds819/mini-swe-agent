@@ -216,6 +216,7 @@ def build_loop(
         system_prompt=system_prompt,
         max_turns=config.agent.max_turns,
         cost_limit=config.agent.cost_limit,
+        token_limit=config.agent.token_limit,
         checkpoints=checkpoints,
         hooks=hooks,
         mcp=mcp,

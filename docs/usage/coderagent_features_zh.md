@@ -53,7 +53,7 @@ coder --list
 }
 ```
 
-`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`error`、
+`stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`error`、
 `interrupted` 之一。
 
 ### 出错时怎么办
@@ -390,6 +390,7 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 | `/resume <不存在的 id>` 起了一个目录是 `.` 的会话 | 日志里没有这个 id 不会报错，它会造一个空会话。 | 用 `coder --list` 看看有哪些 id。 |
 | 一轮以 `stop_reason: max_turns` 结束 | agent 用了 50 次模型调用还没完（`agent.max_turns`）。 | 调大 `agent.max_turns`，或者把任务拆小。 |
 | 一轮以 `stop_reason: cost_exceeded` 结束 | 这一轮花的钱超过了 `agent.cost_limit`。`0` 是没有上限。 | 调大 `agent.cost_limit`。 |
+| 一轮以 `stop_reason: token_limit` 结束 | 这一轮用的 token 超过了 `agent.token_limit`。`0` 是没有上限。模型没有价格时钱不动，token 就是预算。 | 调大 `agent.token_limit`。 |
 | 一轮以 `stop_reason: error` 结束 | 模型调用重试完了还是失败。错误文本在 `error` 里。 | 看 `error`，那是厂商的消息。 |
 | 一轮以 `stop_reason: interrupted` 结束 | 有人按了 `ctrl+c`。 | 会话已经存下来了，用 `--resume` 接着来。 |
 
@@ -836,7 +837,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | 段 | 键 |
 |---|---|
 | `model` | `model_name`、`model_kwargs`、`max_retries`、`litellm_config`、`routing`、`routing_rules`、`set_cache_control` |
-| `agent` | `system_prompt`、`max_turns`、`cost_limit` |
+| `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs` |
 | `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model` |

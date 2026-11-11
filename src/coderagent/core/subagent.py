@@ -158,7 +158,7 @@ class SubAgentRunner:
             on_path=self.on_path,
         )
         gateway = self._gateway(spec)
-        before = gateway.total_cost
+        before = (gateway.total_cost, gateway.total_tokens_in, gateway.total_tokens_out)
         system = spec.system_prompt or spec.description
         block = mode_block(self.policy.mode)
         if block:
@@ -218,18 +218,24 @@ class SubAgentRunner:
         )
 
     def _result(
-        self, status: str, summary: str, findings: list[str], touched: list[str], gateway, before: float, turns: int
+        self, status: str, summary: str, findings: list[str], touched: list[str], gateway, before, turns: int
     ) -> dict:
         """What the sub agent spent. When it ran on its own model, the cost is booked on the main one."""
-        cost = gateway.total_cost - before
+        cost = gateway.total_cost - before[0]
+        tokens_in = gateway.total_tokens_in - before[1]
+        tokens_out = gateway.total_tokens_out - before[2]
         if gateway is not self.gateway:
             self.gateway.total_cost += cost
+            self.gateway.total_tokens_in += tokens_in
+            self.gateway.total_tokens_out += tokens_out
         return {
             "status": status,
             "summary": summary,
             "findings": findings,
             "files_touched": sorted(set(touched)),
             "cost": cost,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
             "turns": turns,
         }
 

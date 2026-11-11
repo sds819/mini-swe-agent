@@ -54,6 +54,11 @@ class AgentConfig(BaseModel):
     """Maximum number of model calls per user turn. 0 means no limit."""
     cost_limit: float = 0.0
     """Stop after exceeding this cost. 0 means no limit."""
+    token_limit: int = 0
+    """Stop after exceeding this many tokens. 0 means no limit.
+
+    It is the budget of a model that has no price, where the money never moves.
+    """
 
 
 class ToolConfig(BaseModel):
