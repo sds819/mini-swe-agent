@@ -12,8 +12,13 @@ A plugin is a directory with a `plugin.py` in it:
 A plugin runs in the process of the agent, without a sandbox, so it is only
 loaded when the user has trusted it. The trust list lives in
 `~/.coderagent/trusted-plugins.json` and is changed with `/plugins trust`.
+
+The code of a plugin is not run before that decision: finding the plugins only
+reads their source, and the module is imported when a trusted plugin is
+resolved.
 """
 
+import ast
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -46,10 +51,14 @@ class ExtensionRegistry:
 
 @dataclass
 class Plugin:
-    """A plugin that was found on the disk."""
+    """A plugin that was found on the disk.
+
+    The code of the plugin is not loaded until `resolve()` is called: listing the
+    plugins must not run the code of a plugin the user has not trusted yet.
+    """
 
     name: str
-    register: Callable[[ExtensionRegistry], None]
+    resolve: Callable[[], Callable[[ExtensionRegistry], None] | None]
     path: Path | None = None
     source: str = "directory"
 
@@ -87,7 +96,10 @@ def load(
                     remember(plugin.name, DENIED, user_home)
                 continue
             remember(plugin.name, TRUSTED, user_home)
-        plugin.register(registry)
+        register = plugin.resolve()
+        if register is None:
+            continue
+        register(registry)
         loaded.append(plugin)
     return registry, loaded
 
@@ -126,7 +138,38 @@ def _directories(cwd: Path, user_home: Path | None) -> list[Path]:
 
 
 def _from_file(path: Path) -> Plugin | None:
-    """Read one `plugin.py`. Returns None when it has nothing to register."""
+    """Find one `plugin.py`. Returns None when it has nothing to register.
+
+    The file is only read here: whether it has a `register` is decided by
+    looking at the source, the code itself runs when the plugin is resolved.
+    """
+    try:
+        source = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if not _has_register(source):
+        return None
+    return Plugin(name=path.parent.name, resolve=lambda: _register_of(path), path=path)
+
+
+def _has_register(source: str) -> bool:
+    """Whether the source has a `register` function or a class with one."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "register":
+            return True
+        if isinstance(node, ast.ClassDef) and any(
+            isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == "register" for item in node.body
+        ):
+            return True
+    return False
+
+
+def _register_of(path: Path) -> Callable[[ExtensionRegistry], None] | None:
+    """Run the plugin file and return the function that registers it."""
     import importlib.util
 
     spec = importlib.util.spec_from_file_location(f"coderagent_plugin_{path.parent.name}", path)
@@ -138,9 +181,7 @@ def _from_file(path: Path) -> Plugin | None:
     if register is None:
         plugin = getattr(module, "plugin", None)
         register = getattr(plugin, "register", None)
-    if not callable(register):
-        return None
-    return Plugin(name=path.parent.name, register=register, path=path)
+    return register if callable(register) else None
 
 
 def _from_entry_points() -> list[Plugin]:
@@ -148,11 +189,17 @@ def _from_entry_points() -> list[Plugin]:
 
     plugins = []
     for entry in entry_points(group=ENTRY_POINT_GROUP):
-        loaded = entry.load()
-        register = getattr(loaded, "register", loaded)
-        if callable(register):
-            plugins.append(Plugin(name=entry.name, register=register, source="entry-point"))
+        plugins.append(
+            Plugin(name=entry.name, resolve=lambda entry=entry: _entry_register(entry), source="entry-point")
+        )
     return plugins
+
+
+def _entry_register(entry) -> Callable[[ExtensionRegistry], None] | None:
+    """Load the installed distribution and return the function that registers it."""
+    loaded = entry.load()
+    register = getattr(loaded, "register", loaded)
+    return register if callable(register) else None
 
 
 __all__ = [

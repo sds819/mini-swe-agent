@@ -121,6 +121,25 @@ def test_a_plugin_may_use_the_object_form(tmp_path):
     assert registry.model_backends == {"demo": str}
 
 
+def test_the_code_of_a_plugin_runs_only_when_it_is_trusted(tmp_path):
+    marker = tmp_path / "ran.txt"
+    _write(
+        Path(tmp_path) / ".coderagent" / "plugins",
+        text=(f"open({str(marker)!r}, 'w').write('x')\n\ndef register(registry):\n    pass\n"),
+    )
+    assert [plugin.name for plugin in discover(tmp_path)] == ["hello"]
+    assert load(tmp_path, tmp_path / "home")[1] == []
+    assert not marker.exists()
+    remember("hello", "trusted", tmp_path / "home")
+    assert load(tmp_path, tmp_path / "home")[1] != []
+    assert marker.exists()
+
+
+def test_a_plugin_that_does_not_parse_is_not_used(tmp_path):
+    _write(Path(tmp_path) / ".coderagent" / "plugins", text="def register(registry)\n")
+    assert discover(tmp_path) == []
+
+
 def test_the_registry_starts_empty():
     registry = ExtensionRegistry()
     assert registry.tools.names() == []

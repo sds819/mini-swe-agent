@@ -11,6 +11,11 @@ a directory with a `plugin.py` in it:
 The plugin runs in the process of the agent, without a sandbox. It is only
 loaded when the user has trusted it.
 
+The code of a plugin is not run before that decision. Finding the plugins only
+reads their source, to see whether they have a `register`; the module is
+imported when a trusted plugin is loaded. So `/plugins` never runs the code of
+a plugin, and an untrusted plugin cannot do anything but sit on the disk.
+
 ## Where a plugin is looked for
 
 | Where | What |
