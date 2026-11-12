@@ -146,6 +146,7 @@ nav:
     - "Design logic": design/coderagent-design-logic.md
     - "Questions": design/coderagent-questions.md
     - "Answers": design/coderagent-answers.md
+    - "Topic — Context & compaction": design/coderagent-context.md
     - "M0 — Skeleton & config": design/milestones/M0-skeleton.md
     - "M1 — Tools & permissions": design/milestones/M1-tools-permissions.md
     - "M2 — Context & sessions": design/milestones/M2-context-session.md

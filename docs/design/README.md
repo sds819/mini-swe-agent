@@ -22,6 +22,7 @@
 | [coderagent-design-logic.md](coderagent-design-logic.md) | **设计逻辑文档**：为什么长成这样——三条承重决策、全局不变量、有意的不对称、逐层取舍、依赖地图 |
 | [coderagent-questions.md](coderagent-questions.md) | **提问文档**：六组 33 问——上下文、工具、调度、memory/state、评测与观察、约束与恢复 |
 | [coderagent-answers.md](coderagent-answers.md) | **答问录**：逐题作答，每条答案指向具体文件与函数，并说明取舍与已知瑕疵 |
+| [coderagent-context.md](coderagent-context.md) | **专题：上下文管理与压缩**——怎么组上下文、怎么切、摘要怎么保证不丢东西 |
 | [milestones/M0-skeleton.md](milestones/M0-skeleton.md) | M0 骨架与配置：Session / EventBus / Loop / Config 的逐条任务分解 |
 | [milestones/M1-tools-permissions.md](milestones/M1-tools-permissions.md) | M1 工具系统与权限：ToolRegistry / PermissionPolicy / 内置工具规范 |
 | [milestones/M2-context-session.md](milestones/M2-context-session.md) | M2 上下文治理与会话管理：结构化压缩 / 恢复 / 检查点 |

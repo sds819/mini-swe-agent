@@ -11,6 +11,8 @@
 
 ## a. 上下文是如何管理的
 
+> 本节是浓缩版，展开见专题 [coderagent-context.md](coderagent-context.md)（含完整的保真机制清单）。
+
 ### a1 一次请求发给模型的消息由哪几部分组成？
 
 **结论**：固定五段、顺序不可换，由 `core/context.py` 的 `ContextEngine.build_messages()` 组装。
