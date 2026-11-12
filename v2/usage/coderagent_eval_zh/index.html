@@ -3391,6 +3391,8 @@
       
         
       
+        
+      
     
     
     
@@ -3542,6 +3544,34 @@
     
   
     Answers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Context &amp; compaction
   
 
     
@@ -3963,7 +3993,7 @@
 其余文件（除 <code>*.yaml</code>/<code>*.yml</code> 外）是 fixture：agent 开始前会被复制进工作目录。</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># evals/basic/off-by-one/task.yaml</span>
 <span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">off-by-one</span><span class="w">                </span><span class="c1"># 可选，默认取目录名</span>
-<span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span><span class="w">                     </span><span class="c1"># 或者 `prompts:`，一个列表：每个 prompt 一轮</span>
 <span class="w">  </span><span class="no">calc.py 里的 add_one 差一。修好它，让测试通过。</span>
 <span class="nt">setup</span><span class="p">:</span><span class="w">                        </span><span class="c1"># 可选，在 agent 开始前于工作目录执行</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -e .</span>
@@ -3995,6 +4025,8 @@
 </code></pre></div>
 <p><code>verify</code> 就是这个任务的判据：全部命令 exit 0 才算通过。
 <strong>没有 <code>verify</code> 的任务永远不算通过</strong>，所以一个 suite 不可能靠「什么都不做」通过。</p>
+<p><code>prompts:</code> 给 agent 多轮：同一个会话里一个接一个。<strong>只有一个 prompt 的任务永远不会压缩</strong>——
+切点必须落在轮边界上，没发生过的轮切不了。想看到压缩、想量摘要多大，任务就得有第二个 prompt。</p>
 <p><code>expect: fail</code> 是给那些<strong>必须不通过</strong>的任务用的：它是 suite 的保险丝——
 一个从来不失败的判据，会让每个任务都通过。
 报告里每个任务带 <code>as_expected</code>（它有没有做到该做的），summary 里数了 <code>unexpected</code>（没做到的有几个）。</p>
@@ -4041,7 +4073,8 @@
 <span class="w">    </span><span class="nt">"tasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">"passed"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"failed"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"unexpected"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"pass_rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.667</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0412</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">12345</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">6789</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"total_model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
+<span class="w">    </span><span class="nt">"total_model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratio_mean"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratio_max"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span>
 <span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="nt">"tasks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
@@ -4050,7 +4083,8 @@
 <span class="w">      </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span><span class="w"> </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nt">"error_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.012</span><span class="p">,</span><span class="w"> </span><span class="nt">"tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">800</span><span class="p">,</span><span class="w"> </span><span class="nt">"tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="nt">"tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="nt">"tool_errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"approvals"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261111-a1b2c3"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratios"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.12</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261111-a1b2c3"</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">      </span><span class="nt">"verify"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"python -m pytest -q tests/test_calc.py"</span><span class="p">,</span>
@@ -4064,6 +4098,9 @@
 token 来自 provider，是可靠的。</p>
 <p><code>model_calls</code> 只数主循环的调用；子 agent 的调用不在里面，它们的<strong>成本</strong>在。</p>
 <p><code>tool_errors</code> 数失败的工具调用，被权限拒绝的也算。</p>
+<p><code>summary_ratios</code> 每次压缩给一个数：摘要多大，对着它替换掉的那段历史多大。
+这个比值突然变大，要么是摘要变啰嗦了，要么是原文变啰嗦了。均值和最差值在整轮运行的
+summary 里。</p>
 <h2 id="fingerprint">fingerprint</h2>
 <p>fingerprint 是这次运行所用配置的哈希：模型、system prompt、工具、权限模式、上下文、沙箱。
 <strong>两次运行 fingerprint 相同才可比</strong>；不同，说明 harness 变了，数字自然不一样。</p>
@@ -4163,9 +4200,9 @@ coder<span class="w"> </span>eval-compare<span class="w"> </span>head.json<span 
 所以 <code>edit</code> 一坏，任务就失败，而不是被绕过去。</p>
 <p>除了 <code>no-op</code>，每个任务在 agent 开始之前都是<strong>没通过</strong>的——一个什么都不做就能过的任务是个坏任务。
 <code>tests/coderagent/eval/test_suite.py</code> 盯着这件事。</p>
-<p><code>evals/offline</code> 是另一个 suite：五个任务，全是脚本化的，全离线。
+<p><code>evals/offline</code> 是另一个 suite：六个任务，全是脚本化的，全离线。
 <code>broken-check</code> 是这个 suite 的保险丝：它的判据<strong>必须</strong>失败，
-所以一个从来不失败的判据藏不住。</p>
+所以一个从来不失败的判据藏不住。<code>multi-turn</code> 有三个 prompt：每个 prompt 一轮，同一个会话。</p>
 <p>想不花 API key 就跑一个任务，给它加一段 <code>script</code>：agent 的回答是写死的，轨迹每次都一样。</p>
 
 

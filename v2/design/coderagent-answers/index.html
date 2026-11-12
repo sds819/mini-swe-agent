@@ -11,7 +11,7 @@
         <link rel="prev" href="../coderagent-questions/">
       
       
-        <link rel="next" href="../milestones/M0-skeleton/">
+        <link rel="next" href="../coderagent-context/">
       
       
         
@@ -3249,6 +3249,8 @@
       
         
       
+        
+      
     
     
     
@@ -4000,6 +4002,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Context &amp; compaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4866,6 +4896,9 @@
 </blockquote>
 <hr>
 <h2 id="a">a. 上下文是如何管理的</h2>
+<blockquote>
+<p>本节是浓缩版，展开见专题 <a href="../coderagent-context/">coderagent-context.md</a>（含完整的保真机制清单）。</p>
+</blockquote>
 <h3 id="a1">a1 一次请求发给模型的消息由哪几部分组成？</h3>
 <p><strong>结论</strong>：固定五段、顺序不可换，由 <code>core/context.py</code> 的 <code>ContextEngine.build_messages()</code> 组装。</p>
 <ol>
@@ -4909,7 +4942,8 @@
 <li><strong>永远只有一份摘要</strong>：<code>self.summaries = [summary]</code> 是<strong>替换</strong>不是追加。所以第二次压缩时，<strong>上一份摘要会作为额外输入喂给模型</strong>——否则摘要会越堆越多把预算吃光。</li>
 <li><strong>失败判定</strong>：解析不出 JSON → 失败；<strong>压缩掉的段落里有写操作、但摘要里 <code>files_touched</code> 是空的</strong> → 也算失败（模型忘了改过文件，说明它没读懂）。失败就<strong>重试一次</strong>。</li>
 <li><strong>两次都失败</strong> → <code>conservative_summary()</code> 兜底：<code>goal</code> 写「对话前半部分被压缩了」，<code>findings</code> 放最后 5 条消息（每条截 400 字），<code>next_steps</code> 写「重新读一遍提到的文件来恢复细节」。</li>
-<li><strong>落地</strong>：写一条 <code>EventType.COMPACTION</code> 事件（<code>compacted_messages</code> / <code>tokens</code> / <code>cost</code> / <code>summary</code>），历史被截断成 <code>history.messages[cut:]</code>。</li>
+<li><strong>落地</strong>：写一条 <code>EventType.COMPACTION</code> 事件（<code>compacted_messages</code> / <code>tokens</code> / <code>summary_tokens</code> / <code>summary_ratio</code> / <code>cost</code> / <code>summary</code>），历史被截断成 <code>history.messages[cut:]</code>。</li>
+<li><strong>历史装不下一个提示词时</strong>：按 map-reduce 做——<code>chunk_messages()</code> 按轮切块，每块摘要一次，再用 <code>merge_prompt()</code> 把若干 partial 合成一份（带上一份摘要）；合并失败时用纯代码的 <code>merge_summaries()</code> 拼起来，一条不丢。</li>
 </ul>
 <p><strong>为什么</strong>：摘要失败不能变成「静默丢历史」。兜底摘要很笨，但它诚实地告诉模型「你丢了东西，去重读」。</p>
 <h3 id="a5">a5 指令文件从哪儿加载？优先级？子目录怎么办？</h3>
@@ -5284,6 +5318,11 @@
 <td>给 agent 的用户请求</td>
 </tr>
 <tr>
+<td><code>prompts</code></td>
+<td></td>
+<td>给 agent 的多个请求，一个接一个，同一会话。<strong>只有一个 prompt 的任务永远不会压缩</strong>——切点必须落在轮边界上</td>
+</tr>
+<tr>
 <td><code>verify</code></td>
 <td><strong>是</strong></td>
 <td>判定用的命令，<strong>全部退出码 0 才算通过</strong>；没有 verify 的任务永远不算通过</td>
@@ -5331,7 +5370,7 @@
 </tbody>
 </table>
 <p><code>require_tools</code> 是本项目的关键设计：<code>{tools: [edit, multi_edit], paths: [calc.py]}</code> —— 任务不仅要有 verify 命令，还要<strong>用对的工具在对的文件上</strong>干成事。判定靠 <code>eval/runner.py</code> 的 <code>_successful_calls()</code>：只有<strong>没有报错的</strong> tool call 才算数，工具名要在白名单里、路径要在名单里（路径按 workdir 解析）。</p>
-<p><strong>两个 suite</strong>：<code>evals/basic/</code> 8 个任务（全部要 API key）、<code>evals/offline/</code> 5 个任务（全部带 <code>script:</code>，<strong>不要 API key</strong>）。<code>evals/offline/broken-check</code> 是 <code>expect: fail</code> 的保险丝。</p>
+<p><strong>两个 suite</strong>：<code>evals/basic/</code> 9 个任务（全部要 API key）、<code>evals/offline/</code> 6 个任务（全部带 <code>script:</code>，<strong>不要 API key</strong>）。<code>evals/offline/broken-check</code> 是 <code>expect: fail</code> 的保险丝。<code>evals/basic/long-conversation</code> 是唯一会触发压缩的任务：它有四个 prompt，并把自己的窗口调小，逼着 harness 压缩。<code>evals/offline/multi-turn</code> 是多轮的离线版：三个 prompt，同一个会话，三轮。</p>
 <h3 id="e2-agent-harness">e2 怎么保证「agent 的失败」和「harness 的失败」分得开？</h3>
 <p><strong>结论</strong>：<code>eval/runner.py</code> 用 <code>error_kind</code> 区分三种情况：</p>
 <ul>
@@ -5350,7 +5389,8 @@
 <h3 id="e3-fingerprint">e3 报告里有什么？fingerprint 是什么？</h3>
 <p><strong>结论</strong>：<code>eval/report.py</code>，格式 <code>coder-eval-1.0</code>。</p>
 <p>JSON 顶层：<code>format</code>、<code>label</code>、<code>suite</code>、<code>model</code>、<code>fingerprint</code>、<code>config</code>、<code>started_at</code>、<code>duration_seconds</code>、<code>summary</code>、<code>tasks[]</code>。</p>
-<p><code>summary</code>：<code>tasks</code>、<code>passed</code>、<code>failed</code>、<code>errors</code>、<code>unexpected</code>、<code>pass_rate</code>、<code>total_cost</code>、<code>total_tokens_in</code>、<code>total_tokens_out</code>、<code>total_model_calls</code>、<code>total_tool_calls</code>。</p>
+<p><code>summary</code>：<code>tasks</code>、<code>passed</code>、<code>failed</code>、<code>errors</code>、<code>unexpected</code>、<code>pass_rate</code>、<code>total_cost</code>、<code>total_tokens_in</code>、<code>total_tokens_out</code>、<code>total_model_calls</code>、<code>total_tool_calls</code>、<code>compactions</code>、<code>summary_ratio_mean</code>、<code>summary_ratio_max</code>。</p>
+<p><code>summary_ratio</code> = 摘要多大 / 它替换掉的那段历史多大，一次压缩一个数，落在 <code>tasks[].summary_ratios</code> 里。<strong>这个比值是摘要质量的仪表盘</strong>：突然变大，要么是摘要变啰嗦了，要么是被摘的那段变啰嗦了。</p>
 <p><strong>fingerprint</strong> = <code>sha256:</code> + 对一组<strong>配置</strong>做的哈希。输入包括：<code>model</code> 和 <code>model.routing</code>、<code>agent.system_prompt</code> / <code>max_turns</code> / <code>cost_limit</code> / <code>token_limit</code>、<code>tools.enabled</code> / <code>disabled</code>、<code>permissions.mode</code> / <code>rules</code> / <code>deny_paths</code>、整个 <code>context</code> 配置、<code>sandbox.type</code>、<strong>每个任务的 config 覆盖</strong>、<strong>每个任务的 require_tools</strong>。</p>
 <p><strong>为什么</strong>：fingerprint 相同才说明两次跑的是同一套 harness，数字才可比。不同就说明「harness 变了，数字自然变」，不能拿来算退化。而且报告里同时放了 fingerprint 的<strong>输入原样</strong>，外部 diff 能直接看出<strong>是哪一项</strong>变了。</p>
 <p><strong>注意事项</strong>：报告里<strong>不放临时工作目录路径</strong>（每次都变，会毁掉 diff）；只用 task id 和相对路径。成本可能是 0（litellm 没有这个模型的价格表），所以 <strong>token 数必须一起报</strong>，它来自 provider 的 usage，靠得住。</p>
@@ -5674,13 +5714,13 @@
         
         
           
-          <a href="../milestones/M0-skeleton/" class="md-footer__link md-footer__link--next" aria-label="Next: M0 — Skeleton &amp; config">
+          <a href="../coderagent-context/" class="md-footer__link md-footer__link--next" aria-label="Next: Topic — Context &amp; compaction">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                M0 — Skeleton &amp; config
+                Topic — Context &amp; compaction
               </div>
             </div>
             <div class="md-footer__button md-icon">

@@ -3389,6 +3389,8 @@
       
         
       
+        
+      
     
     
     
@@ -3540,6 +3542,34 @@
     
   
     Answers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/coderagent-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Topic — Context &amp; compaction
   
 
     
@@ -3963,7 +3993,7 @@ did, so that a change of the harness can be compared with the change before it.<
 directory of the agent.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># evals/basic/off-by-one/task.yaml</span>
 <span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">off-by-one</span><span class="w">                </span><span class="c1"># optional, the name of the directory by default</span>
-<span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span><span class="w">                     </span><span class="c1"># or `prompts:`, a list of them: one turn each</span>
 <span class="w">  </span><span class="no">The function `add_one` in calc.py is off by one. Fix it so that the test passes.</span>
 <span class="nt">setup</span><span class="p">:</span><span class="w">                        </span><span class="c1"># optional, in the working directory, before the agent</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -e .</span>
@@ -3995,6 +4025,11 @@ directory of the agent.</p>
 </code></pre></div>
 <p>Every file of the task directory that is not a yaml file is a fixture: it is
 copied into the working directory before the agent starts.</p>
+<p><code>prompts:</code> gives the agent several turns, one after the other, in the same
+session. A task with a single prompt can never compact: the cut of the history
+has to land on a turn boundary, and a turn that never happened cannot be cut.
+A task that wants to see the compaction — and to measure the size of the
+summary — needs more than one prompt.</p>
 <p>The <code>verify</code> commands are the judgement of the task: the task passed when all of
 them exit with 0. A task without a <code>verify</code> never passes, so a suite cannot
 pass by doing nothing.</p>
@@ -4052,7 +4087,8 @@ the report says which is which (<code>"mode"</code>).</p>
 <span class="w">    </span><span class="nt">"tasks"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">"passed"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"failed"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"unexpected"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"pass_rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.667</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0412</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">12345</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">6789</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"total_model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
+<span class="w">    </span><span class="nt">"total_model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratio_mean"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratio_max"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span>
 <span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="nt">"tasks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
@@ -4061,7 +4097,8 @@ the report says which is which (<code>"mode"</code>).</p>
 <span class="w">      </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span><span class="w"> </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w"> </span><span class="nt">"error_kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.012</span><span class="p">,</span><span class="w"> </span><span class="nt">"tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">800</span><span class="p">,</span><span class="w"> </span><span class="nt">"tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="nt">"tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="nt">"tool_errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"approvals"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261111-a1b2c3"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"summary_ratios"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.12</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.1</span><span class="p">,</span><span class="w"> </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261111-a1b2c3"</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">"setup"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">      </span><span class="nt">"verify"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"python -m pytest -q tests/test_calc.py"</span><span class="p">,</span>
@@ -4077,6 +4114,10 @@ the report next to it: they come from the provider and they are reliable.</p>
 not in it, their cost is.</p>
 <p><code>tool_errors</code> counts the tool calls that failed, the ones that were denied
 included.</p>
+<p><code>summary_ratios</code> holds one number per compaction: the size of the summary
+against the size of the history it replaces. A ratio that grows means the
+summary became verbose, or the history it summarizes became noisy. The mean and
+the worst of them are in the summary of the run.</p>
 <h2 id="the-fingerprint">The fingerprint</h2>
 <p>The fingerprint is the hash of the configuration the agent ran with: the model,
 the system prompt, the tools, the permission mode, the context and the sandbox.
@@ -4194,9 +4235,10 @@ routed around.</p>
 <p>Every task but <code>no-op</code> fails its check before the agent starts, so a task that
 is solved by doing nothing is a broken task. <code>tests/coderagent/eval/test_suite.py</code>
 keeps an eye on that.</p>
-<p><code>evals/offline</code> is the other suite: five tasks, all scripted, all offline. The
+<p><code>evals/offline</code> is the other suite: six tasks, all scripted, all offline. The
 <code>broken-check</code> task is the guard of the suite: its check has to fail, so a check
-that never fails cannot hide.</p>
+that never fails cannot hide. The <code>multi-turn</code> task has three prompts: it runs
+a turn for each of them, in the same session.</p>
 <p>To run a task without an API key, give it a <code>script</code>: the answers of the agent
 are written down, and the trajectory is the same every time.</p>
 
