@@ -1,19 +1,23 @@
 permissions:
   mode: default
   rules:
-    - tool: write
-      pattern: config.json
-      decision: deny
-      reason: config.json is changed with the edit tool, not rewritten
-    - tool: multi_edit
-      pattern: config.json
-      decision: deny
-      reason: config.json is changed with the edit tool, not rewritten
-    - tool: bash
-      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?config\\.json(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: config.json is changed with the edit tool, not written by a shell command
-    - tool: bash
-      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?config\\.json(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: config.json is changed with the edit tool, not written by a shell command
+  - tool: write
+    pattern: config.json
+    decision: deny
+    reason: config.json is changed with the edit tool, not rewritten
+  - tool: multi_edit
+    pattern: config.json
+    decision: deny
+    reason: config.json is changed with the edit tool, not rewritten
+  - tool: bash
+    pattern: ^.*>\s*[\"']?(?:[^\s'\"]*/)?config\.json(?:$|[\s'\";|&])
+    decision: deny
+    reason: config.json is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?:.*[\s'\"])?(?:sed\s+-i|cp|mv|tee|install|truncate|ln|patch)\b.*[\s'\"](?:[^\s'\"]*/)?config\.json(?:$|[\s'\";|&])
+    decision: deny
+    reason: config.json is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?!(?:cat|head|tail|less|more|grep|egrep|fgrep|rg|wc|ls|stat|file|diff|nl)\b|python[0-9.]*\s+[\"']?(?:[^\s'\"]*/)?config\.json\b).*['\"](?:[^\s'\"]*/)?config\.json['\"]
+    decision: deny
+    reason: config.json is changed with the edit tool, not written by a shell command

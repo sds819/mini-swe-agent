@@ -5,7 +5,9 @@ prompt: |
   not be rewritten from scratch.
 verify:
   - python -m pytest -q tests/test_app.py
-require_tools: [edit, multi_edit]
+require_tools:
+  - tools: [edit, multi_edit]
+    paths: [app.py, utils.py]
 config:
   - permissions.yaml
 tags: [bugfix]

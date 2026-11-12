@@ -78,9 +78,12 @@ def test_the_tasks_that_may_only_be_edited_cannot_be_rewritten(tmp_path):
                 f"sed -i s/a/b/ {rule.pattern}",
                 f"cp other.py {rule.pattern}",
                 f"tee {rule.pattern}",
+                f"python3 - <<'EOF'\np='{rule.pattern}'\nopen(p,'w').write('x')\nEOF",
+                f"python3 -c \"open('{rule.pattern}','w').write('x')\"",
             ]:
                 assert policy.evaluate("bash", {"command": command}).decision == "deny", command
-            assert policy.evaluate("bash", {"command": f"python {rule.pattern}"}).decision != "deny"
+            for command in [f"cat {rule.pattern}", f"python {rule.pattern}"]:
+                assert policy.evaluate("bash", {"command": command}).decision != "deny", command
     assert checked, "the suite has no task that protects a file"
 
 
@@ -88,11 +91,16 @@ def test_the_tasks_that_need_the_edit_tool_say_so(tmp_path):
     """A task that may only be edited needs the edit tool, or the suite cannot see a broken one."""
     needing = {task.id: task for task in load_suite(SUITE) if task.require_tools}
     assert set(needing) == {"cli-flag", "config-value", "import-error", "off-by-one", "rename-symbol"}
-    assert all(
-        set(requirement.tools) <= {"edit", "multi_edit"}
-        for task in needing.values()
-        for requirement in task.require_tools
-    )
+    for task in needing.values():
+        assert [requirement.tools for requirement in task.require_tools] == [["edit", "multi_edit"]]
+        assert all(requirement.paths for requirement in task.require_tools), "the file of the task matters"
+        protected = {
+            rule["pattern"]
+            for override in task_overrides(task)
+            for rule in (override.get("permissions") or {}).get("rules") or []
+            if rule["tool"] == "write"
+        }
+        assert set(task.require_tools[0].paths) == protected
 
 
 def test_the_offline_suite_needs_no_api_key(tmp_path):

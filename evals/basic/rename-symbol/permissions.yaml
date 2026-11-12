@@ -1,35 +1,43 @@
 permissions:
   mode: default
   rules:
-    - tool: write
-      pattern: pricing.py
-      decision: deny
-      reason: pricing.py is changed with the edit tool, not rewritten
-    - tool: multi_edit
-      pattern: pricing.py
-      decision: deny
-      reason: pricing.py is changed with the edit tool, not rewritten
-    - tool: bash
-      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?pricing\\.py(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: pricing.py is changed with the edit tool, not written by a shell command
-    - tool: bash
-      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?pricing\\.py(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: pricing.py is changed with the edit tool, not written by a shell command
-    - tool: write
-      pattern: report.py
-      decision: deny
-      reason: report.py is changed with the edit tool, not rewritten
-    - tool: multi_edit
-      pattern: report.py
-      decision: deny
-      reason: report.py is changed with the edit tool, not rewritten
-    - tool: bash
-      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?report\\.py(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: report.py is changed with the edit tool, not written by a shell command
-    - tool: bash
-      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?report\\.py(?:$|[\\s'\";|&])"
-      decision: deny
-      reason: report.py is changed with the edit tool, not written by a shell command
+  - tool: write
+    pattern: pricing.py
+    decision: deny
+    reason: pricing.py is changed with the edit tool, not rewritten
+  - tool: multi_edit
+    pattern: pricing.py
+    decision: deny
+    reason: pricing.py is changed with the edit tool, not rewritten
+  - tool: bash
+    pattern: ^.*>\s*[\"']?(?:[^\s'\"]*/)?pricing\.py(?:$|[\s'\";|&])
+    decision: deny
+    reason: pricing.py is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?:.*[\s'\"])?(?:sed\s+-i|cp|mv|tee|install|truncate|ln|patch)\b.*[\s'\"](?:[^\s'\"]*/)?pricing\.py(?:$|[\s'\";|&])
+    decision: deny
+    reason: pricing.py is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?!(?:cat|head|tail|less|more|grep|egrep|fgrep|rg|wc|ls|stat|file|diff|nl)\b|python[0-9.]*\s+[\"']?(?:[^\s'\"]*/)?pricing\.py\b).*['\"](?:[^\s'\"]*/)?pricing\.py['\"]
+    decision: deny
+    reason: pricing.py is changed with the edit tool, not written by a shell command
+  - tool: write
+    pattern: report.py
+    decision: deny
+    reason: report.py is changed with the edit tool, not rewritten
+  - tool: multi_edit
+    pattern: report.py
+    decision: deny
+    reason: report.py is changed with the edit tool, not rewritten
+  - tool: bash
+    pattern: ^.*>\s*[\"']?(?:[^\s'\"]*/)?report\.py(?:$|[\s'\";|&])
+    decision: deny
+    reason: report.py is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?:.*[\s'\"])?(?:sed\s+-i|cp|mv|tee|install|truncate|ln|patch)\b.*[\s'\"](?:[^\s'\"]*/)?report\.py(?:$|[\s'\";|&])
+    decision: deny
+    reason: report.py is changed with the edit tool, not written by a shell command
+  - tool: bash
+    pattern: ^(?!(?:cat|head|tail|less|more|grep|egrep|fgrep|rg|wc|ls|stat|file|diff|nl)\b|python[0-9.]*\s+[\"']?(?:[^\s'\"]*/)?report\.py\b).*['\"](?:[^\s'\"]*/)?report\.py['\"]
+    decision: deny
+    reason: report.py is changed with the edit tool, not written by a shell command

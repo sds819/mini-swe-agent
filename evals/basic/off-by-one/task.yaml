@@ -5,7 +5,9 @@ prompt: |
   rewritten from scratch.
 verify:
   - python -m pytest -q tests/test_calc.py
-require_tools: [edit, multi_edit]
+require_tools:
+  - tools: [edit, multi_edit]
+    paths: [calc.py]
 config:
   - permissions.yaml
 tags: [bugfix]
