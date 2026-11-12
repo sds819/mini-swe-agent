@@ -2,6 +2,13 @@
 
 > 目标：在 mini-SWE-agent 的极简哲学之上，构建一个对标 Codex CLI / Claude Code 的交互式 coding agent。
 > 技术栈：Python 3.10+ / litellm / pydantic / typer / jinja2，代码位于 `src/coderagent/`。
+>
+> **这份文档是设计稿**，写于 M0 之前，是「为什么这么分层、这么定」的依据。
+> M0–M5 落地之后，几处实现与草图不同（下文逐条标出）。要看**现在长什么样**，
+> 读 [coderagent-answers.md](coderagent-answers.md)（逐题作答）、
+> [coderagent-context.md](coderagent-context.md)（上下文专题）和
+> [coderagent-design-logic.md](coderagent-design-logic.md)（设计逻辑）；要看**怎么一步步做出来的**，
+> 读 [milestones/](milestones/) 下的五份里程碑文档。
 
 ---
 
@@ -42,8 +49,8 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 | 上下文压缩 | ✅ 自动 | ✅ 自动 + 手动 | ❌ | ✅ ContextEngine |
 | 项目指令文件 | ✅ AGENTS.md | ✅ CLAUDE.md | ❌ | ✅ 多源指令加载 |
 | MCP | ✅ | ✅ | ❌ | ✅ 扩展层 |
-| 子 Agent 委派 | ⚠️ | ✅ Task | ❌ | ✅ 后置 |
-| Hooks | ❌ | ✅ | ❌ | ✅ 后置 |
+| 子 Agent 委派 | ⚠️ | ✅ Task | ❌ | ✅ M4 已落地 |
+| Hooks | ❌ | ✅ | ❌ | ✅ M3 已落地 |
 | 终端 diff 预览 | ✅ | ✅ | ❌ | ✅ L5 |
 | 流式输出 | ✅ | ✅ | ❌ | ✅ L4 |
 | 多模型路由 | ✅ | ✅ | ⚠️ 单模型 | ✅ L4 ModelRouter |
@@ -82,27 +89,32 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 User input
    │
    ▼
-Session.append_user_msg ──► ContextEngine.build_messages()  ← 注入 CLAUDE.md/AGENTS.md
+ContextEngine.append(user message) ──► ContextEngine.build_messages()  ← 注入 CLAUDE.md/AGENTS.md
    │
    ▼
-AgentLoop.step() ──► ModelGateway.query(stream=True)
+AgentLoop.run_turn() ──► ModelGateway.query_stream()
    │                     │
    │                     ▼  assistant msg (含 tool_calls) + reasoning
    │                     │
    │                     ▼
    │              ToolExecutor.plan(actions)
-   │                     │  ← PermissionPolicy.check() → 可能触发审批 → EventBus
+   │                     │  ← PermissionPolicy.evaluate() → 可能触发审批 → EventBus
    │                     ▼
    │              并行执行 → Environment.execute()
    │                     │
    │                     ▼
-   │              ToolResult[] → ContextEngine.append_tool_results()
+   │              observation[] → ContextEngine.extend()
    │
    └──► 重复直到 stop_reason / 限额 / 用户中断
          │
          ▼
-   SessionStore.persist()  →  .coderagent/sessions/<id>.jsonl
+   SessionStore.append()  →  <config_home>/sessions/<id>.jsonl
 ```
+
+> 实现与草图的差别：主循环的方法叫 `run_turn()`（不是 `step()`），消息进上下文走
+> `ContextEngine.append()` / `extend()`（不是 `Session.append_user_msg()`），
+> 权限求值用 `PermissionPolicy.evaluate()`（`check()` 是它的薄封装），
+> 事件日志落在 `<config_home>/sessions/`（不是 `.coderagent/sessions/`）。
 
 **三种前端，一套内核**：CLI（typer）、TUI（textual）、Web（FastAPI + SSE）跑的是同一套
 loop / 工具 / 权限 / 事件日志；TUI 与 Web 都是 `EventBus` 的**订阅者**，不各自实现循环。
@@ -146,41 +158,50 @@ class SessionStore:
     """会话持久化。JSONL 追加写，天然支持流式落盘与崩溃恢复。"""
     def __init__(self, root: Path): ...
     def create(self, cwd: Path) -> Session: ...
-    def load(self, session_id: str) -> Session: ...
-    def append(self, session_id: str, event: dict) -> None: ...
+    def rebuild(self, session_id: str) -> Session: ...
+    def append(self, session_id: str, event: Event) -> None: ...
     def list(self, cwd: Path | None = None) -> list[Session]: ...
 ```
 
 **事件溯源**：所有状态变更都以 `event` 追加到 JSONL，重放即可恢复。
-事件类型：`user_message` / `assistant_message` / `tool_call` / `tool_result` / `approval_request` / `approval_response` / `state_change` / `compaction` / `error`。
+事件类型见 `core/events.py` 的 `EventType`（15 个）：`user_message` / `assistant_message` /
+`text_delta` / `reasoning` / `tool_call` / `tool_result` / `approval_request` /
+`approval_response` / `state_change` / `turn_end` / `verify` / `compaction` /
+`reflection` / `reverted_to` / `error`。
 
 `EventBus` 用于解耦：L5 的 UI 订阅事件流渲染，L2 的工具执行发布事件，L4 的模型网关发布 token 流。
 
 ```python
 class EventBus:
-    def __init__(self): self._subs: dict[str, list[Callable]] = {}
-    def subscribe(self, topic: str, cb: Callable) -> None: ...
-    def publish(self, topic: str, payload: dict) -> None: ...
+    def __init__(self): self._subs: dict[EventType, list[Callable]] = {}
+    def subscribe(self, event_type: EventType, cb: Callable) -> None: ...
+    def publish(self, event: Event) -> None: ...
 ```
+
+> 实现与草图的差别：会话是**重放**出来的，所以 `SessionStore` 的方法叫 `rebuild()`
+> 而不是 `load()`；事件是 `Event` 对象而不是裸 dict；`EventBus` 按 `EventType` 订阅，
+> 不是按字符串 topic。
 
 ### 4.2 L1 执行层
 
 直接复用 `minisweagent.environments`，但扩展 `Environment` 协议以支持**多命令并行**与**工作目录隔离**：
 
 ```python
-# src/coderagent/core/environment.py
-class CodingEnvironment(Protocol):
-    def execute(self, action: dict, cwd: str = "") -> dict: ...
-    def execute_batch(self, actions: list[dict], cwd: str = "") -> list[dict]:
-        """并行执行多个独立命令（Claude Code 风格的多工具调用）。"""
-    def snapshot(self) -> str:
-        """返回环境指纹（镜像 ID / 容器 ID），用于 checkpoint。"""
-    def restore(self, snapshot: str) -> None: ...
+# src/coderagent/tools/builtin/shell.py
+class CodingEnvironment(LocalEnvironment):
+    """本机 subprocess 环境：超时 kill 进程组、去掉 mini 的「任务完成」哨兵。"""
+    def _run(self, cmd, cwd, env): ...
 ```
 
 实现策略：
 - **默认**：`minisweagent.environments.local.LocalEnvironment` + `docker.DockerEnvironment`（后者作为 `--sandbox docker`）。
 - **checkpoint**：在 `LocalEnvironment` 上用 `git stash`/`git diff` 快照文件树；在 Docker 上用 `docker commit` 快照镜像。
+
+> 实现与草图的差别：没有单独的 `core/environment.py`，环境装配在 `core/sandbox.py`
+> 的 `build_environment()` 里，落地类是 `tools/builtin/shell.py` 的 `CodingEnvironment`。
+> 草图里的 `execute_batch()` / `snapshot()` / `restore()` **没有实现**：
+> 并行调度放在 `ToolExecutor` 里（读类工具并行、写类串行），
+> 检查点是**文件级**的（`core/checkpoint.py` 记「改之前的内容」），不是环境快照。
 
 ### 4.3 L2 工具层（核心增量）
 
@@ -189,17 +210,20 @@ mini 只有 `bash`。我们要引入**结构化工具注册表**，但保留 bas
 ```
 coderagent/tools/
 ├── registry.py       # ToolRegistry：注册、schema 生成、名称解析
-├── base.py           # Tool 抽象 + ToolResult
-├── context.py        # ToolContext（cwd、session、bus、policy 的注入容器）
+├── base.py           # Tool 抽象 + ToolResult + ToolContext
 ├── builtin/
-│   ├── fs.py         # read, write, edit, multi_edit, notebook_edit
+│   ├── fs.py         # read, write, edit, multi_edit
 │   ├── search.py     # glob, grep, ls
-│   ├── shell.py      # bash
-│   ├── web.py        # web_fetch, web_search
-│   ├── todo.py       # todo_write, update_plan
-│   └── task.py       # task（子 Agent 委派，后置）
+│   ├── shell.py      # bash, bash_output, bash_kill
+│   ├── todo.py       # todo_write
+│   ├── task.py       # task（子 Agent 委派）
+│   └── skill.py      # skill（加载技能）
 └── mcp.py            # MCP client → 动态注册为工具
 ```
+
+> 实现与草图的差别：`ToolContext` 落在 `base.py`（没有单独的 `context.py`）；
+> `web.py`（`web_fetch` / `web_search`）**没有实现**，`notebook_edit` 和 `update_plan` 也没有；
+> `task` 与 `skill` 已经在 M4 落地，不是「后置」。
 
 #### 工具抽象
 
@@ -238,11 +262,11 @@ class ToolContext:
 
 - **`edit`**：字符串精确匹配替换。**必须**要求 `old_string` 在文件中唯一，否则报错返回。这避免了 `sed` 式的模糊替换风险。
 - **`read`**：支持 `offset`/`limit`，默认带行号（`cat -n` 风格），大文件自动截断并提示。
-- **`grep`**：优先调用 `rg`，无 `rg` 时回退 `grep -r`。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。
+- **`grep`**：**纯 Python 实现**（不用 `rg`，也不退到 `grep -r`——`rg` 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。
 - **`glob`**：按 pattern 排序返回路径列表，超出上限截断。
-- **`bash`**：默认 timeout 120s；`run_in_background=True` 时返回 task id，长命令不阻塞。
-- **`todo_write` / `update_plan`**：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。
-- **`web_fetch` / `web_search`**：带域名白名单。
+- **`bash`**：默认 timeout 120s（`tools.bash_timeout`）；长命令不阻塞，配 `bash_output` / `bash_kill` 取回结果与杀掉进程。
+- **`todo_write`**：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。
+- **`web_fetch` / `web_search`**：**未实现**（`TRIM_ORDER` 里留了位置，将来加工具时直接可用）。
 
 #### 权限策略
 
@@ -341,32 +365,44 @@ summary:
 @dataclass
 class BudgetGuard:
     context_window: int
-    reserved_output: int = 4096
-    reserve_ratio: float = 0.15
+    reserved_output: int = 8000
+    compact_threshold: float = 0.8
 
+    def limit(self) -> int: ...
     def should_compact(self, estimated_tokens: int) -> bool: ...
-    def trim_tool_result(self, result: ToolResult, max_tokens: int) -> ToolResult:
-        """超长输出裁剪：保留头尾，中间标注省略行数。"""
 ```
 
-工具输出裁剪沿用 mini 的 `observation_template` 思路（头尾各 5000 字符），但改为**按 token 预算**而非固定字符数。
+工具输出裁剪在 `core/tokens.py`：`trim_text()` / `trim_lines()` 按 **token 预算**保留
+**头 40% + 尾 40%**，中间写明省略了多少行、多少 token，并告诉模型怎么把内容找回来
+（`use grep/offset to view that region`）。
+
+> 实现与草图的差别：没有 `reserve_ratio`（预留是绝对值 `reserved_output`，默认 8000），
+> 裁剪函数也不在 `BudgetGuard` 上，而在 `core/tokens.py`；裁剪按 token 而非固定字符数
+> 这条决策保留了下来。
 
 ### 4.5 L4 模型网关
 
 mini 是「一个 Model 实例」。Coding agent 需要**网关**：
 
 ```python
-# src/coderagent/core/model_gateway.py
+# src/coderagent/models/gateway.py
 class ModelGateway:
     """按用途路由到不同模型，统一流式、重试、成本统计。"""
-    def __init__(self, config: dict, bus: EventBus): ...
+    def __init__(self, backend: ModelBackend): ...
 
-    def query(self, messages: list[dict], *, purpose: str = "main",
-              tools: list[dict] | None = None, stream: bool = True) -> AsyncIterator[ModelEvent]: ...
+    def query_stream(self, messages: list[dict], tools: list[dict] | None = None,
+                     **kwargs) -> Iterator[ModelEvent]: ...
 
-    def complete(self, messages: list[dict], *, purpose: str = "summarize") -> str:
+    def query(self, messages: list[dict], tools: list[dict] | None = None,
+              **kwargs) -> dict: ...
+
+    def complete(self, messages: list[dict], **kwargs) -> str:
         """非流式便捷方法，用于压缩/经验沉淀等后台调用。"""
 ```
+
+> 实现与草图的差别：网关在 `models/gateway.py`（不是 `core/model_gateway.py`），
+> 而且**是同步的**——`query_stream()` 返回 `Iterator[ModelEvent]`，不是 `AsyncIterator`；
+> 路由不在网关里，是独立的 `models/router.py`（`ModelRouter`）。
 
 **用途路由（purpose）**：
 
@@ -405,13 +441,25 @@ class ModelEvent:
 coder [task]                       # 主入口，等价于 mini
   -m/--model            模型
   -c/--config           配置（YAML + key=value 覆盖）
-  --mode                default|acceptEdits|plan|bypass
-  --sandbox             local|docker|bubblewrap
+  --permission-mode      default|acceptEdits|plan|bypass|readonly
   --resume <id>         恢复会话
   --continue            恢复最近会话
+  --fork <id>           复制会话到新的一条继续
+  --list                列出本目录的会话
+  --tui                 启动终端界面
   --print               非交互模式，输出到 stdout（供脚本/CI 使用）
-  --output-format       text|json|stream-json
+  --output-format       text|json
+
+coder web              # 浏览器版（FastAPI + SSE）
+coder eval <suite>     # 跑一批任务，出 JSON 报告
+coder eval-compare     # 比两次运行
+coder export           # 导出会话 trace
 ```
+
+> 实现与草图的差别：权限模式的开关叫 `--permission-mode`（不是 `--mode`），多一档 `readonly`；
+> 没有 `--sandbox` 这个命令行开关（沙箱走配置 `sandbox.type`）；
+> `--output-format` 只有 `text|json`（没有 `stream-json`）；多了 `--fork` / `--list` / `--tui`
+> 和四个子命令。
 
 #### TUI（textual）
 
@@ -569,7 +617,7 @@ fastapi / uvicorn / jinja2；`ui/cli.py` 的 `web` 子命令在函数体里惰�
 #### MCP 客户端
 
 ```python
-# src/coderagent/tools/mcp.py
+# src/coderagent/config/schema.py
 class MCPServerConfig(BaseModel):
     name: str
     command: str | None = None          # stdio
@@ -578,16 +626,20 @@ class MCPServerConfig(BaseModel):
     enabled: bool = True
 
 
+# src/coderagent/tools/mcp.py
 class MCPClient:
     """管理到 MCP server 的连接，把 server 暴露的 tool 转成 Tool。"""
     async def connect(self, cfg: MCPServerConfig) -> list[Tool]: ...
     async def disconnect(self) -> None: ...
 ```
 
+> 实现与草图的差别：server 的配置类是 `config/schema.py` 里的 `MCPServerConfig`（跟着配置走），
+> 不是 `tools/mcp.py` 里的类；客户端在 `tools/mcp.py`，每个 server 一个线程 + 自己的 event loop。
+
 - 传输：stdio（`mcp` python SDK 的 `stdio_client`）、SSE、Streamable HTTP
 - 工具命名：`mcp__<server>__<tool>`
 - 生命周期：随 Session 创建/销毁；断线自动重连一次
-- MCP server 提供的 resources/prompts 作为只读上下文注入
+- MCP server 提供的 resources/prompts 作为只读上下文注入（**未实现**，目前只接工具）
 
 #### Hooks
 
@@ -616,7 +668,7 @@ Hook 本身是「命令 + JSON 输入 → JSON 输出」，用 `subprocess` 执�
 }
 ```
 
-#### Subagent（后置）
+#### Subagent（M4 已落地）
 
 `task` 工具：主 agent 把一个独立子任务委派给子 agent（独立上下文、独立工具集、可指定模型档位），返回结构化结果。
 
@@ -687,6 +739,7 @@ class ToolExecutor(Protocol):
 ```
 src/coderagent/
 ├── __init__.py              # 导出 Protocol 与版本
+├── paths.py                 # config_home()：用户级数据的唯一总开关
 ├── core/
 │   ├── protocols.py         # ModelBackend / ToolExecutor 协议
 │   ├── session.py           # Session, SessionStore, SessionState
@@ -694,29 +747,33 @@ src/coderagent/
 │   ├── loop.py              # AgentLoop（多轮主循环）
 │   ├── context.py           # ContextEngine（构建 prompt / 压缩）
 │   ├── history.py           # 消息历史抽象（按轮切分 / 切分点）
-│   ├── tokens.py            # token 估算器
-│   ├── budget.py            # BudgetGuard, 输出裁剪
+│   ├── tokens.py            # token 估算器 + 输出裁剪
+│   ├── budget.py            # BudgetGuard（窗口 / 阈值）
 │   ├── summarize.py         # 结构化摘要 schema 与生成
 │   ├── instructions.py      # CLAUDE.md / AGENTS.md 加载
-│   ├── memory.py            # 分层记忆读写
-│   └── checkpoint.py        # 文件树/容器快照与回滚
+│   ├── memory.py            # 分层记忆读取
+│   ├── checkpoint.py        # 文件级检查点与回滚
+│   ├── redact.py            # 密钥脱敏
+│   ├── sandbox.py           # build_environment()：装配执行环境
+│   ├── subagent.py          # 子 Agent 的定义与运行
+│   └── telemetry.py         # 指标与 trace
 ├── models/
-│   ├── gateway.py           # ModelGateway, 用途路由
+│   ├── gateway.py           # ModelGateway（记账 + 统一入口）
 │   ├── streaming.py         # ModelEvent, 增量 tool_call 拼接
 │   ├── router.py            # ModelRouter, 路由规则
-│   └── backends.py          # litellm 后端包装
+│   ├── backends.py          # litellm 后端包装
+│   └── litellm_config.py    # litellm 别名文件（model_list）
 ├── tools/
 │   ├── base.py              # Tool, ToolResult, ToolContext
 │   ├── registry.py          # ToolRegistry（schema 生成 / 预算裁剪）
 │   ├── executor.py          # ToolExecutor（解析 → 权限 → 执行）
 │   ├── permissions.py       # PermissionMode, Rule, PermissionPolicy, Approver
 │   ├── rules.py             # 规则文件加载与合并
-│   ├── builtin/{fs,search,shell,web,todo,task}.py
+│   ├── bash_policy.py       # bash 的分段与分类
+│   ├── builtin/{fs,search,shell,todo,task,skill}.py
 │   └── mcp.py               # MCP 客户端
-├── environments/
-│   └── local.py, docker.py  # 薄封装，底层复用 minisweagent.environments
 ├── ui/
-│   ├── cli.py               # typer 入口
+│   ├── cli.py               # typer 入口（coder / coder web / coder eval ...）
 │   ├── tui.py               # textual App
 │   ├── render.py            # 消息/diff 渲染
 │   ├── widgets/             # ToolCard, DiffView, ApprovalPrompt, StatusBar...
@@ -725,7 +782,13 @@ src/coderagent/
 ├── extensions/
 │   ├── hooks.py             # HookRunner
 │   ├── skills.py
-│   └── plugins.py
+│   ├── plugins.py
+│   └── reflect.py           # 经验沉淀（项目记忆 / 待确认偏好）
+├── eval/
+│   ├── task.py              # 任务与任务集的格式
+│   ├── runner.py            # 跑任务、隔离、判分
+│   ├── report.py            # 报告与 fingerprint
+│   └── compare.py           # 两次运行的对比
 ├── web/
 │   ├── __init__.py          # 只有 docstring：不 import fastapi（web extra 才是硬依赖）
 │   ├── app.py               # create_app：装配 app、静态资源、模板
@@ -771,21 +834,27 @@ model:
   max_retries: 5
 
 agent:
-  mode: default            # default|acceptEdits|plan|bypass
-  max_turns: 100
+  max_turns: 50
   cost_limit: 5.0
-  auto_compact: true
+  token_limit: 0
+
+context:
+  context_window: 200000
+  reserved_output: 8000
   compact_threshold: 0.8
+  keep_recent_turns: 20
+  auto_compact: true
 
 tools:
-  enabled: [read, write, edit, glob, grep, ls, bash, todo_write, web_fetch]
+  enabled: [read, write, edit, multi_edit, glob, grep, ls, bash, bash_output, bash_kill, todo_write]
   disabled: []
   bash_timeout: 120
   max_output_tokens: 8000
-  include_dirs: []
 
 permissions:
   mode: default
+  include_dirs: []
+  deny_paths: []
   rules:
     - tool: bash
       pattern: "git status*"
@@ -806,6 +875,11 @@ sandbox:
   type: local              # local|swerex_docker|bubblewrap|contree
   # 其余选项原样传给环境（如 docker 的 run_args、image）
 ```
+
+> 实现与草图的差别：权限模式在 `permissions.mode`（不是 `agent.mode`），
+> `include_dirs` 也在 `permissions` 下面（不是 `tools`）；
+> 压缩的开关在 `context` 段（`auto_compact` / `compact_threshold`），不在 `agent` 段；
+> `agent.max_turns` 数的是**模型调用**次数，默认 50。
 
 ### 7.1 谁可以写配置
 
@@ -941,7 +1015,7 @@ model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的
 | `ToolExecutor.execute` | M1 | 返回顺序必须与输入 tool_call 顺序一致 |
 | `ContextEngine.build_messages` | M2 | 消息顺序固定：system → instructions → summary → history |
 | `ModelGateway.query_stream` | M3 | 产出 `ModelEvent` 序列；工具调用在 `tool_call_done` 时完整 |
-| `HookRunner.run` | M3 | 异常 / 超时不得阻断主流程（除非 `strict`） |
+| `HookRunner.apply` | M3 | 异常 / 超时不得阻断主流程（除非 `strict`） |
 | `web.events.normalize` | M5 | 核心事件 → 前端条目的**唯一**翻译层；未知事件类型返回空列表，不抛异常 |
 | `SessionRuntime.emit` / `attach` / `detach` | M5 | 缓冲与 SSE 共用同一个 `seq` 空间；瞬时条目只推不存 |
 | `PermissionPolicy.within_bounds` | M5 | 路径越界检查**不被规则放宽**；越界 → 403 |
@@ -986,7 +1060,7 @@ Web 层的测试在 `tests/coderagent/web/`：`fastapi` 是**可选依赖**，�
 |---|---|---|
 | 专用工具与 bash 语义重叠，模型困惑 | 质量下降 | 工具描述明确边界；edit 失败时提示改用 bash；prompt 中给使用建议 |
 | 结构化摘要丢失关键信息 | 长会话跑偏 | 摘要 schema 强制字段 + 每次压缩后校验「files_touched」非空 |
-| 上下文估算不准（tokenizer 差异） | 仍会 OOM | 预留 15% 余量 + 超限异常兜底触发强制压缩 |
+| 上下文估算不准（tokenizer 差异） | 仍会 OOM | 预留 `reserved_output`（默认 8000 token）+ 超限异常兜底触发强制压缩 |
 | TUI 与 headless 行为分叉 | 线上问题难复现 | 核心逻辑（loop/context/tools）与 UI 完全解耦，headless 为准 |
 | 权限规则误伤 | 体验差 | 提供 `/permissions` 查看命中规则与来源；拒绝时回传原因让模型改写 |
 | 上游 mini-swe-agent 演进冲突 | 维护成本 | `coderagent` 只依赖 `minisweagent` 的稳定公共 API（Protocol/配置/环境），版本化锁定 |
