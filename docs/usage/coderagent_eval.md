@@ -28,7 +28,9 @@ timeout: 300                  # optional, the seconds of the agent (default 300)
 verify_timeout: 300           # optional, the seconds of each verify command
 expect: pass                  # optional, `pass` (default) or `fail`
 tags: [bugfix]                # optional
+require_tools: [edit, multi_edit]  # optional, the tools the task needs
 config:                       # optional, a yaml file or `a.b=c` overrides
+  - permissions.yaml          # a yaml file next to the task.yaml
   - agent.max_turns=20
 script:                       # optional, the scripted model. Empty means: the real model.
   - content: Let me look at the file first.
@@ -56,6 +58,17 @@ pass by doing nothing.
 suite honest, because a check that never fails would let every task pass. The
 report says whether a task did what it was supposed to do (`as_expected`), and
 the summary counts the ones that did not (`unexpected`).
+
+`require_tools` names the tools the task needs: one of them has to have worked.
+The result of the task alone is not enough, because an agent that rewrites the
+file with the shell would pass the check while the tool stayed broken. A task
+that says `require_tools: [edit, multi_edit]` cannot be solved that way, so a
+broken `edit` shows up as a failed task.
+
+A `config` entry may be a yaml file next to the `task.yaml`, so that a task
+brings its own settings. The tasks of `evals/basic` use it for their permission
+rules: the mode and the rules of the task win over the mode of the command, and
+they forbid the routes around the tool the task needs.
 
 The `script` is a scripted model: the answers of the agent are written down
 instead of asked for. It needs no API key, so a task with a script runs offline,

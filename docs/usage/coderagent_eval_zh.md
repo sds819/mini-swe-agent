@@ -26,7 +26,9 @@ timeout: 300                  # 可选，agent 这一轮的墙钟秒数（默认
 verify_timeout: 300           # 可选，每条 verify 命令的秒数（默认 300）
 expect: pass                  # 可选，`pass`（默认）或 `fail`
 tags: [bugfix]                # 可选
+require_tools: [edit, multi_edit]  # 可选，这个任务需要的工具
 config:                       # 可选，配置覆盖：YAML 文件路径或 `a.b=c`
+  - permissions.yaml          # task.yaml 旁边的 YAML 文件
   - agent.max_turns=20
 script:                       # 可选，脚本化模型；为空 = 用真实模型
   - content: 先看一下文件。
@@ -49,6 +51,15 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 `expect: fail` 是给那些**必须不通过**的任务用的：它是 suite 的保险丝——
 一个从来不失败的判据，会让每个任务都通过。
 报告里每个任务带 `as_expected`（它有没有做到该做的），summary 里数了 `unexpected`（没做到的有几个）。
+
+`require_tools` 写这个任务需要哪些工具：里面至少要有一个真的用成功过。
+光看任务的结果是不够的：agent 用 shell 把文件重写一遍，照样能让检查通过，
+而工具还是坏的。写了 `require_tools: [edit, multi_edit]` 的任务没法这样绕过去，
+所以 `edit` 一坏，任务就会失败。
+
+`config` 里可以写 `task.yaml` 旁边的 YAML 文件，这样一个任务能自带配置。
+`evals/basic` 的任务用它带自己的权限规则：任务的模式和规则盖过命令行的模式，
+并且把「绕开这个任务需要的工具」的路都堵上。
 
 `script` 是脚本化模型：agent 的回答是写死的，不是问模型要来的。
 它不需要 API key，所以带 `script` 的任务可以离线跑，而且 harness 自己的轨迹是可复现的；
