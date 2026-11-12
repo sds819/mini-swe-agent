@@ -28,7 +28,9 @@ timeout: 300                  # optional, the seconds of the agent (default 300)
 verify_timeout: 300           # optional, the seconds of each verify command
 expect: pass                  # optional, `pass` (default) or `fail`
 tags: [bugfix]                # optional
-require_tools: [edit, multi_edit]  # optional, the tools the task needs
+require_tools:               # optional, the tools the task needs, and the files they touch
+  - tools: [edit, multi_edit]
+    paths: [calc.py]
 config:                       # optional, a yaml file or `a.b=c` overrides
   - permissions.yaml          # a yaml file next to the task.yaml
   - agent.max_turns=20
@@ -59,11 +61,21 @@ suite honest, because a check that never fails would let every task pass. The
 report says whether a task did what it was supposed to do (`as_expected`), and
 the summary counts the ones that did not (`unexpected`).
 
-`require_tools` names the tools the task needs: one of them has to have worked.
-The result of the task alone is not enough, because an agent that rewrites the
-file with the shell would pass the check while the tool stayed broken. A task
-that says `require_tools: [edit, multi_edit]` cannot be solved that way, so a
-broken `edit` shows up as a failed task.
+`require_tools` names what the task needs from the tools: one of the requirements
+has to be met. The result of the task alone is not enough, because an agent
+that rewrites the file with the shell would pass the check while the tool
+stayed broken. A requirement names the tools that may do the work and the
+files they have to touch:
+
+```yaml
+require_tools:
+  - tools: [edit, multi_edit]
+    paths: [calc.py]
+```
+
+The file matters: an edit of another file is not the work of the task. A task
+that says this cannot be solved with the shell, so a broken `edit` shows up as
+a failed task.
 
 A `config` entry may be a yaml file next to the `task.yaml`, so that a task
 brings its own settings. The tasks of `evals/basic` use it for their permission
@@ -242,6 +254,11 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 
 The last one is deliberate: an agent that changes what it should not is as much
 a bug as an agent that changes nothing.
+
+Five of the tasks protect the file they change: the rules of the task refuse
+every other way of writing it, and the task needs the `edit` tool to have
+worked on that very file. So a broken `edit` fails the task instead of being
+routed around.
 
 Every task but `no-op` fails its check before the agent starts, so a task that
 is solved by doing nothing is a broken task. `tests/coderagent/eval/test_suite.py`

@@ -26,7 +26,9 @@ timeout: 300                  # 可选，agent 这一轮的墙钟秒数（默认
 verify_timeout: 300           # 可选，每条 verify 命令的秒数（默认 300）
 expect: pass                  # 可选，`pass`（默认）或 `fail`
 tags: [bugfix]                # 可选
-require_tools: [edit, multi_edit]  # 可选，这个任务需要的工具
+require_tools:               # 可选，这个任务需要的工具，以及它们必须改的文件
+  - tools: [edit, multi_edit]
+    paths: [calc.py]
 config:                       # 可选，配置覆盖：YAML 文件路径或 `a.b=c`
   - permissions.yaml          # task.yaml 旁边的 YAML 文件
   - agent.max_turns=20
@@ -52,10 +54,18 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 一个从来不失败的判据，会让每个任务都通过。
 报告里每个任务带 `as_expected`（它有没有做到该做的），summary 里数了 `unexpected`（没做到的有几个）。
 
-`require_tools` 写这个任务需要哪些工具：里面至少要有一个真的用成功过。
+`require_tools` 写这个任务对工具的要求：这些要求里**有一条**要满足。
 光看任务的结果是不够的：agent 用 shell 把文件重写一遍，照样能让检查通过，
-而工具还是坏的。写了 `require_tools: [edit, multi_edit]` 的任务没法这样绕过去，
-所以 `edit` 一坏，任务就会失败。
+而工具还是坏的。一条要求写清楚「哪些工具可以动手」和「它们必须动哪些文件」：
+
+```yaml
+require_tools:
+  - tools: [edit, multi_edit]
+    paths: [calc.py]
+```
+
+文件这一项是要紧的：改了另一个文件，不算做了这个任务。
+写了这条要求的任务没法用 shell 绕过去，所以 `edit` 一坏，任务就会失败。
 
 `config` 里可以写 `task.yaml` 旁边的 YAML 文件，这样一个任务能自带配置。
 `evals/basic` 的任务用它带自己的权限规则：任务的模式和规则盖过命令行的模式，
@@ -212,6 +222,10 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 | `no-op` | 一个已经做好的任务：agent 得**什么都别改** |
 
 最后一个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。
+
+八个任务里有五个把要改的文件「保护」起来：任务自己的规则挡住其它所有写法，
+而且任务要求 `edit` 工具**在这个文件上**成功用过。
+所以 `edit` 一坏，任务就失败，而不是被绕过去。
 
 除了 `no-op`，每个任务在 agent 开始之前都是**没通过**的——一个什么都不做就能过的任务是个坏任务。
 `tests/coderagent/eval/test_suite.py` 盯着这件事。
