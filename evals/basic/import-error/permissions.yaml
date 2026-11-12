@@ -1,0 +1,18 @@
+permissions:
+  rules:
+    - tool: write
+      pattern: app.py
+      decision: deny
+      reason: app.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: app.py
+      decision: deny
+      reason: app.py is edited, not rewritten
+    - tool: write
+      pattern: utils.py
+      decision: deny
+      reason: utils.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: utils.py
+      decision: deny
+      reason: utils.py is edited, not rewritten

@@ -1,0 +1,10 @@
+permissions:
+  rules:
+    - tool: write
+      pattern: config.json
+      decision: deny
+      reason: config.json is edited, not rewritten
+    - tool: multi_edit
+      pattern: config.json
+      decision: deny
+      reason: config.json is edited, not rewritten

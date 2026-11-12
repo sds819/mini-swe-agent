@@ -1,0 +1,10 @@
+permissions:
+  rules:
+    - tool: write
+      pattern: calc.py
+      decision: deny
+      reason: calc.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: calc.py
+      decision: deny
+      reason: calc.py is edited, not rewritten

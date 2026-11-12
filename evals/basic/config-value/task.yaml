@@ -2,7 +2,10 @@ id: config-value
 prompt: |
   The service is meant to give up after 60 seconds, but the configuration says 30.
   Change the configuration so that the timeout is 60. Leave the code alone.
+  Change config.json in place: it may not be rewritten from scratch.
 verify:
   - python -c 'import settings; assert settings.timeout()==60'
   - python -c 'import settings; assert settings.CONFIG["retries"]==3'
+config:
+  - permissions.yaml
 tags: [config]

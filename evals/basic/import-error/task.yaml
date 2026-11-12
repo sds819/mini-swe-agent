@@ -1,7 +1,10 @@
 id: import-error
 prompt: |
   app.py does not run: it imports a name that utils does not have.
-  Fix it so that the test passes.
+  Fix it so that the test passes. Change app.py and utils.py in place: they may
+  not be rewritten from scratch.
 verify:
   - python -m pytest -q tests/test_app.py
+config:
+  - permissions.yaml
 tags: [bugfix]

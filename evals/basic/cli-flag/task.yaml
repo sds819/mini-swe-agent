@@ -2,8 +2,11 @@ id: cli-flag
 prompt: |
   The script `greet.py` ignores its arguments: `python greet.py --name World` prints
   `Hello!`. It should greet the person it is given, so that
-  `python greet.py --name World` prints `Hello, World!`.
+  `python greet.py --name World` prints `Hello, World!`. Change greet.py in
+  place: it may not be rewritten from scratch.
 verify:
   - test "$(python greet.py --name World)" = "Hello, World!"
   - test "$(python greet.py --name Ada)" = "Hello, Ada!"
+config:
+  - permissions.yaml
 tags: [feature]

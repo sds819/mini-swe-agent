@@ -1,0 +1,18 @@
+permissions:
+  rules:
+    - tool: write
+      pattern: pricing.py
+      decision: deny
+      reason: pricing.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: pricing.py
+      decision: deny
+      reason: pricing.py is edited, not rewritten
+    - tool: write
+      pattern: report.py
+      decision: deny
+      reason: report.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: report.py
+      decision: deny
+      reason: report.py is edited, not rewritten

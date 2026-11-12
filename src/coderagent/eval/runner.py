@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from coderagent.config.schema import Config
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
@@ -154,13 +156,21 @@ def task_config(base: Config, task: Task) -> Config:
     config = base.model_copy(deep=True)
     explicit = "context_window" in base.context.model_fields_set
     for spec in task.config:
-        override = get_config_from_spec(spec)
+        override = _override(spec, task)
         explicit = explicit or "context_window" in (override.get("context") or {})
         config = Config(**recursive_merge(config.model_dump(mode="json"), override))
     if not explicit:
         """The window of the model is used when the configuration does not set one."""
         config.context.model_fields_set.discard("context_window")
     return config
+
+
+def _override(spec: str, task: Task) -> dict:
+    """The override of a task: a yaml file next to it, or an `a.b=c` spec."""
+    path = Path(spec)
+    if "=" not in spec and not path.is_absolute() and task.path is not None and (task.path / path).exists():
+        return yaml.safe_load((task.path / path).read_text(encoding="utf-8")) or {}
+    return get_config_from_spec(spec)
 
 
 def run_task(

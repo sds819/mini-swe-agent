@@ -1,0 +1,10 @@
+permissions:
+  rules:
+    - tool: write
+      pattern: greet.py
+      decision: deny
+      reason: greet.py is edited, not rewritten
+    - tool: multi_edit
+      pattern: greet.py
+      decision: deny
+      reason: greet.py is edited, not rewritten

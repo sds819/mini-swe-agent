@@ -1,7 +1,10 @@
 id: off-by-one
 prompt: |
   The function `add_one` in calc.py is off by one: it adds two instead of one.
-  Fix it so that the test passes.
+  Fix it so that the test passes. Change calc.py in place: it may not be
+  rewritten from scratch.
 verify:
   - python -m pytest -q tests/test_calc.py
+config:
+  - permissions.yaml
 tags: [bugfix]
