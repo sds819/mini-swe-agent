@@ -1,0 +1,5733 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://mini-swe-agent.com/latest/design/coderagent-answers/">
+      
+      
+        <link rel="prev" href="../coderagent-questions/">
+      
+      
+        <link rel="next" href="../milestones/M0-skeleton/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/mini_square.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Answers - mini-SWE-agent documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M22%2012a10%2010%200%200%201-10%2010A10%2010%200%200%201%202%2012%2010%2010%200%200%201%2012%202a10%2010%200%200%201%2010%2010m-12%206%206-6-6-6-1.4%201.4%204.6%204.6-4.6%204.6z%22/%3E%3C/svg%3E');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../assets/custom.css">
+    
+      <link rel="stylesheet" href="../../assets/gif-controls.css">
+    
+      <link rel="stylesheet" href="../../assets/mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../assets/image_theme.css">
+    
+      <link rel="stylesheet" href="../../assets/bubbles.css">
+    
+      <link rel="stylesheet" href="../../assets/navigation_cards.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-SG2NC1GDRD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-SG2NC1GDRD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-SG2NC1GDRD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#coding-agent" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+              <button class="md-banner__button md-icon" aria-label="Don't show this again">
+                
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+              </button>
+            
+            
+<a href="../../usage/programbench/">
+  🎉 Run mini-swe-agent on our new &amp; extremely challenging benchmark, ProgramBench
+</a>
+
+          </div>
+          
+            <script>var el=document.querySelector("[data-md-component=announce]");if(el){var content=el.querySelector(".md-typeset");__md_hash(content.innerHTML)===__md_get("__announce")&&(el.hidden=!0)}</script>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden="">
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="mini-SWE-agent documentation" class="md-header__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            mini-SWE-agent documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Answers
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-orange" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design (WIP)
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://www.swebench.com/blog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://swebench.com" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Leaderboard
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="mini-SWE-agent documentation" class="md-nav__button md-logo" aria-label="mini-SWE-agent documentation" data-md-component="logo">
+      
+  <img src="../../assets/mini_square.svg" alt="logo">
+
+    </a>
+    mini-SWE-agent documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SWE-agent/mini-SWE-agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    SWE-agent/mini-SWE-agent
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3">
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Command line usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    <code>mini</code>
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/output_files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4" id="__nav_1_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding agent
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Coding agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    快速开始
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_4_2">
+        
+          
+          <label class="md-nav__link" for="__nav_1_4_2" id="__nav_1_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    中文
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    中文
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_features_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    功能
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_web_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    网页版
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_commands_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    命令
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_subagents_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    子 agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_hooks_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_eval_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_web/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_subagents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sub agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP servers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sandbox
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/coderagent_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_5">
+        
+          
+          <label class="md-nav__link" for="__nav_1_5" id="__nav_1_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Language models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Language models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/local_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_6">
+        
+          
+          <label class="md-nav__link" for="__nav_1_6" id="__nav_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/global_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Global configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/yaml_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Yaml config files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7">
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python bindings &amp; more
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Python bindings &amp; more
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/python_bindings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic Python bindings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/control_flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understanding the agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subclassing and more
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/environments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/v2_migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2 migration guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/agents/default/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DefaultAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/agents/interactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    InteractiveAgent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3">
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/litellm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/litellm_response_toolcall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LitellmResponseModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/openrouter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenRouterModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/requesty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RequestyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/portkey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/portkey_response/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PortkeyResponse
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/test_models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DeterministicModel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extra Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/models/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4">
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/local/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LocalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/singularity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SingularityEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/swerex_docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexDockerEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/bubblewrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BubblewrapEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/contree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ContreeEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/environments/swerex_modal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SwerexModalEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5">
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run Scripts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Run Scripts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/hello_world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hello World
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/mini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/mini_extra/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mini-extra
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/inspector/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inspector
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/swebench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (batch)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/swebench_single/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SWE-bench (single)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/run/programbench/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ProgramBench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked="">
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design (WIP)
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design (WIP)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding-agent-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent-design-logic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design logic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coderagent-questions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Questions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Answers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Answers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a. 上下文是如何管理的
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="a. 上下文是如何管理的">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a1 一次请求发给模型的消息由哪几部分组成？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a2 上下文预算怎么算？token 怎么估？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a3 什么时候触发压缩？切点怎么选？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a4 被切掉的内容去哪了？摘要失败怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a5 指令文件从哪儿加载？优先级？子目录怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a6 运行时状态怎么进上下文？权限模式中途变了怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b. 工具如何管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="b. 工具如何管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b1 内置工具有哪些？怎么启用/禁用？外部工具怎么进来？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b2 工具 schema 占多少预算？怎么裁？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3-tool-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b3 一轮多个 tool call，并行还是串行？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b4 工具执行失败会怎样？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b5 有哪几种权限模式？默认判定是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b6 规则文件在哪？谁说了算？匹配语义是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b7-bash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b7 bash 这种命令怎么管？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b8-edit-multi_edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b8 edit / multi_edit 的硬性保证？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c. 任务如何调度
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="c. 任务如何调度">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#c1-turn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c1 一轮 turn 的主循环长什么样？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c2 一轮会以哪些原因结束？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c3 跑太久 / 轮数多 / 花钱多，怎么卡住？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c4 一轮进行中怎么被打断？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c5-agent-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c5 子 agent 怎么调度？和主 agent 什么关系？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c6 模型可以中途换吗？依据是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c7-todo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c7 todo 列表存在哪儿？怎么回到上下文？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-memory-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d. memory 和 state 如何管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="d. memory 和 state 如何管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d1-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d1 「state」指什么？有哪几种？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d2 事件日志是什么？格式？为什么是「唯一事实来源」？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d3 关掉程序能接着聊吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d4 检查点存什么？能回退到什么粒度？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d5-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d5 「memory」有几层？谁读谁写？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d6 用户级数据散落在哪些路径？评测怎么隔离？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e. 如何做评测与如何观察
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="e. 如何做评测与如何观察">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#e1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e1 有没有跑一批任务并自动判分的入口？任务怎么写？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2-agent-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e2 怎么保证「agent 的失败」和「harness 的失败」分得开？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e3-fingerprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e3 报告里有什么？fingerprint 是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e4 两次运行怎么比？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e5 一次真实会话怎么观察？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e6-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e6 CI 里跑的是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f. 如何做约束以及恢复
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="f. 如何做约束以及恢复">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#f1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f1 约束一共有几层？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f2-hook-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f2 hook 有哪几个触发点？hook 自己挂了会挡住操作吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f3-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f3 hook 改写参数和改写提问，怎么区分？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f4 出错之后能恢复吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f5 三种失败分别怎么处理？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f6 沙箱管得住什么？边界在哪？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知瑕疵（写下来是为了不被当成没看见）
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M0-skeleton/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M0 — Skeleton &amp; config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M1-tools-permissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M1 — Tools &amp; permissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M2-context-session/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M2 — Context &amp; sessions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M3-ui-extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M3 — UI &amp; extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M4-advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M4 — Advanced
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M5-web-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../milestones/M5-web-modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    M5 — Web modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.swebench.com/blog.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://swebench.com" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Leaderboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a. 上下文是如何管理的
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="a. 上下文是如何管理的">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a1 一次请求发给模型的消息由哪几部分组成？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a2 上下文预算怎么算？token 怎么估？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a3 什么时候触发压缩？切点怎么选？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a4 被切掉的内容去哪了？摘要失败怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a5 指令文件从哪儿加载？优先级？子目录怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a6 运行时状态怎么进上下文？权限模式中途变了怎么办？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b. 工具如何管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="b. 工具如何管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b1 内置工具有哪些？怎么启用/禁用？外部工具怎么进来？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b2 工具 schema 占多少预算？怎么裁？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3-tool-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b3 一轮多个 tool call，并行还是串行？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b4 工具执行失败会怎样？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b5 有哪几种权限模式？默认判定是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b6 规则文件在哪？谁说了算？匹配语义是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b7-bash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b7 bash 这种命令怎么管？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b8-edit-multi_edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b8 edit / multi_edit 的硬性保证？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c. 任务如何调度
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="c. 任务如何调度">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#c1-turn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c1 一轮 turn 的主循环长什么样？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c2 一轮会以哪些原因结束？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c3 跑太久 / 轮数多 / 花钱多，怎么卡住？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c4 一轮进行中怎么被打断？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c5-agent-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c5 子 agent 怎么调度？和主 agent 什么关系？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c6 模型可以中途换吗？依据是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c7-todo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        c7 todo 列表存在哪儿？怎么回到上下文？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-memory-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d. memory 和 state 如何管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="d. memory 和 state 如何管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d1-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d1 「state」指什么？有哪几种？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d2 事件日志是什么？格式？为什么是「唯一事实来源」？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d3 关掉程序能接着聊吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d4 检查点存什么？能回退到什么粒度？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d5-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d5 「memory」有几层？谁读谁写？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        d6 用户级数据散落在哪些路径？评测怎么隔离？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e. 如何做评测与如何观察
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="e. 如何做评测与如何观察">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#e1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e1 有没有跑一批任务并自动判分的入口？任务怎么写？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2-agent-harness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e2 怎么保证「agent 的失败」和「harness 的失败」分得开？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e3-fingerprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e3 报告里有什么？fingerprint 是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e4 两次运行怎么比？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e5 一次真实会话怎么观察？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e6-ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e6 CI 里跑的是什么？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f. 如何做约束以及恢复
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="f. 如何做约束以及恢复">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#f1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f1 约束一共有几层？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f2-hook-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f2 hook 有哪几个触发点？hook 自己挂了会挡住操作吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f3-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f3 hook 改写参数和改写提问，怎么区分？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f4 出错之后能恢复吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f5 三种失败分别怎么处理？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        f6 沙箱管得住什么？边界在哪？
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知瑕疵（写下来是为了不被当成没看见）
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+
+                  
+
+
+  
+    <a href="https://github.com/SWE-agent/mini-SWE-agent/edit/main/docs/design/coderagent-answers.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+    </a>
+  
+  
+
+
+<h1 id="coding-agent">Coding Agent 答问录</h1>
+<blockquote>
+<p>这份文档回答 <a href="../coderagent-questions/">coderagent-questions.md</a> 里的 33 个问题。
+每条答案的格式是：<strong>结论</strong> → <strong>它落在哪</strong> → <strong>为什么这么定</strong>（取舍）。
+代码位置全部相对 <code>src/coderagent/</code>，测试相对 <code>tests/coderagent/</code>。</p>
+<p>读法建议：先看每节的「一句话」，需要动手时再顺着文件路径跳。设计层面的「为什么」见
+<a href="../coderagent-design-logic/">coderagent-design-logic.md</a>，本文只讲「现在长什么样」。</p>
+</blockquote>
+<hr>
+<h2 id="a">a. 上下文是如何管理的</h2>
+<h3 id="a1">a1 一次请求发给模型的消息由哪几部分组成？</h3>
+<p><strong>结论</strong>：固定五段、顺序不可换，由 <code>core/context.py</code> 的 <code>ContextEngine.build_messages()</code> 组装。</p>
+<ol>
+<li><strong>system prompt</strong> —— <code>system</code> 角色，来自 <code>agent.system_prompt</code>；</li>
+<li><strong>权限模式说明</strong> —— <code>user</code> 角色，<code>&lt;permission_mode mode="plan"&gt;…&lt;/permission_mode&gt;</code>；</li>
+<li><strong>指令 + 记忆 + todo</strong> —— 合并成<strong>一条</strong> <code>user</code> 消息（<code>ContextEngine._instruction_text()</code>）；</li>
+<li><strong>压缩出来的摘要</strong> —— <code>user</code> 角色，<code>&lt;session_summary&gt;…&lt;/session_summary&gt;</code>；</li>
+<li><strong>历史消息</strong> —— 原始的 assistant / user / tool 消息列表。</li>
+</ol>
+<p><strong>为什么</strong>：摘要在历史之前，因为被摘要的是<strong>更早</strong>的那部分；指令和 todo 合成一条，是因为它们性质相同（都是「本轮的外部状态」），拆成多条 user 消息会让模型误以为用户说了好几句话。历史放在最后，因为它是「刚刚发生的事」。</p>
+<p><strong>取舍</strong>：第 2 段和第 4 段是两条相邻的 <code>user</code> 消息，中间没有 assistant。这在 provider 侧合法，但严格说不是一段自然对话——见「已知瑕疵」一节。</p>
+<h3 id="a2-token">a2 上下文预算怎么算？token 怎么估？</h3>
+<p><strong>结论</strong>：<code>core/budget.py</code> + <code>core/tokens.py</code>。</p>
+<ul>
+<li><strong>窗口大小</strong>：<code>context_window_for(model_name)</code> 按模型名前缀查表（<code>gpt-</code> 128k、<code>claude</code> 200k、<code>deepseek</code> 64k、<code>gemini</code> 1M、<code>minimax</code> 204800……）。<strong>只有用户没显式配 <code>context.context_window</code> 时才生效</strong>——<code>run.py</code> 的 <code>_context_config()</code> 会检查 <code>"context_window" in config.context.model_fields_set</code>。显式配置永远赢。</li>
+<li><strong>可用上限</strong>：<code>BudgetGuard.limit() = max(0, context_window - reserved_output)</code>，<code>reserved_output</code> 默认 8000。</li>
+<li><strong>压缩阈值</strong>：<code>should_compact(estimated) = estimated &gt; min(int(context_window * compact_threshold), limit())</code>，默认 <code>compact_threshold=0.8</code>。两个阈值取小的那个，即<strong>比例阈值和绝对上限谁更紧听谁的</strong>。</li>
+<li><strong>token 估算</strong>：装了 <code>tiktoken</code> 就用 <code>cl100k_base</code> 精确算（含 tool schema 的 JSON 长度，每条消息额外 4 token 开销）；没装就退回启发式：<code>字符数 / 3.6 + 4 × 消息数</code>。</li>
+</ul>
+<p><strong>为什么</strong>：估算只是用来<strong>决定要不要压缩</strong>，不用来精确计费，所以宁可便宜。但 tiktoken 存在时用精确值，能少很多次无谓压缩。</p>
+<p><strong>取舍</strong>：启发式常数（3.6）是拍出来的经验值，对中文偏保守（中文一个字约 1–2 token）。</p>
+<h3 id="a3">a3 什么时候触发压缩？切点怎么选？</h3>
+<p><strong>结论</strong>：<code>ContextEngine.maybe_compact()</code>，每轮问模型之前调一次（<code>core/loop.py</code> 里在 <code>_query()</code> 前）。</p>
+<p><strong>三个触发条件</strong>（任一成立就压）：</p>
+<ol>
+<li><code>config.context.auto_compact</code> 为真，且估算 token 超过预算阈值；</li>
+<li>距上次压缩超过 <code>compact_every_turns</code>（默认 40）轮；</li>
+<li>provider 报上下文溢出 → <code>force_compact()</code> 强制压一次再重试。</li>
+</ol>
+<p><strong>切点</strong>在 <code>ContextEngine._cut_index()</code>：</p>
+<ul>
+<li>候选切点只有<strong>轮边界</strong>（<code>History.turn_starts()</code>，即每条 role 为 user 的消息）。切在轮边界上，工具结果消息才不会跟「发起它的那条 assistant 消息」分家。</li>
+<li>两个条件<strong>取更严的</strong>：一是「保留最近 <code>keep_recent_turns</code>（默认 20）轮」，二是「保留最近 <code>keep_recent_token_ratio</code>（默认 0.4）个窗口的 token」——哪个切得更靠前就切哪里。</li>
+<li>还有一条<strong>硬上限</strong>兜底：切完之后剩余部分 + 摘要的 token 也不能超过 <code>guard.limit()</code>，超了就继续往后切一个轮。</li>
+</ul>
+<p><strong>为什么</strong>：宁可多留一点，也不要让切点落在半个工具调用中间——那会让模型看到「结果没了，但请求还在」。</p>
+<h3 id="a4">a4 被切掉的内容去哪了？摘要失败怎么办？</h3>
+<p><strong>结论</strong>：<code>core/summarize.py</code> + <code>ContextEngine.compact()</code>。</p>
+<ul>
+<li><strong>摘要 schema</strong>（<code>Summary</code> / <code>FIELDS</code>）：<code>goal</code>、<code>findings</code>、<code>decisions</code>、<code>files_touched</code>、<code>open_questions</code>、<code>next_steps</code>、<code>errors_seen</code>，再加一个<strong>派生</strong>字段 <code>recent_errors</code>（从消息里直接算，不问模型）。<code>files_touched</code> 的每一项是 <code>{path, change, state}</code>。</li>
+<li><strong>永远只有一份摘要</strong>：<code>self.summaries = [summary]</code> 是<strong>替换</strong>不是追加。所以第二次压缩时，<strong>上一份摘要会作为额外输入喂给模型</strong>——否则摘要会越堆越多把预算吃光。</li>
+<li><strong>失败判定</strong>：解析不出 JSON → 失败；<strong>压缩掉的段落里有写操作、但摘要里 <code>files_touched</code> 是空的</strong> → 也算失败（模型忘了改过文件，说明它没读懂）。失败就<strong>重试一次</strong>。</li>
+<li><strong>两次都失败</strong> → <code>conservative_summary()</code> 兜底：<code>goal</code> 写「对话前半部分被压缩了」，<code>findings</code> 放最后 5 条消息（每条截 400 字），<code>next_steps</code> 写「重新读一遍提到的文件来恢复细节」。</li>
+<li><strong>落地</strong>：写一条 <code>EventType.COMPACTION</code> 事件（<code>compacted_messages</code> / <code>tokens</code> / <code>cost</code> / <code>summary</code>），历史被截断成 <code>history.messages[cut:]</code>。</li>
+</ul>
+<p><strong>为什么</strong>：摘要失败不能变成「静默丢历史」。兜底摘要很笨，但它诚实地告诉模型「你丢了东西，去重读」。</p>
+<h3 id="a5">a5 指令文件从哪儿加载？优先级？子目录怎么办？</h3>
+<p><strong>结论</strong>：<code>core/instructions.py</code>。</p>
+<ul>
+<li><code>load_instructions(cwd, user_home)</code> 按顺序加载：用户 <code>CLAUDE.md</code> → 项目 <code>AGENTS.md</code> → 项目 <code>CLAUDE.md</code>。渲染成 <code>&lt;project_instructions source="AGENTS.md"&gt;…&lt;/project_instructions&gt;</code> 块。</li>
+<li><strong>子目录惰性加载</strong>：<code>subdirectory_instructions(path, cwd)</code> 从 <code>cwd</code> 往 <code>path</code> 逐层走，<strong>由深到浅</strong>加载每层的 <code>AGENTS.md</code>（子目录只认 <code>AGENTS.md</code>，不认 <code>CLAUDE.md</code>）。不在 <code>cwd</code> 底下就返回空。</li>
+<li><strong>触发时机</strong>：不是预先全读，而是<strong>agent 碰某个路径时</strong>才加载——<code>ToolExecutor</code> 对每个带 <code>path</code> 参数的工具调 <code>on_path(path)</code>（<code>run.py</code> 里接的是 <code>context.note_path</code>）。同一路径只加载一次。</li>
+</ul>
+<p><strong>为什么</strong>：一个仓库可能有几百个目录的 AGENTS.md，全量塞进上下文会炸。惰性加载让「我要去那个目录了」和「我读到了那个目录的规矩」同步发生。</p>
+<h3 id="a6">a6 运行时状态怎么进上下文？权限模式中途变了怎么办？</h3>
+<p><strong>结论</strong>：每一条都在<strong>每次组装消息时现算</strong>，不烤进 system prompt。</p>
+<ul>
+<li><strong>权限模式</strong>：<code>ContextEngine._mode_text()</code> → <code>tools/permissions.py</code> 的 <code>mode_block(mode)</code>。只有 <code>plan</code> 和 <code>readonly</code> 两种模式有说明（其余三种没有额外说明）。之所以必须现算，是因为 <code>/mode</code>、<code>/plan</code> 会在<strong>会话中途</strong>原地改 <code>policy.mode</code>，烤进 system prompt 就成了过期信息。</li>
+<li><strong>todo</strong>：<code>session.metadata["todos"]</code>，渲染成 <code>&lt;current_todos&gt;</code> 块，用 <code>- [x]</code> / <code>- [ ]</code> 复选框语法。</li>
+<li><strong>摘要</strong>：<code>self.summaries</code>，渲染成 <code>&lt;session_summary&gt;</code> 块。</li>
+</ul>
+<p><strong>为什么</strong>：同一段 system prompt 必须在权限模式变化后立刻失真。实测踩过这个坑：最早 <code>plan</code> 和 <code>readonly</code> 两个模式对模型完全一样（空壳），模型不知道自己能做什么、不能做什么。</p>
+<hr>
+<h2 id="b">b. 工具如何管理</h2>
+<h3 id="b1">b1 内置工具有哪些？怎么启用/禁用？外部工具怎么进来？</h3>
+<p><strong>结论</strong>：<code>tools/builtin/__init__.py</code> 的 <code>ALL_TOOLS</code> 有 <strong>11 个</strong>内置工具：</p>
+<p><code>read</code>、<code>write</code>、<code>edit</code>、<code>multi_edit</code>、<code>glob</code>、<code>grep</code>、<code>ls</code>、<code>bash</code>、<code>bash_output</code>、<code>bash_kill</code>、<code>todo_write</code>。</p>
+<ul>
+<li><strong>启用/禁用</strong>：<code>config.tools.enabled</code>（白名单，默认全开）+ <code>config.tools.disabled</code>（黑名单），<code>build_registry(enabled, disabled)</code> 求交集。</li>
+<li><strong>外部工具</strong>叠加在上面：<code>task</code>、<code>skill</code>（<code>run.py</code> 里条件注册）、MCP 工具（<code>mcp__&lt;server&gt;__&lt;tool&gt;</code>）、插件工具。</li>
+<li><code>tools/registry.py</code> 的 <code>ToolRegistry</code> 是名字 → <code>Tool</code> 的字典；同名重复注册会告警并覆盖。</li>
+</ul>
+<p><strong>为什么</strong>：白名单 + 黑名单两条通道，是为了「全局开一个工具」和「全局关一个工具」都能一句话写出来。</p>
+<h3 id="b2-schema">b2 工具 schema 占多少预算？怎么裁？</h3>
+<p><strong>结论</strong>：<code>tools/registry.py</code> 的 <code>ToolRegistry.schemas(budget_tokens)</code>。</p>
+<ul>
+<li><strong>预算大小</strong>：<code>run.schema_budget()</code> —— 配了 <code>tools.schema_budget_tokens</code> 就用它，否则 <code>max(context_window // 10, 内置工具本身的大小)</code>。也就是<strong>默认给工具 schema 留窗口的 10%</strong>。</li>
+<li><strong>估算</strong>：<code>int(len(json.dumps(schemas)) / 3.5)</code>。</li>
+<li><strong>裁剪顺序</strong>：<code>TRIM_ORDER</code> 从先丢 <code>web_search</code> / <code>web_fetch</code> / <code>todo_write</code> / <code>bash_output</code> / <code>bash_kill</code>，再到 <code>multi_edit</code> / <code>write</code> / <code>edit</code>，再到 <code>ls</code> / <code>glob</code> / <code>grep</code>，最后是 <code>read</code> / <code>bash</code>。</li>
+<li><strong>永不裁</strong>：<code>NEVER_TRIM = {"bash", "read"}</code>。</li>
+<li><strong>两轮裁剪</strong>：第一轮按顺序丢到放得下为止；第二轮如果还超，就反复丢<strong>剩下里 schema 最大的那个</strong>（<code>bash</code> / <code>read</code> 除外）。</li>
+</ul>
+<p><strong>为什么</strong>：<code>bash</code> 和 <code>read</code> 是 agent 的两条腿（行动和观察），砍掉任何一个 agent 都不会干活。<code>web_*</code> 最先丢是因为很多模型自带联网。</p>
+<h3 id="b3-tool-call">b3 一轮多个 tool call，并行还是串行？</h3>
+<p><strong>结论</strong>：<code>tools/executor.py</code> 的 <code>ToolExecutor.execute()</code>。</p>
+<ul>
+<li><strong>判定</strong>：只要有<strong>任意一个</strong> action 属于 <code>SEQUENTIAL_TOOLS = {"bash", "write", "edit", "multi_edit"}</code>，或者只有一个 action → <strong>串行</strong>按序执行。否则 → <code>ThreadPoolExecutor(max_workers=len(actions))</code> 并行。</li>
+<li><strong>顺序保证</strong>：<code>pool.map</code> 保序，所以结果<strong>永远按模型给定的 tool_call 顺序</strong>返回。</li>
+<li><strong>权限先算</strong>：<code>_prepare()</code> 对<strong>所有</strong> action 先跑一遍（hook → 权限 → 审批），再开始执行。所以被拒的 action 不会执行，但也<strong>不产生</strong> <code>TOOL_RESULT</code> 事件——事件日志里只看到 <code>TOOL_CALL</code>，看不到它的结果。</li>
+</ul>
+<p><strong>为什么</strong>：读类工具（<code>read</code> / <code>grep</code> / <code>glob</code>）互不干扰，可以并行省时间；写类工具有顺序依赖，并行会打架。</p>
+<h3 id="b4">b4 工具执行失败会怎样？</h3>
+<p><strong>结论</strong>：<strong>不会中断整轮</strong>。<code>executor.py</code> 的 <code>_run()</code>：</p>
+<ul>
+<li>工具抛异常 → 变成一条 observation 字符串 <code>"Error: '&lt;tool&gt;' failed: &lt;Type&gt;: &lt;msg&gt;"</code>；</li>
+<li>参数 JSON 解析失败 → 变成 <code>"Error: ..."</code>，并明确告诉模型「请发一个 JSON 对象」；</li>
+<li>工具自己返回 <code>is_error=True</code>（比如 <code>old_string</code> 没找到）→ 同样是给模型看的一段错误文本。</li>
+</ul>
+<p>模型看到的是<strong>正常的 tool result</strong>，只是内容是错误说明，它可以自己改正后重试。</p>
+<p><strong>为什么</strong>：让工具错误成为<strong>模型可读的信息</strong>而不是异常，是 agent 能自我纠错的前提。</p>
+<h3 id="b5">b5 有哪几种权限模式？默认判定是什么？</h3>
+<p><strong>结论</strong>：<code>tools/permissions.py</code> 的 <code>PermissionMode</code> + <code>_default_decision()</code>。5 种模式：<code>default</code>、<code>acceptEdits</code>、<code>plan</code>、<code>bypass</code>、<code>readonly</code>。</p>
+<p>工具被分成三类（<code>permissions.py</code> 顶部）：</p>
+<ul>
+<li><code>READ_TOOLS = {read, glob, grep, ls}</code></li>
+<li><code>WRITE_TOOLS = {write, edit, multi_edit}</code></li>
+<li><code>INFO_TOOLS = {todo_write, bash_output, bash_kill}</code> —— 只动 agent 自己的记账，<strong>任何模式都直接放行</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>读类 / 记账类</th>
+<th>写类</th>
+<th>其他（bash / task / skill / MCP）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>allow</td>
+<td><strong>ask</strong></td>
+<td><strong>ask</strong></td>
+</tr>
+<tr>
+<td><code>acceptEdits</code></td>
+<td>allow</td>
+<td><strong>allow</strong></td>
+<td>ask</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>allow</td>
+<td><strong>deny</strong></td>
+<td><strong>deny</strong></td>
+</tr>
+<tr>
+<td><code>readonly</code></td>
+<td>allow</td>
+<td><strong>deny</strong></td>
+<td><strong>deny</strong></td>
+</tr>
+<tr>
+<td><code>bypass</code></td>
+<td>allow</td>
+<td>allow</td>
+<td>allow</td>
+</tr>
+</tbody>
+</table>
+<p><strong>审批结果</strong>有三种：<code>allow</code> / <code>deny</code> / <code>always</code>。选 <code>always</code> 会把一条 allow 规则<strong>写进用户规则文件</strong>（<code>rules.add_rule</code>），下次同一类操作不再问。</p>
+<h3 id="b6">b6 规则文件在哪？谁说了算？匹配语义是什么？</h3>
+<p><strong>结论</strong>：<code>tools/rules.py</code>。</p>
+<ul>
+<li><strong>位置</strong>：项目 <code>&lt;project&gt;/.coderagent/rules.yaml</code> 和用户 <code>&lt;config_home&gt;/rules.yaml</code>。</li>
+<li><strong>优先级</strong>：<strong>项目规则先、用户规则后，后写的赢</strong>。也就是说用户可以覆盖项目的同名规则。</li>
+<li><strong>格式</strong>：<code>{"rules": [{tool, pattern, decision, reason}]}</code>。只认这四个键，多一个就抛 <code>RuleError</code>（带文件名和行号）。<code>decision</code> 只能是 <code>allow</code> / <code>ask</code> / <code>deny</code>。</li>
+<li><strong>匹配语义</strong>（<code>Rule.pattern</code>）：</li>
+<li><strong>路径类工具</strong>：<code>pattern</code> 是 <strong>glob</strong>，用 <code>glob_to_regex</code> 转成正则，对<strong>相对 cwd 的路径</strong>匹配。<code>*</code> 不跨 <code>/</code>，<code>**</code> 跨。</li>
+<li><strong><code>bash</code></strong>：<code>pattern</code> 是<strong>正则</strong>，而且必须匹配<strong>整段的开头</strong>（<code>git push</code> 不会匹配 <code>echo "git push"</code>）。</li>
+<li><strong>其他工具</strong>：<code>pattern</code> 是工具名，或者 <code>*</code>。</li>
+<li><strong>求值顺序</strong>：非 bash 工具是「按顺序遍历所有规则，<strong>最后一条匹配的赢</strong>」；bash 是「<strong>分段</strong>判，每段最后一条匹配的赢，整条命令取<strong>最严</strong>的段」。这两处「最后一条赢」的作用域不同，是个容易看错的地方。</li>
+<li><strong>deny 永远赢</strong>：<code>_strictest()</code> 定义 <code>allow(0) &lt; ask(1) &lt; deny(2)</code>。</li>
+</ul>
+<h3 id="b7-bash">b7 <code>bash</code> 这种命令怎么管？</h3>
+<p><strong>结论</strong>：<code>tools/bash_policy.py</code> + <code>permissions.py</code> 的 <code>_evaluate_bash()</code>。</p>
+<ol>
+<li><strong>先看越界</strong>：<code>outside_paths(command, cwd, include_dirs)</code> 找出命令要碰的、<strong>工作目录之外</strong>的路径。只要有，直接 deny——<strong>在任何模式下都成立</strong>（本地沙箱时 <code>bounded=True</code>）。</li>
+<li><code>bypass</code> → 直接 allow；<code>plan</code> / <code>readonly</code> → 直接 deny。</li>
+<li>其余模式：<strong>按段判定</strong>。<code>segments(command)</code> 是个手写扫描器，按 <code>&amp;&amp;</code>、<code>||</code>、<code>;</code>、<code>|</code>、换行切分，且<strong>尊重引号</strong>。</li>
+<li>每段先看规则；没有规则就看 <code>classify_segment(segment)</code>：</li>
+<li><code>safe</code> → allow（<code>git status</code>、<code>ls</code>、<code>cat</code> 等在 <code>COMMANDS</code> 表里且没有危险说明）；</li>
+<li><code>dangerous</code> / <code>unknown</code> → <strong>ask</strong>（<code>git push</code> 是 dangerous；任何带 <code>/</code> 的程序名、带重定向的段都是 unknown）。</li>
+<li>整条命令取<strong>最严</strong>的那一段。</li>
+</ol>
+<p><strong>为什么</strong>：不能只对整条命令做正则匹配——<code>echo hi &amp;&amp; rm -rf /</code> 里危险的是后半段。所以要切段，要逐段判，要取最严。</p>
+<p><strong>注意</strong>：<code>bash</code> 规则<strong>在 <code>bypass</code> 模式下完全失效</strong>（第 2 步就返回了）。评测任务想用 bash 规则保护文件，就必须让那个任务用 <code>mode: default</code>。</p>
+<h3 id="b8-edit-multi_edit">b8 <code>edit</code> / <code>multi_edit</code> 的硬性保证？</h3>
+<p><strong>结论</strong>：<code>tools/builtin/fs.py</code>。</p>
+<ul>
+<li><strong><code>edit</code></strong>：<code>old_string</code> 必须<strong>恰好出现一次</strong>。出现多次 → 报错并告诉模型出现了几次、在第几行，建议加上下文或用 <code>replace_all=True</code>；一次都没出现 → 报错「用 <code>read</code> 看看原文再带更多上下文重试」。文件是 CRLF 而 <code>old_string</code> 不是时，会自动试 CRLF 变体。</li>
+<li><strong><code>multi_edit</code></strong>：<strong>原子</strong>。所有编辑先在内存副本上应用，全部成功才落盘；任何一条失败就返回「Edit #N failed, no changes were written」，文件一个字节都不动。</li>
+<li><strong><code>write</code></strong>：整体覆盖，会建父目录。</li>
+<li><strong>读类工具的输出有上限</strong>：<code>read</code> 默认 2000 行，超过 2000 字符的行会被截断并标出来；<code>glob</code> 最多 200 条路径；<code>grep</code> 最多 100 行内容；<code>bash</code> 输出按 <code>tools.max_output_tokens</code>（默认 8000）裁剪。</li>
+</ul>
+<p><strong>为什么</strong>：<code>edit</code> 的「唯一匹配」是 agent 改文件时最容易出错的地方（改错位置）。宁可让它失败要求重试，也不要让它猜。</p>
+<hr>
+<h2 id="c">c. 任务如何调度</h2>
+<h3 id="c1-turn">c1 一轮 turn 的主循环长什么样？</h3>
+<p><strong>结论</strong>：<code>core/loop.py</code> 的 <code>AgentLoop.run_turn(user_input)</code>。</p>
+<ol>
+<li><strong>UserPromptSubmit hook</strong> 先跑（hook 可以改写用户提问，也可以直接拦下整轮）；</li>
+<li>用户消息进上下文，<code>session.turn_count += 1</code>，状态 → <code>THINKING</code>；</li>
+<li><code>while True</code>：</li>
+<li>检查 <code>cancel</code>（见 c4）；</li>
+<li>检查 <code>max_turns</code> / <code>cost_limit</code> / <code>token_limit</code>（见 c3）；</li>
+<li>路由选模型（见 c6）→ <code>maybe_compact()</code> → 问模型；</li>
+<li>模型返回<strong>工具调用</strong> → <code>executor.plan()</code> + <code>execute()</code> → 工具结果回灌上下文 → 继续下一轮；</li>
+<li>模型返回<strong>纯文本</strong>（没有 tool call）→ 这一轮就结束（<code>end_turn</code>）。</li>
+</ol>
+<p><strong>关键点</strong>：一次「用户输入」对应<strong>很多次模型调用</strong>（<code>max_turns</code> 数的是模型调用次数，不是用户轮数）。<code>TurnResult.turn_count</code> 才是用户轮数。</p>
+<h3 id="c2">c2 一轮会以哪些原因结束？</h3>
+<p><strong>结论</strong>：<code>stop_reason</code> 共 7 种：</p>
+<table>
+<thead>
+<tr>
+<th>stop_reason</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>end_turn</code></td>
+<td>模型不再要求调工具，这轮结束</td>
+</tr>
+<tr>
+<td><code>interrupted</code></td>
+<td><code>cancel()</code> 返回 True（用户中断 / 评测超时）</td>
+</tr>
+<tr>
+<td><code>max_turns</code></td>
+<td>模型调用次数达到 <code>agent.max_turns</code></td>
+</tr>
+<tr>
+<td><code>cost_exceeded</code></td>
+<td>本会话花费达到 <code>agent.cost_limit</code></td>
+</tr>
+<tr>
+<td><code>token_limit</code></td>
+<td>本会话 token 达到 <code>agent.token_limit</code></td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>模型调用失败，或上下文溢出且压不动了</td>
+</tr>
+<tr>
+<td><code>verify_failed</code></td>
+<td>验证命令在 <code>verify.max_rounds</code> 轮之后仍然失败</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注意</strong>：<code>end_turn</code> <strong>不等于成功</strong>。模型可以什么都没干就停。成功与否由外部的验证命令决定（评测里就是 <code>verify</code>）。</p>
+<p><strong>已知瑕疵</strong>：<code>TurnResult.stop_reason</code> 的 docstring 只列了 5 种，漏了 <code>interrupted</code> 和 <code>verify_failed</code>。</p>
+<h3 id="c3">c3 跑太久 / 轮数多 / 花钱多，怎么卡住？</h3>
+<p><strong>结论</strong>：<code>core/loop.py</code> 在每轮循环顶部依次检查。</p>
+<ul>
+<li><code>agent.max_turns</code>（默认 50，0 = 不限）——<strong>模型调用</strong>上限。</li>
+<li><code>agent.cost_limit</code>（默认 0.0 = 不限）。</li>
+<li><code>agent.token_limit</code>（默认 0 = 不限）。</li>
+<li>附加提醒：<code>_warn_unpriced()</code>——如果模型没有价格表却配了 <code>cost_limit</code>，会提示改用 <code>agent.token_limit</code>（很多自建端点没有价格，cost 恒为 0）。</li>
+</ul>
+<p><strong>取舍</strong>：<code>max_turns</code> 数模型调用而不是工具调用，因为真正烧钱的是模型调用。</p>
+<h3 id="c4">c4 一轮进行中怎么被打断？</h3>
+<p><strong>结论</strong>：<code>AgentLoop.cancel</code> 是一个<strong>公开扩展点</strong>（<code>self.cancel = None</code>），每轮循环顶部调一次，返回 True 就以 <code>interrupted</code> 结束。</p>
+<p>三个使用者：</p>
+<ul>
+<li><strong>TUI</strong>：<code>loop.cancel = self.interrupted.is_set</code>（按 Esc 置位）；</li>
+<li><strong>Web 版</strong>：<code>threading.Event</code>；</li>
+<li><strong>评测</strong>：<code>loop.cancel = lambda: time.monotonic() &gt; deadline</code>，<code>deadline = now + task.timeout</code>（默认 300 秒）。</li>
+</ul>
+<p><strong>为什么</strong>：把「打断」做成一个可注入的回调，而不是在循环里写死某一种中断源——这样同一个循环能同时被界面、网页和评测三种外部节奏驱动。</p>
+<h3 id="c5-agent-agent">c5 子 agent 怎么调度？和主 agent 什么关系？</h3>
+<p><strong>结论</strong>：<code>core/subagent.py</code> 的 <code>SubAgentRunner</code>，由 <code>task</code> 工具触发。</p>
+<ul>
+<li><strong>定义</strong>：markdown + YAML front matter，放在 <code>.coderagent/agents/*.md</code>（项目）或 <code>&lt;config_home&gt;/agents/*.md</code>（用户），<strong>项目优先</strong>。front matter 字段：<code>name</code>、<code>description</code>、<code>tools</code>、<code>model_purpose</code>、<code>max_turns</code>。正文就是 system prompt。</li>
+<li><strong>内置三个</strong>：<code>code-explorer</code>（<code>read/grep/glob/ls</code>，15 轮）、<code>verifier</code>（<code>read/grep/glob/bash</code>，20 轮）、<code>refactorer</code>（<code>read/edit/grep/glob</code>，30 轮）。</li>
+<li><strong>和主 agent 的关系</strong>：</li>
+<li><strong>不共享上下文</strong>。子 agent 自己起一份 <code>[system, user]</code> 消息（<code>subagent.py</code> 的 <code>messages = [system, user]</code>），看不见主对话。</li>
+<li><strong>不共享工具</strong>。它有一份<strong>白名单</strong>工具表（<code>_restricted(spec)</code> 另建一个 <code>ToolRegistry</code>）。</li>
+<li><strong>不共享轮数</strong>。自己的 <code>max_turns</code>（默认 20）。</li>
+<li><strong>共享权限模式</strong>，而且这个模式说明被写进子 agent 的 system prompt，让它知道自己和主 agent 一样受限。</li>
+<li><strong>共享事件总线和会话 id</strong>，所以子 agent 的行为在主会话里看得见。</li>
+<li><strong>成本归属</strong>：子 agent 报回自己的 <code>cost = gateway.total_cost - before</code>（<strong>只算它自己那几次调用</strong>）。如果它跑在<strong>另一个</strong> gateway（不同模型）上，这个差额会<strong>加回主 gateway</strong>，主会话的总账因此是对的。</li>
+<li><strong>子 agent 的 tool call 不进事件日志</strong>（只发到总线），所以从日志里看不出它改过哪些文件；它的<strong>结果 JSON</strong>里有 <code>files_touched</code>，但只统计 <code>write</code>/<code>edit</code>/<code>multi_edit</code>。</li>
+</ul>
+<p><strong>为什么</strong>：子 agent 的价值是<strong>隔离上下文</strong>——让它去看 50 个文件，主对话只拿到一份结论。它的工具白名单是第二道安全边界。</p>
+<h3 id="c6">c6 模型可以中途换吗？依据是什么？</h3>
+<p><strong>结论</strong>：<code>models/router.py</code> 的 <code>ModelRouter</code>，每轮循环开头调一次。</p>
+<ul>
+<li><strong>四个维度</strong>：<code>purpose</code>（main / cheap / strong / summarize / reflect）、<code>complexity</code>、<code>budget</code>、<code>user_override</code>。</li>
+<li><strong>优先级</strong>：用户显式指定的模型 &gt; <code>config.model.routing[purpose]</code> &gt; 默认 main。</li>
+<li><strong>默认策略</strong>：预算用掉 80%（<code>cost &gt;= budget * 0.8</code> 或 <code>tokens_used &gt;= token_budget * 0.8</code>）→ 降到 <code>cheap</code>；上下文超过 50000 token 或会话超过 30 轮 → 升到 <code>strong</code>。</li>
+<li><strong>自定义规则</strong>：<code>model.routing_rules</code>，每条形如 <code>when: "tokens &gt; 10000"</code> + <code>purpose: strong</code>。<strong>只比较数字</strong>，<code>&gt;</code>、<code>&gt;=</code>、<code>&lt;</code>、<code>&lt;=</code>、<code>==</code>、<code>!=</code> 六种；<strong>绝不 eval</strong>，所以配置文件跑不了代码。</li>
+<li><strong>换模型时发一条 <code>STATE_CHANGE</code> 事件</strong>（<code>model</code> / <code>previous</code> / <code>reason</code>），事件日志里能看到「为什么换的」。</li>
+<li><strong>坑</strong>：<code>ModelRouter.backend_for()</code> <strong>每次都新建一个 backend</strong>。所以 <code>loop._route()</code> 比较的是<strong>解析后的真名</strong>而不是别名，否则每轮都会重建 backend，别名解析还会失效。</li>
+</ul>
+<h3 id="c7-todo">c7 todo 列表存在哪儿？怎么回到上下文？</h3>
+<p><strong>结论</strong>：<code>tools/builtin/todo.py</code>。</p>
+<ul>
+<li>状态在 <code>session.metadata["todos"]</code>；<code>todo_write</code> 每次<strong>整体替换</strong>列表。</li>
+<li>每项 <code>{content, status, activeForm}</code>，<code>status ∈ {pending, in_progress, completed}</code>，<code>content</code> 和 <code>status</code> 必填，校验不过返回 <code>is_error</code>。</li>
+<li>渲染进上下文的是 <code>&lt;current_todos&gt;</code> 块（<code>- [x]</code> / <code>- [ ]</code>）。</li>
+<li><code>todo_write</code> 属于 <code>INFO_TOOLS</code> → <strong>任何模式都放行</strong>，不问人。</li>
+<li><strong>可重放</strong>：<code>SessionStore.rebuild()</code> 从任何带 <code>todos</code> 的 <code>TOOL_RESULT</code> 事件里恢复 todo 列表。</li>
+</ul>
+<p><strong>为什么</strong>：让 agent 自己把大任务拆成可见的步骤，是它不掉链子的主要手段；但它只动 agent 自己的记账，所以不该占用审批预算。</p>
+<hr>
+<h2 id="d-memory-state">d. memory 和 state 如何管理</h2>
+<h3 id="d1-state">d1 「state」指什么？有哪几种？</h3>
+<p><strong>结论</strong>：<code>core/session.py</code> 的 <code>SessionState</code>：<code>IDLE</code>、<code>THINKING</code>、<code>EXECUTING</code>、<code>AWAITING_APPROVAL</code>、<code>DONE</code>、<code>ERROR</code>。</p>
+<p>状态流转：<code>THINKING</code>（等模型）→ <code>EXECUTING</code>（跑工具）→ <code>THINKING</code> → …… 结束时按停止原因落 <code>DONE</code> 或 <code>ERROR</code>；审批时短暂进 <code>AWAITING_APPROVAL</code>。每次变化发一条 <code>STATE_CHANGE</code> 事件。</p>
+<p>会话的<strong>其他状态</strong>（不是状态机，而是数据）：<code>turn_count</code>、<code>total_cost</code>、<code>total_tokens</code>、<code>metadata</code>（装 todo）、<code>cwd</code>、<code>model_name</code>、<code>permission_mode</code>。</p>
+<h3 id="d2">d2 事件日志是什么？格式？为什么是「唯一事实来源」？</h3>
+<p><strong>结论</strong>：<code>core/events.py</code> + <code>core/session.py</code>。</p>
+<ul>
+<li><strong>文件</strong>：<code>&lt;config_home&gt;/sessions/&lt;session_id&gt;.jsonl</code>，<strong>一行一个 JSON 对象</strong>：<code>{"type", "session_id", "timestamp", "payload"}</code>。</li>
+<li><strong>事件类型</strong>（<code>EventType</code>，16 个）：<code>user_message</code>、<code>assistant_message</code>、<code>text_delta</code>、<code>reasoning</code>、<code>tool_call</code>、<code>tool_result</code>、<code>approval_request</code>、<code>approval_response</code>、<code>state_change</code>、<code>turn_end</code>、<code>verify</code>、<code>compaction</code>、<code>reflection</code>、<code>reverted_to</code>、<code>error</code>。其中 <code>text_delta</code> / <code>reasoning</code> <strong>只发总线、不写日志</strong>（流式文本太碎，会把日志撑爆）。</li>
+<li><strong>会话 id</strong>：<code>YYYYMMDD-xxxxxx</code>（日期 + 6 位 hex）。</li>
+<li><strong>写入</strong>：每行 flush + <code>os.fsync</code>。</li>
+<li><strong>为什么唯一</strong>：<strong>钱、token、上下文、todo 都不另存一份</strong>，全部从事件日志重放算出来。<code>rebuild()</code> 重放时顺带算出 <code>metrics = collect(events)</code>，成本和 token 直接取自日志。</li>
+<li><strong>容错</strong>：坏行只跳过并告警，不报废整个会话。</li>
+</ul>
+<p><strong>为什么</strong>：一份日志同时回答「当时发生了什么」「花了多少钱」「现在对话到哪了」「怎么恢复」，比维护四份状态互相同步要可靠得多。</p>
+<h3 id="d3">d3 关掉程序能接着聊吗？</h3>
+<p><strong>结论</strong>：能。<code>SessionStore.rebuild(session_id)</code> 重放 JSONL，恢复对话历史、摘要、todo、状态、成本。</p>
+<ul>
+<li><strong><code>/resume</code></strong>（<code>ui/commands/resume.py</code>）：列出会话、<code>latest_session()</code> 取最近一个、<code>resume()</code> 就是 <code>store.rebuild()</code>。</li>
+<li><strong>切到旧会话</strong>：<code>AgentLoop.switch_to(session)</code> 重建 <code>ContextEngine</code>（带着 config、memory 配置、摘要模型、权限策略），然后 <code>context.restore()</code>——历史和摘要从日志里<strong>重放</strong>回来（包括 <code>COMPACTION</code> 事件的截断、<code>REVERTED</code> 事件的回退）。</li>
+<li><strong>分叉</strong>：<code>store.fork(session_id)</code> 把整个事件日志复制到新会话 id，原会话<strong>一个字节都不动</strong>。</li>
+</ul>
+<p><strong>取舍</strong>：对话状态是从日志<strong>重算</strong>出来的，不是存出来的。好处是没有「两份状态不一致」这种 bug；代价是恢复的代码必须跟着事件格式走。</p>
+<h3 id="d4">d4 检查点存什么？能回退到什么粒度？</h3>
+<p><strong>结论</strong>：<code>core/checkpoint.py</code>。</p>
+<ul>
+<li><strong>内容</strong>：<code>Checkpoint</code> 里有 <code>id</code> / <code>timestamp</code> / <code>turn</code> / <code>kind</code> / <code>payload</code> / <code>messages</code> / <code>redacted</code>。</li>
+<li><code>payload</code> 是 <code>{路径: 旧内容}</code>，<code>None</code> 表示「这个文件当时还不存在」；</li>
+<li><code>messages</code> 是<strong>当时的对话消息数</strong>——用来回退对话；</li>
+<li><code>redacted</code> 是<strong>存不下</strong>（含密钥）的路径列表。</li>
+<li><strong>位置</strong>：<code>&lt;config_home&gt;/checkpoints/&lt;session_id&gt;.json</code>，一个会话一个文件，里面是一串检查点。文件权限 <code>0600</code>（里面是项目文件的内容）。</li>
+<li><strong>何时产生</strong>：每次写文件<strong>之前</strong>自动拍一个（<code>before_write</code> 回调，<code>run.py</code> 里接的 <code>create_file_checkpoint</code>），由 <code>config.checkpoint.enabled</code> 控制。</li>
+<li><strong>保留</strong>：<code>checkpoint.keep</code>（默认 50），超了丢最老的。</li>
+<li><strong>回退</strong>：<code>restore_files(checkpoint, cwd)</code> 把旧内容写回去；「当时不存在」的文件被<strong>删掉</strong>；<strong>被脱敏的路径跳过</strong>（没法精确还原）。</li>
+</ul>
+<p><strong>为什么</strong>：对话能回退、文件不能，是 agent 最常见的翻车现场。检查点把「文件系统的历史」补上了。</p>
+<h3 id="d5-memory">d5 「memory」有几层？谁读谁写？</h3>
+<p><strong>结论</strong>：四层。</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>位置</th>
+<th>读</th>
+<th>写</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>工作记忆</td>
+<td><code>session.metadata["todos"]</code></td>
+<td><code>context.py</code></td>
+<td><code>todo_write</code> 工具</td>
+</tr>
+<tr>
+<td>会话记忆</td>
+<td><code>&lt;session_summary&gt;</code> 块</td>
+<td><code>context.py</code></td>
+<td>压缩时生成</td>
+</tr>
+<tr>
+<td>项目记忆</td>
+<td><code>&lt;cwd&gt;/.coderagent/memory/*.md</code></td>
+<td><code>core/memory.py</code></td>
+<td><code>extensions/reflect.py</code></td>
+</tr>
+<tr>
+<td>用户记忆</td>
+<td><code>&lt;config_home&gt;/CLAUDE.md</code></td>
+<td><code>core/memory.py</code></td>
+<td><code>extensions/reflect.py</code>（<strong>要确认</strong>）</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>core/memory.py</code> 本身是<strong>只读</strong>的（它只负责把项目记忆和用户记忆读成 <code>InstructionBlock</code> 塞进上下文）。</li>
+<li>写发生在 <code>extensions/reflect.py</code>，由 <code>run.settle_session()</code> 在<strong>会话结束时</strong>触发：</li>
+<li>模型被要求输出 JSON：<code>{"project_facts": [...], "user_preferences": [...]}</code>；</li>
+<li><strong>项目事实</strong>直接写进 <code>&lt;cwd&gt;/.coderagent/memory/projects.md</code>（去重后追加，最多 200 行，超了拒写并告警）；</li>
+<li><strong>用户偏好</strong>不直接写：要么 <code>/memory confirm</code> 确认后写进用户 <code>CLAUDE.md</code> 的 <code>## Preferences</code> 段，要么落到 <code>&lt;cwd&gt;/.coderagent/pending-memory.md</code> 等确认；</li>
+<li><code>/memory forget &lt;文本&gt;</code> 可以从项目记忆或待确认文件里删掉一行。</li>
+<li>整个 <code>settle()</code> <strong>吞掉所有异常</strong>——「这里的失败不能毁掉这一轮运行」。</li>
+<li>反思的成本会记成一条 <code>EventType.REFLECTION</code> 事件，并加进会话总账。</li>
+</ul>
+<p><strong>为什么</strong>：项目事实可以直接写，用户偏好必须确认。用户偏好会永久改变 agent 的行为，不该由一次会话自己决定。</p>
+<h3 id="d6">d6 用户级数据散落在哪些路径？评测怎么隔离？</h3>
+<p><strong>结论</strong>：<code>paths.py</code> 的 <code>config_home()</code> 是<strong>唯一总开关</strong>：</p>
+<div class="highlight"><pre><span></span><code><span class="n">config_home</span><span class="p">()</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"MSWEA_CODER_HOME"</span><span class="p">])</span> <span class="k">if</span> <span class="n">设置了</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".coderagent"</span>
+</code></pre></div>
+<p>它管住：<code>sessions/</code>、<code>checkpoints/</code>、<code>config.yaml</code>、<code>rules.yaml</code>、<code>agents/</code>、<code>skills/</code>、<code>plugins/</code>、<code>trusted-plugins.json</code>、<code>CLAUDE.md</code>。</p>
+<p><strong>项目级的</strong>（<code>&lt;cwd&gt;/.coderagent/</code> 下的 agents、skills、plugins、rules.yaml、memory/、pending-memory.md、commands/）<strong>不在</strong>这个开关里。</p>
+<p><strong>评测的隔离</strong>（<code>ui/cli.py</code> 的 eval 命令）：</p>
+<ol>
+<li><strong>先</strong> <code>load_config()</code>——用户的模型名和 api_key 在 <code>~/.coderagent/config.yaml</code>，必须先读到；</li>
+<li><strong>再</strong> <code>os.environ["MSWEA_CODER_HOME"] = &lt;run-dir&gt;/home</code>；</li>
+<li><code>SessionStore(&lt;run-dir&gt;/home/sessions)</code> 显式传根目录。</li>
+</ol>
+<p><strong>顺序反了就废了</strong>：先重定向就读不到用户的模型配置了。</p>
+<p><strong>注意</strong>：<code>CheckpointStore</code> 和 <code>load_rules</code> 只看 <code>config_home()</code>，不看 <code>build_loop(user_home=...)</code>——所以<strong>两个都要设</strong>，环境变量才是生效的那个。</p>
+<hr>
+<h2 id="e">e. 如何做评测与如何观察</h2>
+<h3 id="e1">e1 有没有跑一批任务并自动判分的入口？任务怎么写？</h3>
+<p><strong>结论</strong>：有，<code>coder eval &lt;suite&gt;</code>。</p>
+<p><strong>任务格式</strong>：一个 suite 是一个目录，每个子目录一个任务，里面必须有 <code>task.yaml</code>；其余文件（除 <code>*.yaml</code>/<code>*.yml</code>）是 <strong>fixture</strong>，会被复制成 agent 的初始工作目录。</p>
+<p><code>task.yaml</code> 字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prompt</code></td>
+<td></td>
+<td>给 agent 的用户请求</td>
+</tr>
+<tr>
+<td><code>verify</code></td>
+<td><strong>是</strong></td>
+<td>判定用的命令，<strong>全部退出码 0 才算通过</strong>；没有 verify 的任务永远不算通过</td>
+</tr>
+<tr>
+<td><code>setup</code></td>
+<td></td>
+<td>agent 开始前在 workdir 里跑的命令</td>
+</tr>
+<tr>
+<td><code>expect</code></td>
+<td></td>
+<td><code>pass</code>（默认）或 <code>fail</code>——保险丝</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td></td>
+<td>agent 这一轮的墙钟秒数（默认 300）</td>
+</tr>
+<tr>
+<td><code>verify_timeout</code></td>
+<td></td>
+<td>每条 verify 命令的秒数（默认 300）</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td></td>
+<td>给 <code>--tag</code> 过滤用</td>
+</tr>
+<tr>
+<td><code>require_tools</code></td>
+<td></td>
+<td>「这个任务必须用某个工具在某个文件上干成」</td>
+</tr>
+<tr>
+<td><code>script</code></td>
+<td></td>
+<td>脚本化模型；<strong>空 = 用真实模型</strong>（要 API key）</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td></td>
+<td>配置覆盖：YAML 文件路径或 <code>a.b=c</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>require_tools</code> 是本项目的关键设计：<code>{tools: [edit, multi_edit], paths: [calc.py]}</code> —— 任务不仅要有 verify 命令，还要<strong>用对的工具在对的文件上</strong>干成事。判定靠 <code>eval/runner.py</code> 的 <code>_successful_calls()</code>：只有<strong>没有报错的</strong> tool call 才算数，工具名要在白名单里、路径要在名单里（路径按 workdir 解析）。</p>
+<p><strong>两个 suite</strong>：<code>evals/basic/</code> 8 个任务（全部要 API key）、<code>evals/offline/</code> 5 个任务（全部带 <code>script:</code>，<strong>不要 API key</strong>）。<code>evals/offline/broken-check</code> 是 <code>expect: fail</code> 的保险丝。</p>
+<h3 id="e2-agent-harness">e2 怎么保证「agent 的失败」和「harness 的失败」分得开？</h3>
+<p><strong>结论</strong>：<code>eval/runner.py</code> 用 <code>error_kind</code> 区分三种情况：</p>
+<ul>
+<li><code>"setup"</code> —— <strong>harness</strong> 的 setup 命令失败了。这不是 agent 的锅：这个任务<strong>不计入</strong>通过率分母，在报告里单列。</li>
+<li><code>"script"</code> —— 脚本化模型把脚本用完了（错误里含 <code>"ran out of responses"</code>）。同样是 harness 的锅。</li>
+<li>空 —— <strong>agent 自己的失败</strong>。计入分母。</li>
+</ul>
+<p><strong>隔离</strong>：每个任务一个独立工作目录（<code>root/work/&lt;task-id&gt;</code>），整个 suite 一个独立的 <code>MSWEA_CODER_HOME</code>（<code>root/home</code>），所以会话、检查点、规则都不会跑到用户目录里。</p>
+<p><strong>其它几个坑</strong>（都已在代码里处理）：</p>
+<ul>
+<li>用 <code>build_loop</code> + <code>loop.run_turn</code>，<strong>不走</strong> <code>run.py</code> 的 <code>run_turn()</code>——后者结尾会 <code>settle()</code>，多一次 reflection 调用，会<strong>吃掉脚本的下一条响应</strong>，还会往被测目录里写记忆文件。</li>
+<li>脚本模式下清掉 <code>config.model.routing</code>（否则长上下文会把脚本换成真模型）和 <code>config.context.auto_compact</code>（压缩会消耗一条脚本响应）。</li>
+<li><code>build_loop</code> 会<strong>改写传进去的 Config</strong>，所以<strong>每个任务重新 <code>load_config</code></strong>。</li>
+<li>setup / verify 用 <code>CodingEnvironment</code>（去掉了 mini-swe-agent 的 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> 哨兵）跑，不要用 <code>bash</code> 工具跑——它会裁剪输出、加 <code>[exit code N]</code> 装饰。</li>
+</ul>
+<h3 id="e3-fingerprint">e3 报告里有什么？fingerprint 是什么？</h3>
+<p><strong>结论</strong>：<code>eval/report.py</code>，格式 <code>coder-eval-1.0</code>。</p>
+<p>JSON 顶层：<code>format</code>、<code>label</code>、<code>suite</code>、<code>model</code>、<code>fingerprint</code>、<code>config</code>、<code>started_at</code>、<code>duration_seconds</code>、<code>summary</code>、<code>tasks[]</code>。</p>
+<p><code>summary</code>：<code>tasks</code>、<code>passed</code>、<code>failed</code>、<code>errors</code>、<code>unexpected</code>、<code>pass_rate</code>、<code>total_cost</code>、<code>total_tokens_in</code>、<code>total_tokens_out</code>、<code>total_model_calls</code>、<code>total_tool_calls</code>。</p>
+<p><strong>fingerprint</strong> = <code>sha256:</code> + 对一组<strong>配置</strong>做的哈希。输入包括：<code>model</code> 和 <code>model.routing</code>、<code>agent.system_prompt</code> / <code>max_turns</code> / <code>cost_limit</code> / <code>token_limit</code>、<code>tools.enabled</code> / <code>disabled</code>、<code>permissions.mode</code> / <code>rules</code> / <code>deny_paths</code>、整个 <code>context</code> 配置、<code>sandbox.type</code>、<strong>每个任务的 config 覆盖</strong>、<strong>每个任务的 require_tools</strong>。</p>
+<p><strong>为什么</strong>：fingerprint 相同才说明两次跑的是同一套 harness，数字才可比。不同就说明「harness 变了，数字自然变」，不能拿来算退化。而且报告里同时放了 fingerprint 的<strong>输入原样</strong>，外部 diff 能直接看出<strong>是哪一项</strong>变了。</p>
+<p><strong>注意事项</strong>：报告里<strong>不放临时工作目录路径</strong>（每次都变，会毁掉 diff）；只用 task id 和相对路径。成本可能是 0（litellm 没有这个模型的价格表），所以 <strong>token 数必须一起报</strong>，它来自 provider 的 usage，靠得住。</p>
+<h3 id="e4">e4 两次运行怎么比？</h3>
+<p><strong>结论</strong>：<code>coder eval-compare &lt;after.json&gt; --against &lt;before.json&gt;</code>，实现在 <code>eval/compare.py</code>。</p>
+<ul>
+<li>报出：<code>regressions</code>（之前过、现在不过的任务）、<code>improvements</code>、<code>only_before</code> / <code>only_after</code>（只出现在一边的任务）、<code>before_pass_rate</code> / <code>after_pass_rate</code> / <code>drop</code>、<code>config_changed</code>、<code>unexpected</code>（结果和 <code>expect</code> 不符）、<code>broken_guards</code>（<code>expect: fail</code> 的保险丝反而过了）、<code>ungraded</code>。</li>
+<li><strong>判定</strong>：<code>verdict(comparison, max_regressions, max_drop)</code> —— 退出码就是结论（有回归就退 1）。</li>
+<li><code>--same-config</code>：两次 fingerprint 不同就明确说「这两次跑的不是同一套配置，比不了」，而不是给一个没意义的结论。</li>
+<li><code>expect: fail</code> 的任务<strong>不计入</strong>通过率。</li>
+</ul>
+<p><strong>为什么</strong>：这是整个 eval 的<strong>交付物</strong>——不是「跑通了一堆任务」，而是「能自动告诉你上一次改动让 agent 变差了」。</p>
+<h3 id="e5">e5 一次真实会话怎么观察？</h3>
+<p><strong>结论</strong>：<code>core/telemetry.py</code>。</p>
+<ul>
+<li><strong><code>collect(events)</code></strong> 从事件日志算出 <code>Metrics</code>：<code>total_cost</code>、<code>total_tokens_in/out</code>、<code>model_calls</code>、<code>tool_calls</code>、<code>per_tool</code>、<code>per_purpose_cost</code>、<code>per_model_cost</code>、<code>duration_seconds</code>、<code>compactions</code>、<code>errors</code>。</li>
+<li>子 agent 的成本从 <code>task</code> 工具结果 JSON 里捞回来，单独记在 purpose <code>subagent</code> 下；</li>
+<li>压缩摘要的成本记在 purpose <code>summarize</code>；反思记在 <code>reflect</code>。</li>
+<li><strong>导出</strong>：<code>coder export --format json|otel</code>。JSON 是 trace 格式 <code>coder-agent-1.0</code>（<code>{session, events, metrics}</code>）；OTLP 是 OTLP/JSON，<strong>一个 user turn 一个 span，每次工具调用一个子 span</strong>。</li>
+<li><strong>会话里的实时观察</strong>：TUI 状态栏（模型、token 用量、成本、cwd、权限模式）、<code>/cost</code>、审批弹窗、Web 版的 SSE 流。</li>
+</ul>
+<p><strong>注意</strong>：<code>model_calls</code> 只数主循环的响应，子 agent 的调用不在里面（它的成本在 <code>per_purpose_cost</code> 里）。别夸大。</p>
+<h3 id="e6-ci">e6 CI 里跑的是什么？</h3>
+<p><strong>结论</strong>：<code>.github/workflows/eval.yaml</code>。</p>
+<ul>
+<li><strong>触发</strong>：对 <code>main</code> 的 PR，且改了 <code>src/coderagent/**</code>、<code>evals/**</code>、<code>tests/coderagent/**</code> 或该 workflow 本身；另外支持手动触发（可以传 <code>live</code> 开关和 <code>model</code> / <code>api_base</code>）。</li>
+<li><strong>必跑 job <code>harness</code></strong>：跑 <code>coder eval evals/offline</code>（<strong>不需要 API key</strong>），再用 <code>git worktree</code> 把 base commit 拉出来、用 <code>PYTHONPATH</code> 指过去跑一遍同样的 suite，然后 <code>coder eval-compare head.json --against base.json</code>。<strong>base 没有 eval 命令就跳过</strong>。</li>
+<li><strong>手动 job <code>live</code></strong>：跑 <code>evals/basic</code>（需要 <code>secrets.CODER_EVAL_API_KEY</code>），加 <code>--same-config --max-regressions 0 --max-drop 0</code>。</li>
+</ul>
+<p><strong>为什么</strong>：PR 门禁用离线 suite——它测的是 <strong>harness 本身</strong>（工具、权限、事件日志、执行器），不需要花钱也不需要凭据，是最划算的回归网。</p>
+<hr>
+<h2 id="f">f. 如何做约束以及恢复</h2>
+<h3 id="f1">f1 约束一共有几层？</h3>
+<p><strong>结论</strong>：六层，从粗到细。</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>管什么</th>
+<th>在哪</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>权限模式</strong></td>
+<td>一刀切：这次会话允许做什么</td>
+<td><code>permissions.mode</code></td>
+</tr>
+<tr>
+<td><strong>规则</strong></td>
+<td>按工具 + 路径 / 命令模式细粒度 allow/ask/deny</td>
+<td><code>rules.yaml</code>、<code>permissions.rules</code></td>
+</tr>
+<tr>
+<td><strong><code>deny_paths</code></strong></td>
+<td>指定路径全局拒绝，<strong>任何模式下都拒</strong>，且排在所有规则之后（能覆盖掉前面的 allow）</td>
+<td><code>permissions.deny_paths</code></td>
+</tr>
+<tr>
+<td><strong><code>include_dirs</code></strong></td>
+<td>显式打开工作目录之外的目录</td>
+<td><code>permissions.include_dirs</code></td>
+</tr>
+<tr>
+<td><strong>hook</strong></td>
+<td>六个时点上的自定义检查与改写</td>
+<td><code>hooks.events</code></td>
+</tr>
+<tr>
+<td><strong>沙箱</strong></td>
+<td>命令实际跑在哪</td>
+<td><code>sandbox.type</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>边界规则</strong>（<code>within_bounds</code>）：路径类工具访问工作目录外的路径 → deny，<strong>在任何模式下都成立</strong>，<strong>用户规则也不能开</strong>（<code>allow</code> 一条越界的路径规则，它依然是被拒的）。<code>include_dirs</code> 里的目录是显式开的口子。</p>
+<p><strong>bash 的对应检查</strong>：<code>bash_policy.outside_paths()</code> 找出命令要碰的越界路径；<code>/bin</code> <code>/usr</code> <code>/lib</code> <code>/opt</code> 这些系统前缀<strong>只允许作为程序</strong>，不允许作为数据路径。</p>
+<p><strong>容器沙箱例外</strong>：<code>bounded = config.sandbox.type == "local"</code>。在容器里，边界由容器自己管，所以不再做路径越界检查。</p>
+<h3 id="f2-hook-hook">f2 hook 有哪几个触发点？hook 自己挂了会挡住操作吗？</h3>
+<p><strong>结论</strong>：<code>extensions/hooks.py</code>，六个点：</p>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>时机</th>
+<th>payload</th>
+<th>能不能挡</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SessionStart</code></td>
+<td>会话开始</td>
+<td><code>session_id</code>, <code>cwd</code></td>
+<td>否（只通知）</td>
+</tr>
+<tr>
+<td><code>UserPromptSubmit</code></td>
+<td>收到用户提问</td>
+<td><code>prompt</code></td>
+<td><strong>能</strong>（整轮终止）</td>
+</tr>
+<tr>
+<td><code>PreToolUse</code></td>
+<td>工具执行前</td>
+<td><code>tool</code>, <code>params</code></td>
+<td><strong>能</strong>（工具不执行）</td>
+</tr>
+<tr>
+<td><code>PostToolUse</code></td>
+<td>工具执行后</td>
+<td><code>tool</code>, <code>params</code>, <code>result</code></td>
+<td>只能换输出，<strong>副作用已经发生</strong></td>
+</tr>
+<tr>
+<td><code>Stop</code></td>
+<td>模型想停</td>
+<td><code>last_message</code></td>
+<td><strong>能</strong>（让 agent 继续干）</td>
+</tr>
+<tr>
+<td><code>SessionEnd</code></td>
+<td>会话结束</td>
+<td><code>session_id</code>, <code>turns</code>, <code>cost</code></td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>决策值</strong>：<code>allow</code> / <code>deny</code> / <code>block</code>（<code>deny</code> 和 <code>block</code> 都算挡住）；<code>reason</code>、<code>additionalContext</code>、<code>updatedInput</code> 也支持。</li>
+<li><strong>合并</strong>：多个 hook 里只要有一个 deny/block 就挡；<code>allow</code> 只在没人决定时才生效；<code>additional_context</code> 拼接；<code>updated_input</code> <strong>最后一个赢</strong>。</li>
+</ul>
+<p><strong>fail-open vs fail-closed</strong>（这是刻意的分界）：</p>
+<table>
+<thead>
+<tr>
+<th>hook 出问题</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>超时</td>
+<td><strong>忽略</strong>（放行）</td>
+</tr>
+<tr>
+<td>退出码非 0</td>
+<td><strong>忽略</strong>（放行）——除非该 hook 配了 <code>strict: true</code>，此时 deny</td>
+</tr>
+<tr>
+<td>输出不是合法 JSON</td>
+<td><strong>忽略</strong>（放行），记一条警告</td>
+</tr>
+<tr>
+<td>matcher 正则写错</td>
+<td>跳过该 matcher，告警</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么</strong>：hook 是<strong>用户自己加的辅助</strong>，不是安全边界。安全边界是权限层和 <code>within_bounds</code>——那些是 fail-closed 的。hook 挂了就挡住操作，用户会得到一个「agent 什么都不干」的系统，却不知道为什么。</p>
+<p><strong>唯一的例外</strong>：<code>strict: true</code> 是用户显式说「我这条 hook 挂了就要挡住」。</p>
+<h3 id="f3-hook">f3 hook 改写参数和改写提问，怎么区分？</h3>
+<p><strong>结论</strong>：<strong>按 <code>updatedInput</code> 的类型区分</strong>。</p>
+<ul>
+<li><strong>dict</strong> → 改<strong>工具参数</strong>（<code>PreToolUse</code> / <code>PostToolUse</code>）。<code>executor.py</code> 里用 <code>isinstance(hook.updated_input, dict)</code> 守住这条线：字符串<strong>永远动不了</strong>工具参数。</li>
+<li><strong>字符串</strong> → 改<strong>用户提问</strong>（<code>UserPromptSubmit</code>）。<code>loop.py</code> 里只接受字符串。</li>
+</ul>
+<p><strong>事件日志存的是模型看到的那一个</strong>：hook 改写后的提问写进 <code>USER_MESSAGE</code> 事件的 <code>content</code>，用户原话放在同一事件的 <code>original</code> 里。这样<strong>重放能复现同样的行为</strong>。</p>
+<h3 id="f4">f4 出错之后能恢复吗？</h3>
+<p><strong>结论</strong>：三种恢复，覆盖三种不同的需求。</p>
+<table>
+<thead>
+<tr>
+<th>手段</th>
+<th>恢复什么</th>
+<th>怎么用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>/rewind</code></strong></td>
+<td>文件 <strong>+</strong> 对话</td>
+<td><code>rewind(context, checkpoints, id, cwd)</code>：<code>restore_files()</code> 把文件写回旧内容（当时不存在的文件删掉），<code>context.rewind_to(checkpoint.messages)</code> 截断对话并发一条 <code>REVERTED</code> 事件</td>
+</tr>
+<tr>
+<td><strong><code>/resume</code></strong></td>
+<td>对话</td>
+<td><code>store.rebuild(session_id)</code> 重放日志；<code>/resume</code> 列出并切回旧会话</td>
+</tr>
+<tr>
+<td><strong>分叉</strong></td>
+<td>一条新分支</td>
+<td><code>store.fork(session_id)</code> 复制全部事件到新会话 id，原会话不动</td>
+</tr>
+</tbody>
+</table>
+<p><strong>不能恢复的</strong>：</p>
+<ul>
+<li><strong><code>/rewind</code> 只回退文件，不回退外部世界</strong>——命令发出去的网络请求、装过的包、删掉的东西，都还在。</li>
+<li><strong>被脱敏的路径不还原</strong>（含密钥的文件存不下原样）。</li>
+<li><strong>会话级的东西</strong>（成本、token）不回滚——历史已经花掉的钱就是花掉了。</li>
+</ul>
+<p><strong>为什么</strong>：诚实地划出「能回退什么」，比假装能时光倒流要安全得多。</p>
+<h3 id="f5">f5 三种失败分别怎么处理？</h3>
+<p><strong>结论</strong>：</p>
+<p><strong>（1）模型调用失败</strong>（<code>loop.py</code> 的 <code>_query</code>）：</p>
+<ul>
+<li><strong>上下文溢出</strong>是唯一可恢复的：强制压缩一次，然后<strong>重试一次</strong>；压不动就返回错误（文本里带 "nothing left to compact"）。</li>
+<li><strong>其它异常</strong>：不重试（在 backend 层就已经过滤了不该重试的异常），直接发一条 <code>ERROR</code> 事件，<code>stop_reason="error"</code>，会话状态落 <code>ERROR</code> 而不是 <code>DONE</code>，错误消息留在日志里。</li>
+</ul>
+<p><strong>哪些异常不重试</strong>（<code>models/backends.py</code> 的 <code>abort_exceptions</code>）：<code>UnsupportedParamsError</code>、<code>NotFoundError</code>、<code>PermissionDeniedError</code>、<code>ContextWindowExceededError</code>、<code>AuthenticationError</code>、<code>BadRequestError</code>、<code>KeyboardInterrupt</code>。其它（比如中转站 500）<strong>会重试</strong>，默认 10 次、约 2 分钟。</p>
+<p><strong>（2）工具失败</strong>：<strong>不中断整轮</strong>，变成 <code>"Error: …"</code> 的 observation 给模型看（见 b4）。</p>
+<p><strong>（3）摘要失败</strong>：重试一次，再失败就兜底摘要（见 a4）。</p>
+<h3 id="f6">f6 沙箱管得住什么？边界在哪？</h3>
+<p><strong>结论</strong>：<code>core/sandbox.py</code> 的 <code>build_environment(config.sandbox, cwd)</code>。</p>
+<ul>
+<li><code>sandbox.type == "local"</code> → <code>CodingEnvironment(cwd=会话目录)</code>，就是本机 subprocess。</li>
+<li>其它类型 → 走 mini-SWE-agent 的环境（<code>swerex_docker</code>、Modal、bubblewrap、contree），<code>SandboxConfig</code> 是 <code>extra="allow"</code>，<code>image</code> 之类的参数直接透传。</li>
+</ul>
+<p><strong>管住的</strong>：只有 <code>bash</code>（以及 verify 命令）进沙箱。</p>
+<p><strong>管不住的</strong>：<code>read</code> / <code>write</code> / <code>edit</code> / <code>glob</code> / <code>grep</code> / <code>ls</code> 这些文件系统工具<strong>直接操作宿主机文件系统</strong>。</p>
+<p><strong>边界的实际形状</strong>：</p>
+<ul>
+<li>本地沙箱时，靠 <code>within_bounds</code> 把文件类工具挡在工作目录内，靠 <code>outside_paths</code> 把 bash 里的越界路径挡掉；</li>
+<li>容器沙箱时，路径不设限（<code>bounded=False</code>），边界由容器自己给；</li>
+<li>远程沙箱有自己的 <code>cwd</code>（<code>sandbox.cwd</code> 可配），不会把宿主机路径塞进容器。</li>
+</ul>
+<p><strong>还有一个容易忘的点</strong>：<code>CodingEnvironment</code> 去掉了 mini-SWE-agent 的 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> 哨兵——「coding agent 结束一轮是因为模型说完了，不是因为某个命令打印了魔法字符串」。</p>
+<hr>
+<h2 id="_1">已知瑕疵（写下来是为了不被当成没看见）</h2>
+<ol>
+<li><strong>相邻的两条 user 消息</strong>：权限模式说明和摘要被组装成两条连续的 <code>user</code> 消息，中间没有 assistant。合法但不是自然对话形态。</li>
+<li><strong><code>stop_reason</code> 的 docstring 过期</strong>：<code>TurnResult.stop_reason</code> 只列了 5 种，实际有 7 种（漏了 <code>interrupted</code> 和 <code>verify_failed</code>）。</li>
+<li><strong><code>_cut_index</code> 用的是 <code>config.context_window</code> 而不是 <code>guard.limit()</code></strong>：两者差一个 <code>reserved_output</code>，极端情况下会切得偏保守。</li>
+<li><strong>「最后一条规则赢」有两个作用域</strong>：路径类工具是「所有规则里最后一条匹配的赢」，bash 是「每段最后一条匹配的赢，再取最严的段」。</li>
+<li><strong><code>model.max_retries</code> 没接进 backend</strong>：只有 <code>coder web</code> 读它；终端里想缩短重试只能用环境变量 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>。</li>
+<li><strong>子 agent 的 tool call 不进事件日志</strong>：只发总线，所以从日志看不出子 agent 动过哪些文件（它的结果 JSON 里有 <code>files_touched</code>）。</li>
+<li><strong><code>core/memory.py</code> 是只读的，但「memory 特性」不是</strong>——写入发生在 <code>extensions/reflect.py</code>，由 <code>settle_session()</code> 驱动。</li>
+</ol>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+
+
+<div class="floating-bubbles">
+<div class="floating-bubbles-title">Our projects</div>
+  <a href="https://swe-agent.com/" class="bubble" title="SWE-agent">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sweagent_logo.svg" alt="SWE-agent">
+    <span class="bubble-tooltip">SWE-agent</span>
+  </a>
+  <a href="https://swe-rex.com/" class="bubble" title="SWE-rex">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swerex_logo.svg" alt="SWE-rex">
+    <span class="bubble-tooltip">SWE-ReX</span>
+  </a>
+  <a href="https://swesmith.com" class="bubble" title="SWE-smith">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swesmith_logo.png" alt="SWE-smith">
+    <span class="bubble-tooltip">SWE-smith</span>
+  </a>
+  <a href="https://swebench.com" class="bubble" title="SWE-bench">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/swebench_logo.png" alt="SWE-bench">
+    <span class="bubble-tooltip">SWE-bench</span>
+  </a>
+  <a href="https://codeclash.ai" class="bubble" title="CodeClash">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/codeclash_logo.svg" alt="CodeClash">
+    <span class="bubble-tooltip">CodeClash</span>
+  </a>
+  <a href="https://www.swebench.com/sb-cli/" class="bubble" title="sb-cli">
+    <img src="https://raw.githubusercontent.com/SWE-agent/swe-agent-media/refs/heads/main/media/logos_banners/sbcli_logo.svg" alt="sb-cli">
+    <span class="bubble-tooltip">sb-cli</span>
+  </a>
+</div>
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer">
+        
+          
+          <a href="../coderagent-questions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Questions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Questions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../milestones/M0-skeleton/" class="md-footer__link md-footer__link--next" aria-label="Next: M0 — Skeleton &amp; config">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                M0 — Skeleton &amp; config
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.top", "content.action.edit", "navigation.footer", "content.code.copy", "content.footnote.tooltips", "header.autohide", "announce.dismiss", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../assets/js/sh-annotation.js"></script>
+      
+        <script src="../../assets/js/gif-controls.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html><!-- Floating Bubbles -->
