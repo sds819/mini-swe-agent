@@ -1,6 +1,6 @@
 # Coding Agent 答问录
 
-> 这份文档回答 [coderagent-questions.md](coderagent-questions.md) 里的 33 个问题。
+> 这份文档回答 [coderagent-questions.md](coderagent-questions.md) 里的 41 个问题。
 > 每条答案的格式是：**结论** → **它落在哪** → **为什么这么定**（取舍）。
 > 代码位置全部相对 `src/coderagent/`，测试相对 `tests/coderagent/`。
 >
@@ -201,6 +201,54 @@
 - **读类工具的输出有上限**：`read` 默认 2000 行，超过 2000 字符的行会被截断并标出来；`glob` 最多 200 条路径；`grep` 最多 100 行内容；`bash` 输出按 `tools.max_output_tokens`（默认 8000）裁剪。
 
 **为什么**：`edit` 的「唯一匹配」是 agent 改文件时最容易出错的地方（改错位置）。宁可让它失败要求重试，也不要让它猜。
+
+### b9 模型的一次工具调用，是怎么一步步跑下来的？
+
+**结论**：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。
+
+1. **取**：`core/loop.py:206` 从 assistant 消息里取 `tool_calls`。没有 `tool_calls` 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。
+2. **规整**：`executor.plan()`（`executor.py:51`）把原始 tool call 变成统一形状：`{"tool", "tool_call_id", "args", "raw"}`。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是**对象**，就在这里记下 `error`，**不会走到执行**。
+3. **记账**：`loop.py:225` 发一个 `TOOL_CALL` 事件，**在执行之前**。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。
+4. **准备**：`executor._prepare()`（`executor.py:93`）对每个 action 依次做四件事：
+   - **查注册表**：`registry.get(name)`，找不到就直接记错（见 b10）；
+   - **PreToolUse hook**：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；
+   - **权限判定**：`policy.evaluate(tool, args)`；
+   - **审批**：`ask` 的去问 approver（headless 下由 `HeadlessApprover` 回答）。
+5. **执行**：`_run()`（`executor.py:149`）——先 `on_path`（让上下文引擎捡起该目录的指令），写类工具先 `before_write`（打 checkpoint），然后 `tool.run(args, ctx)`。工具抛异常 → 变成给模型看的错误文本（见 b4），**整轮不中断**。
+6. **回话**：结果发 `TOOL_RESULT` 事件（含 diff），observation 一定带 `tool_call_id`（`executor.py:178`），模型才能把结果对上号。
+
+**为什么**：权限和 hook 都在**执行之前**判定，所以「被拒绝的工具」永远不会真的动过文件；而 `TOOL_CALL` 在执行之前记账，所以事后复盘时能看出模型**本来想做什么**——这两件事都是评测「模型乱调工具」的依据。
+
+### b10 模型会自己造不存在的工具，或者乱调工具吗？
+
+**结论**：**会**，但每一类都有确定的落点，而且**不会有任何越界的副作用**。
+
+**造工具（调一个不存在的名字）**：`executor.py:97` 查注册表，查不到 → observation 变成
+`Error: unknown tool 'xxx'. Available tools: read, write, edit, ...`。
+**工具不会执行**，模型看到的是一段普通的 tool result（带 `tool_call_id`），下一轮它要么改用真名字，要么就卡在那儿反复试。
+已注册的工具**只有注册表里的那些**——MCP 工具叫 `mcp__<server>__<tool>`，插件工具用插件自己的名字，模型凭空说的名字不在表里。
+
+**乱调（调了不该调的工具）**：由三层挡：
+
+| 层 | 挡住什么 |
+|---|---|
+| 权限模式 | `plan` / `readonly` 下写类工具**直接 deny**；`default` 下写类工具要 ask；`bypass` 下才全放行 |
+| 规则文件 | 项目 / 用户的 `rules.yaml` 可以对具体工具 + 路径给 allow / ask / deny，deny 永远赢 |
+| 越界检查 | `within_bounds()` 在**任何模式**（含 `bypass`）下都挡住工作目录之外的路径 |
+
+**bash 的特殊处理**：命令按 `&&` / `||` / `;` / `|` / 换行切段（尊重引号），逐段判定，整条命令取**最严**的一段。所以 `echo hi && rm -rf /` 不会因为前半段安全就放行。
+
+**参数不对**：工具自己做类型检查（`fs.py` 里 `path` 必须是 str、`old_string` 必须是 str、`multi_edit` 的 `edits` 必须是 list……），不满足就报错；类型转换类的异常（比如把 str 当 int 用）在 `executor.py:160` 被兜住，变成给模型看的错误文本。
+
+**子 agent**：白名单之外的工具在子 agent 的注册表里**根本不存在**（`core/subagent.py:195`），所以子 agent 也调不到。
+
+**怎么发现模型乱调**：
+- `TOOL_CALL` 事件在执行前记下全部参数——事后能逐条回看模型「想干什么」；
+- 评测报告里的 `tool_errors` 数失败的工具调用（被权限拒绝的也算）；
+- `require_tools` 要求某些任务**必须**用某个工具改某个文件（`evals/basic` 里五个任务这样写）——用 shell 绕过去不算完成；
+- `no-op` 任务反过来测「不该改的时候别改」。
+
+**为什么**：模型是概率的，它一定会偶尔喊错工具名、偶尔调错参数。harness 的责任不是让模型永不犯错，而是**让每次犯错都变成模型能读懂的普通消息，并且有确定的后果边界**（不执行、不越界、留痕）。
 
 ---
 
@@ -616,3 +664,7 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 5. **`model.max_retries` 没接进 backend**：只有 `coder web` 读它；终端里想缩短重试只能用环境变量 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`。
 6. **子 agent 的 tool call 不进事件日志**：只发总线，所以从日志看不出子 agent 动过哪些文件（它的结果 JSON 里有 `files_touched`）。
 7. **`core/memory.py` 是只读的，但「memory 特性」不是**——写入发生在 `extensions/reflect.py`，由 `settle_session()` 驱动。
+8. **被裁掉的工具仍然能执行**：`registry.schemas()` 裁的是**发给模型的 schema**，注册表本身没动。模型如果还记得某个被裁掉的工具的名字，照样调得动。
+9. **权限层判不了「合不合适」**：它判的是「这个工具在这个模式下、这条命令是否被允许」，不判「这个任务该不该用这个工具」。
+10. **参数不做 schema 级校验**：schema 只是发给模型的说明，执行前不按它校验；类型不对由工具自己抛，被兜成错误文本。
+11. **`TRIM_ORDER` 是写死的**：不按任务类型裁——一个读代码的任务和一个大改的任务，裁掉的工具是一样的。
