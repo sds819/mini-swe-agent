@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+from minisweagent.config import get_config_from_spec
 
 TASK_FILE = "task.yaml"
 """The file that describes a task. The other yaml files are part of the fixture."""
@@ -37,6 +38,12 @@ class Task:
     verify_timeout: int = DEFAULT_VERIFY_TIMEOUT
     """Seconds each verify command may take."""
     tags: list[str] = field(default_factory=list)
+    require_tools: list[str] = field(default_factory=list)
+    """The tools the task needs. One of them must have been used successfully.
+
+    A task that changes a file with the `edit` tool and says so cannot be
+    solved by another route, so a broken tool shows up as a failed task.
+    """
     script: list[dict] = field(default_factory=list)
     """The scripted model. Empty means: the real model."""
     config: list[str] = field(default_factory=list)
@@ -66,6 +73,7 @@ def load_task(directory: Path) -> Task:
         timeout=int(data.get("timeout") or DEFAULT_TIMEOUT),
         verify_timeout=int(data.get("verify_timeout") or DEFAULT_VERIFY_TIMEOUT),
         tags=[str(tag) for tag in data.get("tags") or []],
+        require_tools=[str(tool) for tool in data.get("require_tools") or []],
         script=list(data.get("script") or []),
         config=[str(spec) for spec in data.get("config") or []],
         path=directory,
@@ -78,6 +86,31 @@ def load_suite(directory: Path) -> list[Task]:
     if not directory.is_dir():
         raise NotADirectoryError(f"the suite {directory} is not a directory")
     return sorted((load_task(child) for child in directory.iterdir() if child.is_dir()), key=lambda t: t.id)
+
+
+def task_overrides(task: Task) -> list[dict]:
+    """The overrides of a task: a yaml file next to it, or an `a.b=c` spec."""
+    overrides = []
+    for spec in task.config:
+        path = Path(spec)
+        if "=" not in spec and not path.is_absolute() and task.path is not None and (task.path / path).exists():
+            overrides.append(yaml.safe_load((task.path / path).read_text(encoding="utf-8")) or {})
+        else:
+            overrides.append(get_config_from_spec(spec))
+    return overrides
+
+
+def task_permission_mode(task: Task) -> str:
+    """The permission mode of a task, when the task sets one.
+
+    The mode of the command is the default; a task may ask for another one, so
+    that its rules are the ones that count.
+    """
+    for override in task_overrides(task):
+        mode = (override.get("permissions") or {}).get("mode")
+        if mode:
+            return str(mode)
+    return ""
 
 
 def script_responses(task: Task) -> list[dict]:

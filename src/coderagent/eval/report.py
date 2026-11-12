@@ -13,6 +13,7 @@ from typing import Any
 
 from coderagent.config.schema import Config
 from coderagent.eval.runner import TaskResult
+from coderagent.eval.task import task_overrides
 
 FORMAT = "coder-eval-1.0"
 """The format of the report. The external tools read it."""
@@ -115,7 +116,8 @@ def fingerprint_inputs(config: Config, model: str, permission_mode: str = "", ta
         "permissions.deny_paths": config.permissions.deny_paths,
         "context": config.context.model_dump(),
         "sandbox.type": config.sandbox.type,
-        "tasks": {task.id: task.config for task in tasks or []},
+        "tasks": {task.id: task_overrides(task) for task in tasks or []},
+        "tasks.require_tools": {task.id: task.require_tools for task in tasks or []},
     }
 
 

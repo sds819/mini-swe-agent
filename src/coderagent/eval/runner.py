@@ -10,18 +10,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from coderagent.config.schema import Config
+from coderagent.core.events import EventType
 from coderagent.core.sandbox import build_environment
 from coderagent.core.session import SessionStore
 from coderagent.core.telemetry import collect
-from coderagent.eval.task import Task, script_responses
+from coderagent.eval.task import Task, script_responses, task_overrides, task_permission_mode
 from coderagent.run import build_loop, build_model
 from coderagent.testing.factory import AllowAllApprover
 from coderagent.testing.scripted_model import ScriptedModel
 from coderagent.tools.permissions import ApprovalDecision
-from minisweagent.config import get_config_from_spec
 from minisweagent.utils.serialize import recursive_merge
 
 SCRIPT_ERROR = "ran out of responses"
@@ -131,6 +129,15 @@ def run_commands(commands: list[str], environment, timeout: int) -> list[VerifyR
     return results
 
 
+def _tools_used(events: list) -> set[str]:
+    """The tools that ran without an error."""
+    return {
+        str(event.payload.get("tool") or "")
+        for event in events
+        if event.type == EventType.TOOL_RESULT and not event.payload.get("is_error")
+    }
+
+
 def prepare_workdir(task: Task, workdir: Path) -> Path:
     """The working directory of a task: the fixture of the task, and nothing else."""
     if workdir.exists():
@@ -155,22 +162,13 @@ def task_config(base: Config, task: Task) -> Config:
     """The configuration of a task: the one of the run, plus the overrides of the task."""
     config = base.model_copy(deep=True)
     explicit = "context_window" in base.context.model_fields_set
-    for spec in task.config:
-        override = _override(spec, task)
+    for override in task_overrides(task):
         explicit = explicit or "context_window" in (override.get("context") or {})
         config = Config(**recursive_merge(config.model_dump(mode="json"), override))
     if not explicit:
         """The window of the model is used when the configuration does not set one."""
         config.context.model_fields_set.discard("context_window")
     return config
-
-
-def _override(spec: str, task: Task) -> dict:
-    """The override of a task: a yaml file next to it, or an `a.b=c` spec."""
-    path = Path(spec)
-    if "=" not in spec and not path.is_absolute() and task.path is not None and (task.path / path).exists():
-        return yaml.safe_load((task.path / path).read_text(encoding="utf-8")) or {}
-    return get_config_from_spec(spec)
 
 
 def run_task(
@@ -202,6 +200,7 @@ def run_task(
             setup=setup,
         )
     config = task_config(config, task)
+    permission_mode = task_permission_mode(task) or permission_mode
     if task.script:
         """A scripted model answers every question, so nothing may be routed or compacted."""
         config.model.routing = {}
@@ -228,7 +227,14 @@ def run_task(
     verify = run_commands(task.verify, loop.sandbox, task.verify_timeout)
     script_error = result.stop_reason == "error" and SCRIPT_ERROR in result.error
     error_kind = "script" if script_error else ""
-    passed = not error_kind and bool(task.verify) and all(item.exit_code == 0 for item in verify)
+    used = _tools_used(events)
+    needed = task.require_tools and not any(tool in used for tool in task.require_tools)
+    """The task needs one of its tools, and none of them worked."""
+    passed = not error_kind and bool(task.verify) and all(item.exit_code == 0 for item in verify) and not needed
+    error = result.error
+    if needed:
+        error = f"{error}. " if error else ""
+        error += f"the task needs one of the tools '{', '.join(task.require_tools)}', and none of them worked"
     return TaskResult(
         id=task.id,
         mode=mode,
@@ -236,7 +242,7 @@ def run_task(
         expect=task.expect,
         as_expected=not error_kind and passed == (task.expect == "pass"),
         stop_reason=result.stop_reason,
-        error=result.error,
+        error=error,
         error_kind=error_kind,
         cost=metrics.total_cost,
         tokens_in=metrics.total_tokens_in,
