@@ -1,5 +1,6 @@
 """Compaction replaces the older part of the history with a summary."""
 
+import json
 from pathlib import Path
 
 from coderagent.config.schema import ContextConfig
@@ -212,3 +213,68 @@ def test_the_cost_of_the_summary_is_recorded_and_booked(tmp_path):
     assert engine.compact()
     events = engine.store.events(engine.session.id)
     assert [event.payload["cost"] for event in events if event.type == EventType.COMPACTION] == [0.05]
+
+
+class ChunkModel:
+    """Answers with a summary per chunk, and merges the partial ones."""
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    def complete(self, messages, **kwargs) -> str:
+        prompt = messages[0]["content"]
+        self.prompts.append(prompt)
+        if "merging the partial summaries" in prompt:
+            return '{"goal": "merged", "findings": ["all of it"]}'
+        return json.dumps({"goal": "chunk", "findings": [f"finding {len(self.prompts)}"]})
+
+
+def _fill_long(engine: ContextEngine, turns: int) -> None:
+    for index in range(turns):
+        engine.append({"role": "user", "content": f"question {index} " + "x" * 400})
+        engine.append({"role": "assistant", "content": f"answer {index} " + "y" * 400})
+
+
+def test_a_history_that_does_not_fit_is_summarized_in_chunks_and_merged(tmp_path):
+    """One prompt per chunk, and one prompt that merges the partial summaries."""
+    model = ChunkModel()
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0, summary_chunk_tokens=300)
+    engine = make_engine(tmp_path, model=model, config=config)
+    _fill_long(engine, 6)
+    assert engine.compact()
+    assert len(model.prompts) == 6, "five chunks and one merge"
+    assert model.prompts[0].count("question ") == 1, "a chunk holds one turn"
+    merge = model.prompts[-1]
+    assert "finding 1" in merge and "finding 5" in merge, "the merge sees every partial summary"
+    assert engine.summary.goal == "merged"
+
+
+def test_the_partial_summaries_are_kept_when_the_merge_fails(tmp_path):
+    """The fallback of the merge loses nothing: it puts the partial summaries together."""
+
+    class BrokenMerge(ChunkModel):
+        def complete(self, messages, **kwargs) -> str:
+            if "merging the partial summaries" in messages[0]["content"]:
+                raise RuntimeError("no merge for you")
+            return super().complete(messages, **kwargs)
+
+    model = BrokenMerge()
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0, summary_chunk_tokens=300)
+    engine = make_engine(tmp_path, model=model, config=config)
+    _fill_long(engine, 6)
+    assert engine.compact()
+    assert engine.summary.findings == ["finding 1", "finding 2", "finding 3", "finding 4", "finding 5"]
+
+
+def test_the_previous_summary_is_part_of_the_merge(tmp_path):
+    """A second compaction does not lose what the first one found."""
+    model = ChunkModel()
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0, summary_chunk_tokens=300)
+    engine = make_engine(tmp_path, model=model, config=config)
+    _fill_long(engine, 6)
+    engine.compact()
+    engine.summaries = [Summary(goal="the old goal", findings=["the old finding"])]
+    _fill_long(engine, 2)
+    engine.compact()
+    merge = model.prompts[-1]
+    assert "the old finding" in merge

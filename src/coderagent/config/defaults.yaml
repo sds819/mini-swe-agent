@@ -33,6 +33,7 @@ context:
   compact_every_turns: 40
   auto_compact: true
   summarize_model: ""
+  summary_chunk_tokens: 0
 
 memory:
   project_path: ".coderagent/memory"

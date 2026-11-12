@@ -90,6 +90,8 @@ class ContextConfig(BaseModel):
     auto_compact: bool = True
     summarize_model: str = ""
     """Model used for summarization. Empty means the same model as the agent."""
+    summary_chunk_tokens: int = 0
+    """How many tokens one summarization prompt may take. Zero means: as much as the window allows."""
 
 
 class MemoryConfig(BaseModel):

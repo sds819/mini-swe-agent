@@ -9,18 +9,31 @@ older part of it with a structured summary, so nothing is ever dropped silently.
 """
 
 import time
+from functools import partial
 from pathlib import Path
 
 from coderagent.config.schema import ContextConfig, MemoryConfig
-from coderagent.core.budget import BudgetGuard
+from coderagent.core.budget import BudgetGuard, context_window_for
 from coderagent.core.events import Event, EventBus, EventType
 from coderagent.core.history import History
 from coderagent.core.instructions import InstructionBlock, load_instructions, subdirectory_instructions
 from coderagent.core.memory import load_project_memory, load_user_memory
 from coderagent.core.session import Session, SessionStore
-from coderagent.core.summarize import Summary, conservative_summary, parse_summary, recent_errors, summarize_prompt
+from coderagent.core.summarize import (
+    Summary,
+    chunk_messages,
+    conservative_summary,
+    merge_prompt,
+    merge_summaries,
+    parse_summary,
+    recent_errors,
+    summarize_prompt,
+)
 from coderagent.core.tokens import estimate_tokens
 from coderagent.tools.permissions import PermissionPolicy, mode_block
+
+SUMMARY_OVERHEAD = 2000
+"""The tokens the prompt template and the answer of a summary take."""
 
 
 class ContextEngine:
@@ -265,29 +278,50 @@ class ContextEngine:
         return [{"role": "user", "content": text}] if text else []
 
     def _summarize(self, messages: list[dict]) -> Summary:
-        """Summarize the compacted part. The previous summary goes in as well, so that
-        a second compaction does not lose what the first one found."""
-        previous = self._summary_text()
-        payload = [*messages, {"role": "user", "content": previous}] if previous else list(messages)
-        expect_files = any(
-            call.get("function", {}).get("name") in ("write", "edit", "multi_edit")
-            for message in messages
-            for call in message.get("tool_calls") or []
-        )
-        summary = None
+        """Summarize the compacted part.
+
+        A history that does not fit into one prompt is summarized in chunks, and
+        the partial summaries are merged into one. The previous summary goes in
+        as well, so that a second compaction does not lose what the first one found.
+        """
+        previous = self.summaries[-1] if self.summaries else None
+        chunks = chunk_messages(messages, self._summary_limit())
+        if len(chunks) <= 1:
+            payload = list(chunks[0]) if chunks else []
+            if previous:
+                payload.append({"role": "user", "content": previous.render()})
+            summary = self._ask(summarize_prompt, payload, _writes(messages)) or conservative_summary(payload)
+        else:
+            parts = [
+                self._ask(summarize_prompt, chunk, _writes(chunk)) or conservative_summary(chunk) for chunk in chunks
+            ]
+            summary = self._ask(partial(merge_prompt, previous=self._summary_text()), parts, _writes(messages)) or (
+                merge_summaries([previous, *parts] if previous else parts)
+            )
+        summary.recent_errors = recent_errors(messages)
+        return summary
+
+    def _ask(self, prompt, payload, expect_files: bool) -> Summary | None:
+        """Ask the model for a summary. None when it does not deliver a usable one."""
         for _ in range(2):
             try:
-                text = self.summary_model.complete([{"role": "user", "content": summarize_prompt(payload)}])
+                text = self.summary_model.complete([{"role": "user", "content": prompt(payload)}])
             except Exception:
                 continue
             summary = parse_summary(text)
             if summary is not None and (summary.files_touched or not expect_files):
-                break
-            summary = None
-        if summary is None:
-            summary = conservative_summary(payload)
-        summary.recent_errors = recent_errors(messages)
-        return summary
+                return summary
+        return None
+
+    def _summary_limit(self) -> int:
+        """How many tokens the summarizer may take in one prompt."""
+        if self.config.summary_chunk_tokens:
+            return self.config.summary_chunk_tokens
+        window = self.config.context_window
+        name = getattr(getattr(self.summary_model, "backend", None), "model_name", "")
+        if name:
+            window = context_window_for(name, default=window)
+        return max(1000, window - self.config.reserved_output - SUMMARY_OVERHEAD)
 
     def rewind_to(self, messages: int) -> int:
         """Drop the messages after a checkpoint. Returns how many were dropped."""
@@ -316,3 +350,12 @@ class ContextEngine:
             if block.path not in known:
                 self.instruction_blocks.append(block)
                 known.add(block.path)
+
+
+def _writes(messages: list[dict]) -> bool:
+    """Whether the messages contain a call that changed a file."""
+    return any(
+        call.get("function", {}).get("name") in ("write", "edit", "multi_edit")
+        for message in messages
+        for call in message.get("tool_calls") or []
+    )

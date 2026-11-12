@@ -2,7 +2,10 @@
 
 from coderagent.core.summarize import (
     Summary,
+    chunk_messages,
     conservative_summary,
+    merge_prompt,
+    merge_summaries,
     parse_summary,
     recent_errors,
     summarize_prompt,
@@ -126,3 +129,54 @@ def test_summarize_prompt_contains_the_transcript_and_the_tool_calls():
     assert "on it" in prompt
     assert "tool call edit" in prompt
     assert "a.py" in prompt
+
+
+def test_the_prompt_shows_the_json_schema_the_model_has_to_answer():
+    prompt = summarize_prompt([{"role": "user", "content": "fix it"}])
+    assert '"goal"' in prompt
+    assert '"files_touched"' in prompt
+    assert "{{" not in prompt, "the schema is JSON, the model has to read it as JSON"
+
+
+def test_chunk_messages_keeps_the_turns_together():
+    messages = [
+        {"role": "user", "content": "a" * 100},
+        {"role": "assistant", "content": "b" * 100},
+        {"role": "user", "content": "c" * 100},
+        {"role": "assistant", "content": "d" * 100},
+    ]
+    chunks = chunk_messages(messages, 100)
+    assert len(chunks) == 2
+    assert [message["role"] for message in chunks[0]] == ["user", "assistant"]
+
+
+def test_chunk_messages_splits_a_turn_that_does_not_fit():
+    messages = [{"role": "user", "content": "x" * 400}, {"role": "assistant", "content": "y" * 400}]
+    chunks = chunk_messages(messages, 50)
+    assert len(chunks) == 2
+    assert all(len(chunk) == 1 for chunk in chunks)
+
+
+def test_merge_summaries_keeps_the_facts_of_every_part():
+    merged = merge_summaries(
+        [
+            Summary(goal="the first goal", findings=["a"], files_touched=[{"path": "x.py", "change": "one"}]),
+            Summary(
+                goal="the second goal",
+                findings=["b", "a"],
+                files_touched=[{"path": "x.py", "change": "two"}, {"path": "y.py", "change": "three"}],
+            ),
+        ]
+    )
+    assert merged.goal == "the second goal"
+    assert merged.findings == ["a", "b"]
+    assert merged.files_touched == [{"path": "x.py", "change": "two"}, {"path": "y.py", "change": "three"}]
+
+
+def test_the_merge_prompt_carries_the_partial_summaries():
+    prompt = merge_prompt(
+        [Summary(goal="g", findings=["the finding"])], previous="<session_summary>old</session_summary>"
+    )
+    assert "the finding" in prompt
+    assert "old" in prompt
+    assert '"goal"' in prompt
