@@ -24,7 +24,7 @@
 
 ## 2. 上下文的四层结构
 
-`ContextEngine.build_messages()`（`core/context.py:132-147`）固定五段，顺序不可换：
+`ContextEngine.build_messages()`（`core/context.py:145-168`）固定五段，顺序不可换：
 
 | # | 段 | 角色 | 来源 | 会变吗 |
 |---|---|---|---|---|
@@ -38,10 +38,10 @@
 
 **权限模式说明**：权限模式会在会话中途变（`/mode`、`/plan` 原地改 `policy.mode`）。如果烤进 system prompt，
 模型看到的就是过期规则。早期版本的 `plan` 和 `readonly` 就是这么成了空壳——模式对模型完全不可见，
-于是「不能写文件」这件事没人告诉模型。所以这段是**每次组装消息时现算**的（`_mode_text()`，`context.py:149-155`）。
+于是「不能写文件」这件事没人告诉模型。所以这段是**每次组装消息时现算**的（`_mode_text()`，`context.py:162-168`）。
 
 **指令 / 记忆 / todo**：它们的性质是「本轮的外部状态」，不是「对话历史」。合并成**一条** user 消息
-（`_instruction_text()`，`context.py:161-175`），而不是拆成几条——拆开会让模型误以为用户连着说了好几句话。
+（`_instruction_text()`，`context.py:174-188`），而不是拆成几条——拆开会让模型误以为用户连着说了好几句话。
 todo 渲染成 `<current_todos>` 复选框块：
 
 ```
@@ -55,7 +55,7 @@ todo 渲染成 `<current_todos>` 复选框块：
 
 `load_instructions(cwd, user_home)` 在启动时加载三处：用户 `CLAUDE.md` → 项目 `AGENTS.md` → 项目 `CLAUDE.md`。
 
-**子目录的 `AGENTS.md` 不预读**。`ContextEngine.note_path(path)`（`context.py:307-319`）在 agent **碰到某个路径时**
+**子目录的 `AGENTS.md` 不预读**。`ContextEngine.note_path(path)`（`context.py:345-357`）在 agent **碰到某个路径时**
 才去 `cwd` 与该路径之间逐层加载（由深到浅，只认 `AGENTS.md`），加载过的按路径去重。
 `ToolExecutor` 对每个带 `path` 参数的工具调 `on_path`（`run.py` 里接的就是 `context.note_path`）。
 
@@ -89,16 +89,16 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 
 ### 3.1 token 估算
 
-`core/tokens.py` 的 `estimate_tokens(messages, tools)`：
+`core/tokens.py` 的 `estimate_tokens(messages, tools)`（`tokens.py:40-52`）：
 
 - 装了 `tiktoken` 就精确算：`MESSAGE_OVERHEAD(4) + len(encoding.encode(message_text(m)))`，
-  外加工具 schema 的 JSON 长度（`tokens.py:40-51`）；
+  外加工具 schema 的 JSON 长度（`tokens.py:40-52`）；
 - 没有就退回启发式：`字符数 / 3.6 + 4 × 消息数`。
 
 `message_text()` 把消息的 `content` 和每个 tool call 的 `name` + `arguments` 都算进去——
 **工具调用的参数也是 token**，只算 content 会低估不少。
 
-`tiktoken` 是懒加载且容错的：装不上、或者首次下载词表失败，都安静地退回启发式（`tokens.py:20-27`）。
+`tiktoken` 是懒加载且容错的：装不上、或者首次下载词表失败，都安静地退回启发式（`tokens.py:20-28`）。
 估算只用来决定「要不要压」，不用来计费——**API 才是最后裁判**。
 
 ### 3.2 配置项
@@ -117,7 +117,7 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 | `context.summarize_model` | "" | 用单独的模型做摘要；空 = 走路由的 `summarize` 用途 |
 
 摘要模型可以是**另一个模型**（`run.py:161-164`）：配了就用它，没配就用路由里的 `summarize` 用途。
-摘要跑在别的模型上时，它的成本会**记到主模型账上**（`context.py:213-215`），所以总账不错。
+摘要跑在别的模型上时，它的成本会**记到主模型账上**（`context.py:225-228`），所以总账不错。
 
 ---
 
@@ -125,11 +125,11 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 
 ### 4.1 三个触发口子
 
-`ContextEngine.maybe_compact()`（`context.py:187-198`），每轮问模型之前调一次：
+`ContextEngine.maybe_compact()`（`context.py:200-211`），每轮问模型之前调一次：
 
 1. **预算到了**：`guard.should_compact(estimated_tokens())`；
 2. **轮数到了**：`session.turn_count - last_compact_turn > compact_every_turns`；
-3. **provider 报溢出**：`force_compact()`（`context.py:200-202`）——
+3. **provider 报溢出**：`force_compact()`（`context.py:213-215`）——
    `loop.py` 的 `_query` 捕获上下文溢出异常后强制压一次，**然后重试一次**；压不动才返回错误
    （文本里带 "nothing left to compact"）。
 
@@ -145,7 +145,7 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 
 ### 4.3 切点：两条规则取更严的
 
-`_cut_index()`（`context.py:235-261`）：
+`_cut_index()`（`context.py:252-278`）：
 
 ```
 earliest = starts[max(0, len(starts) - keep_recent_turns)]     # 最近 N 轮的起点
@@ -185,10 +185,10 @@ while estimate_tokens(messages[cut:]) > limit:
 }
 ```
 
-`parse_summary()`（`summarize.py:100-114`）容错：剥 ```json 围栏 → 取第一个 `{` 到最后一个 `}` → `json.loads`；
+`parse_summary()`（`summarize.py:115-130`）容错：剥 ```json 围栏 → 取第一个 `{` 到最后一个 `}` → `json.loads`；
 不是 dict 就返回 `None`（判失败）。
 
-渲染成 `<session_summary>` 块（`summarize.py:72-97`），**放在历史之前**——被摘要的是更早的那部分。
+渲染成 `<session_summary>` 块（`summarize.py:87-113`），**放在历史之前**——被摘要的是更早的那部分。
 
 **为什么是结构化字段而不是散文**：模型要记住「还剩什么没做完」，靠 JSON 字段比靠一段话稳得多。
 
@@ -245,7 +245,7 @@ while estimate_tokens(messages[cut:]) > limit:
 `telemetry.collect()` 把它收进 `Metrics.summary_ratios`，
 评测报告里给出均值和最差值（`eval/report.py`）。
 
-`restore()` 重放日志时按 `compacted_messages` 截断（`context.py:86-88`），原文随时能取回。
+`restore()` 重放日志时按 `compacted_messages` 截断（`context.py:99-101`），原文随时能取回。
 
 **「模型看不见」和「事实没了」是两回事**——这是整套设计的地基。
 
@@ -255,7 +255,7 @@ while estimate_tokens(messages[cut:]) > limit:
 
 ### 5.3 摘要失败不许通过
 
-`_summarize()`（`context.py:267-290`）的判定链：
+`_summarize()`（`context.py:284-306`）的判定链：
 
 ```
 for _ in range(2):                      # 最多两次
@@ -268,12 +268,12 @@ if summary is None:
     summary = conservative_summary(payload)
 ```
 
-`expect_files` = 被压缩的部分里有没有 `write` / `edit` / `multi_edit`（`context.py:272-276`）。
+`expect_files` = 被压缩的部分里有没有 `write` / `edit` / `multi_edit`（`context.py:359-365`）。
 
 **关键判定**：压缩掉的段落里有写操作，但摘要的 `files_touched` 是空的 → **算失败**。
 模型没交代它改过文件，说明它没读懂被压缩的内容。这时不能接受，重试一次。
 
-两次都失败才用 `conservative_summary()` 兜底（`summarize.py:130-141`）：
+两次都失败才用 `conservative_summary()` 兜底（`summarize.py:257-269`）：
 
 ```python
 Summary(
@@ -287,10 +287,10 @@ Summary(
 
 ### 5.4 摘要链不断
 
-`summaries` **永远只有一份**——`self.summaries = [summary]`（`context.py:216`）是**替换**不是追加。
+`summaries` **永远只有一份**——`self.summaries = [summary]`（`context.py:229`）是**替换**不是追加。
 否则摘要会越堆越多把预算吃光（第二份摘要的输入里已经有第一份，再加一份就是复利）。
 
-但压缩第 N 次时，**上一份摘要会作为额外输入喂给模型**（`context.py:291-304`）：
+但压缩第 N 次时，**上一份摘要会作为额外输入喂给模型**（`context.py:291`）：
 
 ```python
 previous = self.summaries[-1] if self.summaries else None
@@ -302,7 +302,7 @@ previous = self.summaries[-1] if self.summaries else None
 
 ### 5.5 关键信息不问模型
 
-`recent_errors` 是**从消息里直接算**的（`summarize.py:144-151`）：
+`recent_errors` 是**从消息里直接算**的（`summarize.py:271-278`）：
 
 ```python
 for message in messages:
@@ -395,8 +395,8 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
 
 | 手段 | 在哪 | 效果 |
 |---|---|---|
-| 指令不进历史 | `context.py:161-175` | 每次重算，不累积在 history 里 |
-| 子目录指令惰性加载 | `context.py:307-319` | 只加载走过的目录 |
+| 指令不进历史 | `context.py:174-188` | 每次重算，不累积在 history 里 |
+| 子目录指令惰性加载 | `context.py:345-357` | 只加载走过的目录 |
 | 工具 schema 预算裁剪 | `tools/registry.py` | schema 占窗口的 10%，超了按 `TRIM_ORDER` 丢 |
 | 工具输出裁剪 | `core/tokens.py` | 头尾保留，中间标出来 |
 | 工具输出上限 | `tools/builtin/` | `read` 2000 行、`glob` 200 条、`grep` 100 行、`bash` 按 `max_output_tokens` |
@@ -412,7 +412,7 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
 2. **摘要永远只有一份**。第二次压缩时，第一次摘要的细节被压成一句再合并进新摘要。
 3. **窗口外的内容模型取不回**。原文在磁盘上，但模型只能靠 `read` / `grep` 重新捞——这就是
    `conservative_summary` 要写「去重读文件」的原因。
-4. **`_cut_index` 用的是 `config.context_window` 而不是 `guard.limit()`**（`context.py:250` vs `budget.py:35`），
+4. **`_cut_index` 用的是 `config.context_window` 而不是 `guard.limit()`**（`context.py:252` vs `budget.py:35`），
    两者差一个 `reserved_output`，极端情况下会切得偏保守。
 5. **指令块会累积**。`instruction_blocks` 随 agent 走过的目录增长，且**不随压缩清理**。
 6. **相邻的两条 user 消息**。权限模式说明和摘要是两条连续的 `user` 消息，中间没有 assistant。
