@@ -1,18 +1,35 @@
 permissions:
+  mode: default
   rules:
     - tool: write
       pattern: app.py
       decision: deny
-      reason: app.py is edited, not rewritten
+      reason: app.py is changed with the edit tool, not rewritten
     - tool: multi_edit
       pattern: app.py
       decision: deny
-      reason: app.py is edited, not rewritten
+      reason: app.py is changed with the edit tool, not rewritten
+    - tool: bash
+      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?app\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: app.py is changed with the edit tool, not written by a shell command
+    - tool: bash
+      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?app\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: app.py is changed with the edit tool, not written by a shell command
     - tool: write
       pattern: utils.py
       decision: deny
-      reason: utils.py is edited, not rewritten
+      reason: utils.py is changed with the edit tool, not rewritten
     - tool: multi_edit
       pattern: utils.py
       decision: deny
-      reason: utils.py is edited, not rewritten
+      reason: utils.py is changed with the edit tool, not rewritten
+    - tool: bash
+      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?utils\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: utils.py is changed with the edit tool, not written by a shell command
+    - tool: bash
+      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?utils\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: utils.py is changed with the edit tool, not written by a shell command

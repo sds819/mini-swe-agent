@@ -1,10 +1,19 @@
 permissions:
+  mode: default
   rules:
     - tool: write
       pattern: calc.py
       decision: deny
-      reason: calc.py is edited, not rewritten
+      reason: calc.py is changed with the edit tool, not rewritten
     - tool: multi_edit
       pattern: calc.py
       decision: deny
-      reason: calc.py is edited, not rewritten
+      reason: calc.py is changed with the edit tool, not rewritten
+    - tool: bash
+      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?calc\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: calc.py is changed with the edit tool, not written by a shell command
+    - tool: bash
+      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?calc\\.py(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: calc.py is changed with the edit tool, not written by a shell command

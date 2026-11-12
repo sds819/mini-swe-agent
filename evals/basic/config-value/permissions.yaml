@@ -1,10 +1,19 @@
 permissions:
+  mode: default
   rules:
     - tool: write
       pattern: config.json
       decision: deny
-      reason: config.json is edited, not rewritten
+      reason: config.json is changed with the edit tool, not rewritten
     - tool: multi_edit
       pattern: config.json
       decision: deny
-      reason: config.json is edited, not rewritten
+      reason: config.json is changed with the edit tool, not rewritten
+    - tool: bash
+      pattern: "^.*>\\s*(?:[^\\s'\"]*/)?config\\.json(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: config.json is changed with the edit tool, not written by a shell command
+    - tool: bash
+      pattern: "^(?:.*[\\s'\"])?(?:sed\\s+-i|cp|mv|tee|install|truncate|ln)\\b.*[\\s'\"](?:[^\\s'\"]*/)?config\\.json(?:$|[\\s'\";|&])"
+      decision: deny
+      reason: config.json is changed with the edit tool, not written by a shell command

@@ -7,6 +7,7 @@ prompt: |
 verify:
   - test "$(python greet.py --name World)" = "Hello, World!"
   - test "$(python greet.py --name Ada)" = "Hello, Ada!"
+require_tools: [edit, multi_edit]
 config:
   - permissions.yaml
 tags: [feature]

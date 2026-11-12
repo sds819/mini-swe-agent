@@ -7,6 +7,7 @@ prompt: |
 verify:
   - python -c 'import pricing; assert pricing.grand_total([2,3])==5'
   - "python -c 'import report; print(report.render([2,3]))' | grep -qx \"Total: 5\""
+require_tools: [edit, multi_edit]
 config:
   - permissions.yaml
 tags: [refactor]

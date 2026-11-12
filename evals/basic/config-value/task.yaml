@@ -6,6 +6,7 @@ prompt: |
 verify:
   - python -c 'import settings; assert settings.timeout()==60'
   - python -c 'import settings; assert settings.CONFIG["retries"]==3'
+require_tools: [edit, multi_edit]
 config:
   - permissions.yaml
 tags: [config]

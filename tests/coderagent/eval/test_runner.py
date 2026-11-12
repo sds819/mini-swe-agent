@@ -25,6 +25,7 @@ def _task(
     verify: list[str] | None = None,
     timeout: int = 300,
     expect: str = "pass",
+    require_tools: list[str] | None = None,
 ) -> Task:
     """A task on the disk, with its fixture."""
     directory = tmp_path / "the-task"
@@ -41,6 +42,7 @@ def _task(
                 "script": script,
                 "timeout": timeout,
                 "expect": expect,
+                "require_tools": require_tools or [],
             }
         ),
         encoding="utf-8",
@@ -107,6 +109,39 @@ def test_a_scripted_task_that_does_nothing_fails(tmp_path):
     assert result.verify[0].exit_code != 0
     assert "failed" in result.verify[0].output
     assert "return n + 2" in (tmp_path / "work" / "calc.py").read_text(encoding="utf-8")
+
+
+def test_a_task_that_needs_the_edit_tool_fails_without_it(tmp_path):
+    """The check of the task is not enough: the tool has to work, or the task does not pass."""
+    task = _task(
+        tmp_path,
+        [
+            {
+                "content": "Rewriting the file.",
+                "tool_calls": [{"tool": "write", "args": {"path": "calc.py", "content": "def add_one(n):\n    return n + 1\n"}}],
+            },
+            {"content": "The test passes."},
+        ],
+        {"calc.py": CALC, "tests/test_calc.py": TEST},
+        verify=["python -m pytest -q tests/test_calc.py"],
+        require_tools=["edit"],
+    )
+    result, _ = _run(task, tmp_path)
+    assert result.verify[0].exit_code == 0, "the file is right, the tool was not used"
+    assert result.passed is False
+    assert "edit" in result.error
+
+
+def test_a_task_that_needs_the_edit_tool_passes_with_it(tmp_path):
+    task = _task(
+        tmp_path,
+        _scripted_fix(),
+        {"calc.py": CALC, "tests/test_calc.py": TEST},
+        verify=["python -m pytest -q tests/test_calc.py"],
+        require_tools=["edit", "multi_edit"],
+    )
+    result, _ = _run(task, tmp_path)
+    assert result.passed is True
 
 
 def test_a_script_that_runs_out_is_an_error_of_the_harness(tmp_path):
