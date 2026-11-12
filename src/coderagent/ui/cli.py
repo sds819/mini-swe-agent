@@ -241,6 +241,9 @@ def eval_compare(
     against: Path = typer.Option(None, "--against", help="The report of the run before the change"),
     max_regressions: int = typer.Option(0, "--max-regressions", help="The regressions that are allowed"),
     max_drop: float = typer.Option(0.0, "--max-drop", help="The fall of the pass rate that is allowed"),
+    same_config: bool = typer.Option(
+        False, "--same-config", help="Say nothing when the two runs did not run the same configuration"
+    ),
     output_format: str = typer.Option("text", "--format", help="text|json"),
     out: str = typer.Option("", "--out", help="The file to write the comparison to"),
 ) -> None:
@@ -258,6 +261,11 @@ def eval_compare(
     if against:
         old = json.loads(against.read_text(encoding="utf-8"))
         comparison = compare(old, new)
+        if same_config and comparison.config_changed:
+            """The numbers of two different configurations say nothing about the change."""
+            typer.echo(render(comparison))
+            typer.echo("the two runs ran a different configuration: the comparison says nothing")
+            return
         problems = verdict(comparison, max_regressions, max_drop)
     else:
         comparison = compare({"tasks": []}, new)

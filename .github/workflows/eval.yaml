@@ -117,5 +117,5 @@ jobs:
             eval /tmp/base/evals/basic --label base --format json --out base.json
       - name: Compare the two runs
         run: |
-          coder eval-compare head.json --against base.json --max-regressions 0 --max-drop 0 \
+          coder eval-compare head.json --against base.json --same-config --max-regressions 0 --max-drop 0 \
             | tee -a $GITHUB_STEP_SUMMARY

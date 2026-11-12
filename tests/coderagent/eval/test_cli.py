@@ -136,3 +136,15 @@ def test_the_comparison_can_be_read_as_json(tmp_path):
     result = CliRunner().invoke(app, ["eval-compare", str(after), "--against", str(before), "--format", "json"])
     assert result.exit_code == 0, result.output
     assert json.loads(result.output)["regressions"] == []
+
+
+def test_two_runs_with_a_different_configuration_say_nothing(tmp_path):
+    """The numbers of two different configurations do not tell whether the agent got worse."""
+    before = _report(tmp_path / "before.json", "base", True)
+    after = _report(tmp_path / "after.json", "head", False)
+    report = json.loads(after.read_text(encoding="utf-8"))
+    report["fingerprint"] = "sha256:another"
+    after.write_text(json.dumps(report), encoding="utf-8")
+    result = CliRunner().invoke(app, ["eval-compare", str(after), "--against", str(before), "--same-config"])
+    assert result.exit_code == 0, result.output
+    assert "the comparison says nothing" in result.output
