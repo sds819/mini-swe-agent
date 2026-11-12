@@ -424,7 +424,7 @@ config_home() = Path(os.environ["MSWEA_CODER_HOME"]) if 设置了 else Path.home
 
 `require_tools` 是本项目的关键设计：`{tools: [edit, multi_edit], paths: [calc.py]}` —— 任务不仅要有 verify 命令，还要**用对的工具在对的文件上**干成事。判定靠 `eval/runner.py` 的 `_successful_calls()`：只有**没有报错的** tool call 才算数，工具名要在白名单里、路径要在名单里（路径按 workdir 解析）。
 
-**两个 suite**：`evals/basic/` 9 个任务（全部要 API key）、`evals/offline/` 5 个任务（全部带 `script:`，**不要 API key**）。`evals/offline/broken-check` 是 `expect: fail` 的保险丝。`evals/basic/long-conversation` 是唯一会触发压缩的任务：它有四个 prompt，并把自己的窗口调小，逼着 harness 压缩。
+**两个 suite**：`evals/basic/` 9 个任务（全部要 API key）、`evals/offline/` 6 个任务（全部带 `script:`，**不要 API key**）。`evals/offline/broken-check` 是 `expect: fail` 的保险丝。`evals/basic/long-conversation` 是唯一会触发压缩的任务：它有四个 prompt，并把自己的窗口调小，逼着 harness 压缩。`evals/offline/multi-turn` 是多轮的离线版：三个 prompt，同一个会话，三轮。
 
 ### e2 怎么保证「agent 的失败」和「harness 的失败」分得开？
 

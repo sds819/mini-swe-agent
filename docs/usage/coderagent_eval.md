@@ -277,9 +277,10 @@ Every task but `no-op` fails its check before the agent starts, so a task that
 is solved by doing nothing is a broken task. `tests/coderagent/eval/test_suite.py`
 keeps an eye on that.
 
-`evals/offline` is the other suite: five tasks, all scripted, all offline. The
+`evals/offline` is the other suite: six tasks, all scripted, all offline. The
 `broken-check` task is the guard of the suite: its check has to fail, so a check
-that never fails cannot hide.
+that never fails cannot hide. The `multi-turn` task has three prompts: it runs
+a turn for each of them, in the same session.
 
 To run a task without an API key, give it a `script`: the answers of the agent
 are written down, and the trajectory is the same every time.

@@ -239,8 +239,8 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 除了 `no-op`，每个任务在 agent 开始之前都是**没通过**的——一个什么都不做就能过的任务是个坏任务。
 `tests/coderagent/eval/test_suite.py` 盯着这件事。
 
-`evals/offline` 是另一个 suite：五个任务，全是脚本化的，全离线。
+`evals/offline` 是另一个 suite：六个任务，全是脚本化的，全离线。
 `broken-check` 是这个 suite 的保险丝：它的判据**必须**失败，
-所以一个从来不失败的判据藏不住。
+所以一个从来不失败的判据藏不住。`multi-turn` 有三个 prompt：每个 prompt 一轮，同一个会话。
 
 想不花 API key 就跑一个任务，给它加一段 `script`：agent 的回答是写死的，轨迹每次都一样。

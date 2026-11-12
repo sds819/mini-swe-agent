@@ -26,7 +26,7 @@ IDS = [
 """The tasks of the suite, in the order they are sorted."""
 
 OFFLINE = Path(__file__).parents[3] / "evals" / "offline"
-OFFLINE_IDS = ["bash-command", "broken-check", "edit-file", "read-only", "write-file"]
+OFFLINE_IDS = ["bash-command", "broken-check", "edit-file", "multi-turn", "read-only", "write-file"]
 """The tasks of the suite that needs no API key."""
 
 
@@ -126,6 +126,7 @@ def test_the_offline_suite_does_what_it_should(tmp_path):
     assert [result.id for result in results if result.passed] == [
         "bash-command",
         "edit-file",
+        "multi-turn",
         "read-only",
         "write-file",
     ]
