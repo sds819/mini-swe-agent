@@ -162,9 +162,9 @@ coder --task "fix the failing test in tests/test_parser.py"
 }
 ```
 
-`stop_reason` 有五种：`end_turn`、`max_turns`、`cost_exceeded`、`interrupted`、`error`。
+`stop_reason` 有七种：`end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`verify_failed`、`interrupted`、`error`。
 
-**没有终端就没人能批准操作**，所以默认模式下需要批准的调用一律被拒（拒绝的原因会告诉模型，模型会换个做法）。
+**没有终端就没人能批准操作**，所以默认模式下需要批准的调用一律被拒（模型只会看到「用户拒绝了」，看不到拒绝的理由，模型会换个做法）。
 脚本里如果确实需要它动手，加 `--permission-mode bypass`：
 
 ```bash
@@ -181,13 +181,14 @@ coder --task "..." --permission-mode bypass
 | `acceptEdits` | 写文件不问，跑命令要问你 |
 | `plan` | 只读不改，agent 只看不碰 |
 | `readonly` | 同 plan，但 agent 被告知只描述改动、不动手 |
-
-`plan` 和 `readonly` 把写文件的工具收走了，所以模型会被告知这件事：一段
-`<permission_mode mode="...">` 的说明会进到对话里，说清楚它现在能做什么、
-应该改成回答什么。模式一变，这段说明也跟着变。
 | `bypass` | 全放行。只在容器或一次性 checkout 里用 |
 
-界面里被问到的时候：`y` 允许这一次，`n` 拒绝，`a` 本次会话都允许。
+`plan` 和 `readonly` 让权限层拒掉写文件的工具，所以模型会被告知这件事：一段
+`<permission_mode mode="...">` 的说明会进到对话里，说清楚它现在能做什么、
+应该改成回答什么。模式一变，这段说明也跟着变。
+
+界面里被问到的时候：`y` 允许这一次，`n` 拒绝，`a` 永远允许——它会把一条规则写进
+`~/.coderagent/rules.yaml`，以后这个文件（或这条命令）都放行，所有会话都算。
 选项是一行一个、带编号的方框，选中的那个是红星 `[*]`，没选的是灰杠 `[-]`：
 
 ```
@@ -197,7 +198,7 @@ coder --task "..." --permission-mode bypass
 ```
 
 方向键（`←`/`→` 或 `↑`/`↓`）移动选中项，数字键直接跳到那一项，回车确认。
-拒绝的理由会回到模型，模型会改主意而不是硬来。
+拒绝会回到模型，模型会改主意而不是硬来。
 
 想固定某些规则，写在 `.coderagent/rules.yaml`（项目）和 `~/.coderagent/rules.yaml`（用户）：
 
@@ -211,7 +212,8 @@ rules:
     decision: allow
 ```
 
-`decision` 是 `allow` / `ask` / `deny`，最后一条匹配上的规则赢。
+`decision` 是 `allow` / `ask` / `deny`：路径类工具最后一条匹配上的规则赢，
+命令则是分段判断、最严的那段说了算。
 
 ## 常用命令 {#commands}
 
@@ -224,7 +226,7 @@ rules:
 | `/mode` | 看/切权限模式 |
 | `/cost` | 这次会话花了多少钱，花在哪 |
 | `/diff` | 看工作区的改动 |
-| `/init` | 给项目生成一份 `AGENTS.md` |
+| `/init` | 给项目写一份模板 `AGENTS.md`（不问模型） |
 | `/todos` | agent 的任务清单 |
 | `/clear` | 开一个新会话（账从 0 开始） |
 | `/rewind` | 看 checkpoint，指定 id 就退回去 |
@@ -339,7 +341,8 @@ coder export --session <id> --format otel --out trace.otlp
 
 **「找不到 API key」**
 key 必须在环境变量里，或者在 `mini-extra config edit` 打印的那个 `.env` 里。
-`coder` 启动时会静默地读这个 `.env`，读不到就报认证错误。
+`coder` 启动时会读这个 `.env`（启动横幅会打印它的路径，想安静就设
+`MSWEA_SILENT_STARTUP=1`），读不到就报认证错误。
 查一下当前进程里到底有没有：
 
 ```bash
@@ -347,7 +350,7 @@ python -c "import coderagent.ui.cli, os; print(os.getenv('ANTHROPIC_API_KEY'))"
 ```
 
 **「改了文件但我没同意」**
-默认模式下写文件要批准，界面里按 `y` 允许这一次、`a` 本次会话都允许。或者用 `/mode acceptEdits`。脚本里用 `--permission-mode bypass`。
+默认模式下写文件要批准，界面里按 `y` 允许这一次、`a` 永远允许（会写一条规则进 `~/.coderagent/rules.yaml`）。或者用 `/mode acceptEdits`。脚本里用 `--permission-mode bypass`。
 
 **「agent 一直问我要批准」**
 在 `.coderagent/rules.yaml` 里放一条规则，把这个工具定成 `allow`。

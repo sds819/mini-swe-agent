@@ -102,8 +102,9 @@ it is not in the `cost` of a turn, but it is in the bill of the session: it
 lands in the event log, and `session_cost`, `/cost` and `coder export` count
 it.
 
-A turn that failed or that ran out of budget is not settled: there is
-nothing to remember, and no money to do it.
+A turn that failed or that ran out of the money budget is not settled: there is
+nothing to remember, and no money to do it. A turn that stopped at the token
+limit is settled like any other.
 
 ## Turning it off
 
@@ -112,10 +113,16 @@ memory:
   enabled: false
 ```
 
-The model is not even asked. The paths of the files are yours to change:
+The model is not even asked, and the memory of the project and of the user is
+not put into the context of the model any more. The path of the project file
+is yours to change, the path of the user file only in its file name — it is
+always written into the directory of the user:
 
 ```yaml
 memory:
   project_path: ".coderagent/memory"
   user_path: "~/.coderagent/CLAUDE.md"
 ```
+
+The file with the preferences that wait for a confirmation is always
+`<cwd>/.coderagent/pending-memory.md`.

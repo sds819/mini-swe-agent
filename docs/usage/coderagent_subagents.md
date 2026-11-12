@@ -52,7 +52,7 @@ You write the documentation of a module. Read the code, then write the docs.
 
 | Field | What it is | Default |
 |---|---|---|
-| `name` | The name of the sub agent | The name of the file |
+| `name` | The name of the sub agent | The name of the file, without the extension |
 | `description` | What it is for. The main agent reads this one | |
 | `tools` | The tools it may call. A list, or a comma separated string | `read` `grep` `glob` `bash` |
 | `model_purpose` | Which model answers for it | `cheap` |
@@ -82,6 +82,8 @@ The `task` tool returns a JSON object:
   "findings": ["src/parser.py:42 parses the arguments"],
   "files_touched": [],
   "cost": 0.031,
+  "tokens_in": 12043,
+  "tokens_out": 987,
   "turns": 7,
   "purpose": "cheap"
 }
@@ -94,6 +96,8 @@ The `task` tool returns a JSON object:
 | `findings` | The bullet points of that conclusion |
 | `files_touched` | The files it **changed**. The files it read are not in it |
 | `cost` | What it spent |
+| `tokens_in` | The tokens it sent |
+| `tokens_out` | The tokens it got back |
 | `turns` | How many model calls it made |
 | `purpose` | The purpose of the model that answered for it |
 

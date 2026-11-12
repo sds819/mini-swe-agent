@@ -39,7 +39,7 @@ The name of the model is `model.model_name` in the configuration, or
 
 | Option | What it does |
 |---|---|
-| `--task`, `-t` | The task. Without it, the interface opens. |
+| `--task`, `-t` | The task. Without it, the interface opens when the terminal is interactive. |
 | `--model`, `-m` | The model of this run |
 | `--config`, `-c` | A configuration file, or `key=value` overrides |
 | `--cwd` | The directory of the session |
@@ -107,8 +107,10 @@ The trace is the event log of the session with the metrics of the session. See
 | `ctrl+q` | Leave. The session is settled in the memory first. |
 
 When the agent wants to run a tool that needs approval, the interface asks.
-`y` allows it once, `n` refuses it, `a` allows it for the rest of the
-session. The refusal goes back to the model, which then does something else.
+`y` allows it once, `n` refuses it, `a` always allows it: that answer writes a
+rule into `~/.coderagent/rules.yaml`, so the same call — the same file, or the
+same command — is allowed from then on, in every session. The refusal goes back
+to the model, which then does something else.
 
 The answers are listed one per line, each in a numbered box:
 
@@ -336,8 +338,8 @@ The mode decides what the agent may do without asking:
 
 The mode can be changed while the session runs, with `/mode` or `/plan`.
 
-`plan` and `readonly` take the writing tools away from the model, so the model
-is told about it: a `<permission_mode mode="...">` block goes into the
+`plan` and `readonly` make the permission layer deny the writing tools, so the
+model is told about it: a `<permission_mode mode="...">` block goes into the
 conversation, saying what it may do and what it should answer instead. The
 block follows the mode, so it changes as soon as the mode changes.
 
@@ -359,7 +361,9 @@ permissions:
 The pattern is a glob for the tools that touch a path (`read`, `write`,
 `edit`, `multi_edit`, `glob`, `grep`, `ls`) and a regular expression for
 `bash`, where it is matched against the beginning of each part of the command.
-The decision is `allow`, `ask` or `deny`. The last rule that matches wins.
+The decision is `allow`, `ask` or `deny`. For the path tools the last rule that
+matches wins. A command is judged part by part and the strictest part wins, so
+an allowed `pytest` does not carry a `rm` along with it.
 
 The rules of the project live in `.coderagent/rules.yaml`, the rules of the
 user in `~/.coderagent/rules.yaml`. Both are read, in that order, so a rule of
@@ -386,7 +390,7 @@ outside the working directory is refused in every mode.
 `/permissions` shows the mode and the rules that are in effect.
 
 Without a terminal nobody can be asked, so a call that needs approval is
-refused and the model is told why. In a script, use
+refused and the model is told that the user refused it. In a script, use
 `--permission-mode bypass` for the calls that need it.
 
 ### The context
@@ -450,13 +454,14 @@ sandbox:
 ```
 
 `swerex_docker`, `swerex_modal`, `bubblewrap` and `contree` are the other
-ones. The options of the sandbox go to the environment as they are:
+ones. The options of the sandbox go to the environment as they are; the ones
+the environment does not know are ignored:
 
 ```yaml
 sandbox:
   type: swerex_docker
   image: python:3.11
-  run_args: ["--rm", "--network", "none"]
+  cwd: /workspace
 ```
 
 The sandbox has no policy of its own: the network policy belongs to the
@@ -471,6 +476,9 @@ The agent reads the instructions of the project before it starts. The files are
 ```bash
 coder --task "/init"   # write an AGENTS.md for this project
 ```
+
+`/init` writes a template with the layout of the directory; the model is not
+asked. It does nothing when the file already exists.
 
 The user file `~/.coderagent/CLAUDE.md` comes first, then the project. An
 `AGENTS.md` in a subdirectory is read when the agent touches something in it.
@@ -586,7 +594,8 @@ See [MCP servers](coderagent_mcp.md).
 ## The sessions and the money
 
 A session is an append-only log of events, and that log is the source of
-truth. The sessions live in `~/.coderagent/sessions`, one file per session.
+truth. The sessions live in `~/.coderagent/sessions`: one `.jsonl` file with the
+events of a session and one `.meta.json` file with its metadata.
 
 ```bash
 coder --list              # the sessions of this directory
@@ -603,11 +612,20 @@ the same as on the command line.
 model: deepseek/deepseek-flash
 calls: 9
 tokens in the context: 120433
+tokens spent: 45678
 cost so far: $0.4200
 cost: $0.4200
+tokens: 120433 in, 4567 out
+model calls: 9
+tool calls: 14
+duration: 42.1s
 by purpose:
   main        $0.3800
   cheap       $0.0400
+by model:
+  deepseek/deepseek-flash  $0.4200
+by tool:
+  read        8
 ```
 
 The bill belongs to the session: a new session starts at zero, whatever the

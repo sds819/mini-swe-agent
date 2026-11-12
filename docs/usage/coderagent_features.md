@@ -41,19 +41,22 @@ coder web --cwd . --port 8765
 coder --list
 ```
 
-The JSON of one turn has the fields `session_id`, `messages`, `cost`, `usage`,
-`stop_reason` and `error`:
+The JSON of one turn has the fields `session_id`, `messages`, `cost`,
+`session_cost`, `stop_reason` and `error`:
 
 ```json
 {
   "session_id": "20261109-3f0a91",
   "messages": [{"role": "assistant", "content": "I added the docstring."}],
   "cost": 0.0012,
-  "usage": {"input_tokens": 4210, "output_tokens": 96},
+  "session_cost": 0.0143,
   "stop_reason": "end_turn",
   "error": ""
 }
 ```
+
+`cost` is what the turn cost, `session_cost` what the whole session has cost
+so far.
 
 `stop_reason` is one of `end_turn`, `max_turns`, `cost_exceeded`, `token_limit`, `verify_failed`,
 `error` and `interrupted`.
@@ -84,8 +87,8 @@ The JSON of one turn has the fields `session_id`, `messages`, `cost`, `usage`,
   end; the part behind `/v1` is cut off, because litellm adds it itself.
 - **Aliases** — a litellm config file with a model list. The model name can
   then be an alias of that list, and the key of the endpoint stays in the file.
-- **Cache control** — `set_cache_control: ephemeral` for the providers that
-  support it.
+- **Cache control** — `set_cache_control: default_end` for the providers that
+  support it. Any other value is refused.
 - **Retries** — `max_retries`, three by default.
 - **Routing by purpose** — a different model for `main`, `cheap`, `summarize`,
   `reflect` and `strong`.
@@ -112,7 +115,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 # .coderagent/config.yaml
 model:
   model_name: deepseek/deepseek-flash
-  set_cache_control: ephemeral
+  set_cache_control: default_end
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -145,7 +148,7 @@ The reasons are `the budget is nearly used up`, `the context has grown`,
 | What you see | What it means | What to do |
 |---|---|---|
 | `LLM Provider NOT provided` | The model name has no provider in front of it. | Write `openai/<name>` for an OpenAI compatible endpoint, or `deepseek/<name>`. |
-| `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor `ephemeral`. | Use one of the two, or remove the line. |
+| `ValueError: Invalid mode: {mode}` | `set_cache_control` is neither `default_end` nor empty. | Use `default_end`, or remove the line. |
 | `the file does not exist` | `model.litellm_config` points at a file that is not there. | Fix the path; it is relative to the working directory. |
 | `the file is not valid YAML: {error}` | The alias file cannot be parsed. | Fix the YAML. |
 | `the file has no model_list` | The alias file has no `model_list`. | Add the list of the models with their `litellm_params`. |
@@ -204,7 +207,7 @@ The thirteen built-in tools:
 {"tool": "glob", "params": {"pattern": "src/**/*.py"}}
 {"tool": "ls", "params": {"path": "src", "depth": -1}}
 {"tool": "bash", "params": {"command": "pytest -q", "timeout": 300}}
-{"tool": "bash", "params": {"command": "pytest -q", "background": true}}
+{"tool": "bash", "params": {"command": "pytest -q", "run_in_background": true}}
 {"tool": "bash_output", "params": {"task_id": "b7f3"}}
 ```
 
@@ -231,7 +234,7 @@ sees the message and can correct itself. The messages are:
 | `read` | `Error: '{name}' is a directory. Use \`ls\` to list it.` |
 | `read` | `Error: '{name}' is a binary file.` |
 | `edit` | `Error: old_string not found in {path}. Use \`read\` to see the exact content, then retry with more context.` |
-| `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Use more context to make it unique.` |
+| `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Include more surrounding context to make it unique, or set replace_all=true.` |
 | `multi_edit` | `Error: Edit #1 failed, no changes were written. {inner}` — the file is untouched. |
 | `grep` | `Error: invalid regular expression '{pattern}': {error}` |
 | `grep` | `Error: \`output_mode\` must be one of content, files_with_matches, count (got '{mode}').` |
@@ -281,7 +284,7 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
 - **Rules** — `~/.coderagent/rules.yaml` and `.coderagent/rules.yaml` decide
   per tool and per pattern. The user level file wins.
 - **`Always allow`** — the button of an approval writes a rule, so the same
-  tool goes through from then on.
+  call — the same file, or the same command — goes through from then on.
 - **Denied paths** — `permissions.deny_paths`, paths the agent may not touch.
 - **Extra directories** — `permissions.include_dirs`, directories outside the
   working directory the agent may still touch.
@@ -355,7 +358,7 @@ rules:
   - tool: bash
     pattern: pytest
     decision: allow
-    reason: always allowed
+    reason: always allowed by the user
 ```
 
 ### When something goes wrong
@@ -444,8 +447,9 @@ The files of a session live in `~/.coderagent/`:
 ```
 
 The event log is one JSON object per line, and the types are `user_message`,
-`assistant_message`, `tool_call`, `tool_result`, `compaction`, `error` and
-`turn_end`.
+`assistant_message`, `tool_call`, `tool_result`, `approval_request`,
+`approval_response`, `state_change`, `compaction`, `reflection`, `verify`,
+`reverted_to`, `error` and `turn_end`.
 
 `/rewind` restores the **files** only — what a command did to the outside
 world stays done — and truncates the history of the session to the moment of
@@ -606,7 +610,7 @@ memory:
   context or with rewritten arguments.
 - **Your own commands** — `.coderagent/commands/*.md`: a slash command with a
   description, an argument hint, the tools it may use and its own model.
-- **MCP servers** — a server over stdio or over http. Its tools join the
+- **MCP servers** — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.
 
@@ -710,7 +714,7 @@ Commit everything with the message: $ARGUMENTS
 | `Hook 'check_secrets.sh' timed out, ignoring it` | The hook took longer than its timeout. The call goes through. | Raise the `timeout`, or make the hook faster. |
 | `Hook 'check_secrets.sh' failed with RuntimeError: ...` | The hook crashed. The call goes through. | Fix the hook. With `strict: true` the call is blocked instead. |
 | `Error: the MCP server 'echo' is not connected.` | The server is not running. | Check the `command` of the server; `/mcp` says `not connected` or `failed: <error>`. |
-| `Error: the MCP tool 'mcp__echo__echo' failed: RuntimeError: ...` | The server answered with an error. | The message of the server is in the answer. |
+| `Error: the MCP tool 'echo' failed: RuntimeError: ...` | The server answered with an error. The name in the message is the one of the server. | The message of the server is in the answer. |
 
 The custom commands are looked up in `<cwd>/.coderagent/commands/*.md` only —
 the agent does not walk up the directories to find them.
@@ -737,10 +741,12 @@ The seven types are `local`, `docker`, `singularity`, `bubblewrap`, `contree`,
 `swerex_docker` and `swerex_modal`. The options that the environment does not
 know are ignored, so one file can carry the settings of several of them.
 
-`/sandbox` answers with the environment that is in use:
+`/sandbox` answers with the type, the options that are in effect and the
+environment that is in use:
 
 ```
-local
+type: local
+environment: local
 ```
 
 ### When something goes wrong
@@ -824,8 +830,8 @@ An approval is a numbered list, and the selected one is marked:
 space toggles a multiple choice, `enter` confirms, and `y`, `n` and `a` answer
 directly. `ctrl+c` interrupts the turn, `ctrl+q` settles the session and quits.
 
-The todo panel marks the state of a task with `◉` (in progress), `◐` (pending)
-and `○` (completed).
+The todo panel marks the state of a task with `◉` (completed), `◐` (in progress)
+and `○` (pending).
 
 ### When something goes wrong
 
@@ -981,7 +987,7 @@ The sections and what they hold:
 | `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs` |
-| `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model` |
+| `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model`, `summary_chunk_tokens` |
 | `memory` | `project_path`, `user_path`, `enabled` |
 | `checkpoint` | `enabled`, `keep` |
 | `mcp` | `servers`, `timeout` |
@@ -1056,7 +1062,7 @@ comes from `GET /api/commands`.
 ### Example
 
 ```bash
-mini --model litellm/deepseek/deepseek-flash --environment docker \
+mini --model litellm/deepseek/deepseek-flash --environment-class docker \
   --task "the failing test is in test_api.py"
 
 mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \

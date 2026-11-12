@@ -68,14 +68,20 @@ The options that are in effect are listed between the type and the environment.
 
 The sandbox is the environment of mini-swe-agent, so it has no network policy
 and no list of writable directories. A network policy is a property of the
-environment, and it is written there:
+environment, and it is written there — with the options that the environment
+knows. The `docker` sandbox takes the arguments of the `docker` command:
 
 ```yaml
 sandbox:
-  type: swerex_docker
+  type: docker
   image: python:3.11
   run_args: ["--rm", "--network", "none"]
 ```
+
+Every sandbox has its own options: the `swerex_docker` one, for instance, takes
+`deployment_extra_kwargs` for the deployment of SWE-ReX. The options that the
+environment does not know are ignored, so a `run_args` under `swerex_docker`
+is dropped without a word.
 
 The paths the agent may touch are a property of the agent, not of the sandbox.
 They are bounded by the permission layer: `permissions.deny_paths` for the paths

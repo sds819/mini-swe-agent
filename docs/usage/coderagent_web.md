@@ -298,8 +298,8 @@ three buttons:
 - **Deny** — the call does not run and the model is told that you said no, so
   it can do something else.
 - **Always allow** — this call runs **and a rule is written to
-  `~/.coderagent/rules.yaml`**, so the same tool is allowed from now on. The
-  button says so.
+  `~/.coderagent/rules.yaml`**, so the same call — the same file, or the same
+  command — is allowed from now on. The button says so.
 
 If nobody answers, the call is denied (`ui.approval_timeout` seconds, five
 minutes by default). A tool that is denied never runs.

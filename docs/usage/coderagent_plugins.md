@@ -54,8 +54,8 @@ of the user that have the same name.
 
 ## The API of a plugin
 
-The plugin file has a `register` function, or an object with a `register`
-method. The function gets the extension registry:
+The plugin file has a `register` function. The function gets the extension
+registry:
 
 ```python
 # .coderagent/plugins/hello/plugin.py
@@ -110,5 +110,8 @@ line.
 hello = "hello_plugin:plugin"
 ```
 
-The object the entry point points at is loaded the same way as a `plugin.py`:
-it is either a `register` function or an object with a `register` method.
+The object the entry point points at is loaded a little more loosely: it is
+either a `register` function or an object with a `register` method. A
+`plugin.py` has to use the function — a class with a `register` method is
+found by the search, but it is not loaded afterwards and the plugin stays
+empty.

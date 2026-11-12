@@ -39,7 +39,7 @@ coder web --cwd . --port 8765
 coder --list
 ```
 
-一轮的 JSON 有这些字段：`session_id`、`messages`、`cost`、`usage`、
+一轮的 JSON 有这些字段：`session_id`、`messages`、`cost`、`session_cost`、
 `stop_reason`、`error`。
 
 ```json
@@ -47,11 +47,13 @@ coder --list
   "session_id": "20261109-3f0a91",
   "messages": [{"role": "assistant", "content": "我把 docstring 加上了。"}],
   "cost": 0.0012,
-  "usage": {"input_tokens": 4210, "output_tokens": 96},
+  "session_cost": 0.0143,
   "stop_reason": "end_turn",
   "error": ""
 }
 ```
+
+`cost` 是这一轮花了多少，`session_cost` 是整个会话到目前为止花了多少。
 
 `stop_reason` 是 `end_turn`、`max_turns`、`cost_exceeded`、`token_limit`、`verify_failed`、`error`、
 `interrupted` 之一。
@@ -81,7 +83,7 @@ coder --list
   因为 litellm 自己会加。
 - **别名**——一个带模型列表的 litellm 配置文件。模型名可以是那个列表里的
   一条别名，端点的 key 就留在那个文件里。
-- **缓存标记**——`set_cache_control: ephemeral`，给支持它的厂商用。
+- **缓存标记**——`set_cache_control: default_end`，给支持它的厂商用。别的值会被拒。
 - **重试**——`max_retries`，默认三次。
 - **按用途路由**——`main`、`cheap`、`summarize`、`reflect`、`strong` 可以
   各配一个模型。
@@ -106,7 +108,7 @@ coder -t "..." -m openai/MiniMax-M2.7 \
 # .coderagent/config.yaml
 model:
   model_name: deepseek/deepseek-flash
-  set_cache_control: ephemeral
+  set_cache_control: default_end
   routing:
     main: deepseek/deepseek-chat
     cheap: deepseek/deepseek-flash
@@ -139,7 +141,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | 你看到的 | 什么意思 | 怎么办 |
 |---|---|---|
 | `LLM Provider NOT provided` | 模型名前面没有厂商。 | OpenAI 兼容的端点写 `openai/<名字>`，或者 `deepseek/<名字>`。 |
-| `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end` 也不是 `ephemeral`。 | 用这两个之一，或者删掉这一行。 |
+| `ValueError: Invalid mode: {mode}` | `set_cache_control` 既不是 `default_end`，也不是空的。 | 用 `default_end`，或者删掉这一行。 |
 | `the file does not exist` | `model.litellm_config` 指的文件不在。 | 改路径，它是相对于工作目录的。 |
 | `the file is not valid YAML: {error}` | 别名文件解析不了。 | 修 YAML。 |
 | `the file has no model_list` | 别名文件里没有 `model_list`。 | 加上模型列表和它们的 `litellm_params`。 |
@@ -191,7 +193,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 {"tool": "glob", "params": {"pattern": "src/**/*.py"}}
 {"tool": "ls", "params": {"path": "src", "depth": -1}}
 {"tool": "bash", "params": {"command": "pytest -q", "timeout": 300}}
-{"tool": "bash", "params": {"command": "pytest -q", "background": true}}
+{"tool": "bash", "params": {"command": "pytest -q", "run_in_background": true}}
 {"tool": "bash_output", "params": {"task_id": "b7f3"}}
 ```
 
@@ -218,7 +220,7 @@ Switched from deepseek/deepseek-flash to deepseek/deepseek-chat: the context has
 | `read` | `Error: '{name}' is a directory. Use \`ls\` to list it.` |
 | `read` | `Error: '{name}' is a binary file.` |
 | `edit` | `Error: old_string not found in {path}. Use \`read\` to see the exact content, then retry with more context.` |
-| `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Use more context to make it unique.` |
+| `edit` | `Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Include more surrounding context to make it unique, or set replace_all=true.` |
 | `multi_edit` | `Error: Edit #1 failed, no changes were written. {inner}`——文件一个字节都没动。 |
 | `grep` | `Error: invalid regular expression '{pattern}': {error}` |
 | `grep` | `Error: \`output_mode\` must be one of content, files_with_matches, count (got '{mode}').` |
@@ -263,8 +265,8 @@ checkpoint 时会被去掉密钥，`/rewind` 也不会把它恢复回去：文�
   于是把看到的说出来，而不是动手。
 - **规则**——`~/.coderagent/rules.yaml` 和 `.coderagent/rules.yaml` 按工具
   和模式决定放不放行。**用户级那份赢**。
-- **`Always allow`**——审批卡片上的这个按钮会写一条规则，以后这个工具
-  直接放行。
+- **`Always allow`**——审批卡片上的这个按钮会写一条规则，以后**同一个调用**
+  （同一个文件、同一条命令）直接放行。
 - **禁止的路径**——`permissions.deny_paths`，agent 不许碰的路径。
 - **额外的目录**——`permissions.include_dirs`，工作目录以外、agent 仍然
   可以碰的目录。
@@ -333,7 +335,7 @@ rules:
   - tool: bash
     pattern: pytest
     decision: allow
-    reason: always allowed
+    reason: always allowed by the user
 ```
 
 ### 出错时怎么办
@@ -416,7 +418,9 @@ coder --fork 20261109-3f0a91 -t "另一条路"  # 复制一份，原来那份不
 ```
 
 事件日志一行一个 JSON 对象，类型有 `user_message`、`assistant_message`、
-`tool_call`、`tool_result`、`compaction`、`error`、`turn_end`。
+`tool_call`、`tool_result`、`approval_request`、`approval_response`、
+`state_change`、`compaction`、`reflection`、`verify`、`reverted_to`、`error`、
+`turn_end`。
 
 `/rewind` 只还原**文件**——命令对外部世界做过的事还是做过了——并把会话的
 历史截断到快照那一刻。
@@ -565,7 +569,7 @@ memory:
   允许、拒绝、拦下来，带理由、带额外上下文，或者带改写过的参数。
 - **自己的命令**——`.coderagent/commands/*.md`：一个 slash 命令，带说明、
   参数提示、能用的工具，还有自己的模型。
-- **MCP 服务器**——stdio 或者 http。它们的工具和别的工具一样，工具名是
+- **MCP 服务器**——stdio。它们的工具和别的工具一样，工具名是
   `mcp__<服务器>__<工具>`，一样要审批，断了会自己重连。
 
 ### 用法例子
@@ -667,7 +671,7 @@ Commit everything with the message: $ARGUMENTS
 | `Hook 'check_secrets.sh' timed out, ignoring it` | hook 跑得比它的超时久。调用放行。 | 调大 `timeout`，或者让 hook 快点。 |
 | `Hook 'check_secrets.sh' failed with RuntimeError: ...` | hook 崩了。调用放行。 | 修 hook。加 `strict: true` 就会挡住调用。 |
 | `Error: the MCP server 'echo' is not connected.` | 服务器没跑起来。 | 检查服务器的 `command`；`/mcp` 里会写 `not connected` 或者 `failed: <错误>`。 |
-| `Error: the MCP tool 'mcp__echo__echo' failed: RuntimeError: ...` | 服务器回的错。 | 服务器的消息就在答案里。 |
+| `Error: the MCP tool 'echo' failed: RuntimeError: ...` | 服务器回的错。消息里的名字是服务器那边的名字。 | 服务器的消息就在答案里。 |
 
 自己的命令只在 `<cwd>/.coderagent/commands/*.md` 里找——agent **不会**一层层
 往上找。
@@ -692,10 +696,11 @@ sandbox:
 `swerex_docker`、`swerex_modal`。环境不认识的选项会被忽略，所以一个文件里
 可以同时写好几种环境的设置。
 
-`/sandbox` 回答在用的环境：
+`/sandbox` 回答类型、生效的选项和在用的环境：
 
 ```
-local
+type: local
+environment: local
 ```
 
 ### 出错时怎么办
@@ -776,7 +781,7 @@ deepseek/deepseek-flash | 1.5k/64k | $0.0000 | ~/work/project | default
 `enter` 确认，`y`、`n`、`a` 直接回答。`ctrl+c` 打断这一轮，`ctrl+q` 收尾
 会话并退出。
 
-todo 面板用 `◉`（进行中）、`◐`（待办）、`○`（完成）标记任务状态。
+todo 面板用 `◉`（完成）、`◐`（进行中）、`○`（待办）标记任务状态。
 
 ### 出错时怎么办
 
@@ -919,7 +924,7 @@ coder -t "..." -c model.model_name=deepseek/deepseek-chat -c agent.max_turns=20
 | `agent` | `system_prompt`、`max_turns`、`cost_limit`、`token_limit` |
 | `tools` | `enabled`、`disabled`、`bash_timeout`、`max_output_tokens`、`schema_budget_tokens` |
 | `permissions` | `mode`、`rules`、`deny_paths`、`include_dirs` |
-| `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model` |
+| `context` | `context_window`、`reserved_output`、`compact_threshold`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model`、`summary_chunk_tokens` |
 | `memory` | `project_path`、`user_path`、`enabled` |
 | `checkpoint` | `enabled`、`keep` |
 | `mcp` | `servers`、`timeout` |
@@ -991,7 +996,7 @@ coder -t "/mode plan"
 ### 用法例子
 
 ```bash
-mini --model litellm/deepseek/deepseek-flash --environment docker \
+mini --model litellm/deepseek/deepseek-flash --environment-class docker \
   --task "the failing test is in test_api.py"
 
 mini-extra swebench --model litellm/deepseek/deepseek-flash --workers 8 \

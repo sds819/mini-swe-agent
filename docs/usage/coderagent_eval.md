@@ -59,13 +59,16 @@ A task that wants to see the compaction — and to measure the size of the
 summary — needs more than one prompt.
 
 The `verify` commands are the judgement of the task: the task passed when all of
-them exit with 0. A task without a `verify` never passes, so a suite cannot
-pass by doing nothing.
+them exit with 0. A task without a `verify` is refused when the suite is
+loaded, so a suite cannot pass by doing nothing.
 
 `expect: fail` is for the tasks that must *not* pass: a guard that keeps the
 suite honest, because a check that never fails would let every task pass. The
 report says whether a task did what it was supposed to do (`as_expected`), and
-the summary counts the ones that did not (`unexpected`).
+the summary counts the ones that did not (`unexpected`). A guard that failed as
+it should is still a failed task in the pass rate of the report: the pass rate
+counts what the verify commands said, the comparison is the one that leaves the
+guards out.
 
 `require_tools` names what the task needs from the tools: one of the requirements
 has to be met. The result of the task alone is not enough, because an agent
@@ -168,7 +171,9 @@ the worst of them are in the summary of the run.
 The fingerprint is the hash of the configuration the agent ran with: the model,
 the system prompt, the tools, the permission mode, the context and the sandbox.
 Two runs with the same fingerprint are comparable, two runs with a different one
-are not: the harness changed, so the numbers moved for that reason.
+are not: the configuration changed, so the numbers moved for that reason. It is
+a hash of the configuration and not of the code, so a change of the harness that
+touches nothing in the configuration leaves the fingerprint alone.
 
 The input of the fingerprint is in the report as well, so a diff of two reports
 says *what* changed:
@@ -185,9 +190,11 @@ a temporary directory, so a run of the eval does not touch the data of the user
 nor the repository.
 
 The file tools cannot leave the working directory, not even in the `bypass`
-mode. The `bash` tool can: **a local eval runs the commands the model writes on
-your machine.** Run it in a container, or with a sandbox type of your choice
-(`sandbox.type` in the configuration).
+mode, and neither can the `bash` tool: a command that names a path outside of it
+is refused in every mode. What a local eval does run on your machine is the
+command itself: **a local eval runs the commands the model writes.** Run it in
+a container, or with a sandbox type of your choice (`sandbox.type` in the
+configuration).
 
 ## The comparison
 
@@ -204,7 +211,8 @@ are compared, and a task with `expect: fail` is not a rate but a guard.
 
 ```bash
 coder eval-compare after.json \
-  [--against before.json] [--max-regressions N] [--max-drop R] [--format text|json]
+  [--against before.json] [--max-regressions N] [--max-drop R] \
+  [--same-config] [--format text|json] [--out FILE]
 ```
 
 - Without `--against` the report is only checked against what its tasks were
@@ -216,6 +224,9 @@ coder eval-compare after.json \
   rate. A task that regressed is forgiven by the margin, not reported twice.
   The guard of a suite and a task the harness could not grade are never
   forgiven.
+- `--same-config` says nothing when the two runs did not run the same
+  configuration: the numbers of two different configurations say nothing about
+  the change, so the comparison says nothing and the exit code is zero.
 
 ## The check of the pull request
 
@@ -232,22 +243,25 @@ coder eval-compare head.json --against base.json
 
 The suite of the CI is `evals/offline`: every task of it is scripted, so the
 check needs no API key and says the same thing every time. It holds a task that
-must fail, so the check of the suite cannot be vacuous.
+must fail, so the check of the suite cannot be vacuous. Both runs of the
+comparison use that same suite; the pull request decides whether the check
+runs at all, by the files it touches.
 
 The job `live` does the same with `evals/basic` and the real model. It is
 manual, it needs the secrets of the model, and it forgives nothing: the real
 model is not deterministic, so a failure of the job is a reason to run it
-again, not a verdict.
+again, not a verdict. It compares with `--same-config`, so a run that changed
+the configuration says nothing instead of blaming the change.
 
 The two jobs are not equally sensitive. The scripted one is exact: a harness
 that breaks a tool fails its task, and the job says so. The live one is not:
 a model that meets a broken tool often finds another way, so a broken harness
-can cost a single task out of eight. The scripted job is the gate; the live
+can cost a single task out of nine. The scripted job is the gate; the live
 one is the signal.
 
 ## The example suite
 
-`evals/basic` holds eight tasks. They have no `script`, so they run against the
+`evals/basic` holds nine tasks. They have no `script`, so they run against the
 real model and they need an API key:
 
 ```bash
@@ -263,6 +277,7 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 | `cli-flag` | a script that ignores the argument it is given |
 | `config-value` | a value in a configuration file that has to change |
 | `grep-count` | a question about the files of the repository, answered in a file |
+| `long-conversation` | several turns in one session, so that the context has to be compacted |
 | `no-op` | a task that is already done: the agent has to leave the code alone |
 
 The last one is deliberate: an agent that changes what it should not is as much

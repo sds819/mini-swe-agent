@@ -20,7 +20,8 @@ mcp:
 ```
 
 The servers are read from the project file `.coderagent/config.yaml` and from
-the user file `~/.coderagent/config.yaml`.
+the user file `~/.coderagent/config.yaml`. The two lists are not added
+together: the list of the user replaces the list of the project.
 
 | Key | What it is |
 |---|---|
@@ -28,13 +29,16 @@ the user file `~/.coderagent/config.yaml`.
 | `command` | The command that starts the server, over the standard input and output |
 | `env` | The environment of the server |
 | `enabled` | `false` skips the server |
-| `timeout` | How long the agent waits for the server, in seconds |
+
+The `timeout` is not a key of a server: it belongs to `mcp`, next to
+`servers`, and it is how long the agent waits for a server.
 
 Only the standard input and output transport works today. A server with a
 `url` and no `command` is skipped: the http transport is not implemented yet.
 
-The `env` of a server **replaces** its environment, it does not add to it. A
-server that needs `PATH` has to be given one:
+The `env` of a server is **added** to the environment it inherits, it does not
+replace it: the server keeps `PATH`, `HOME` and the rest of the variables the
+MCP SDK passes on, and the ones of the configuration win over them.
 
 ```yaml
 mcp:
@@ -42,7 +46,7 @@ mcp:
     - name: filesystem
       command: npx -y @modelcontextprotocol/server-filesystem .
       env:
-        PATH: /usr/local/bin:/usr/bin:/bin
+        LOG_LEVEL: info
 ```
 
 ## What the tools look like

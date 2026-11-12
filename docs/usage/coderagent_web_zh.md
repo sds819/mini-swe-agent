@@ -80,7 +80,7 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 | API base | `model.model_kwargs.api_base`——第三方模型的地址 |
 | API key | `model.model_kwargs.api_key`。点一下显示，再点一下收起 |
 | Max retries | `model.max_retries` |
-| Cache control | `model.set_cache_control`（`ephemeral` 或空） |
+| Cache control | `model.set_cache_control`（`default_end` 或空） |
 | Routing | `model.routing`，一行一个 `用途: 模型` |
 | Routing rules | `model.routing_rules`，一行一个 `when: purpose` |
 | Extra parameters | `model.model_kwargs` 的其余部分（YAML，原样传给厂商） |
@@ -166,9 +166,9 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 agent 要跑命令、写文件时会问。卡片上有三个按钮：
 
 - **Allow**——这次执行。
-- **Deny**——不执行，理由回给模型，模型会换个做法，而不是硬来。
+- **Deny**——不执行，模型会看到「用户拒绝了」这句话，模型会换个做法，而不是硬来。
 - **Always allow**——这次执行，**并且往 `~/.coderagent/rules.yaml` 写一条规则**，
-  以后这个工具都放行。按钮上写明了这一点。
+  以后**同一个调用**（同一个文件、同一条命令）都放行。按钮上写明了这一点。
 
 没人回答就是拒绝（`ui.approval_timeout` 秒，默认 5 分钟）。被拒的工具不会执行。
 

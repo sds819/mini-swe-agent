@@ -6,7 +6,7 @@ The `export` command turns it into a trace, with the metrics of the session.
 ```bash
 coder export --session 20261106-a1b2c3 --format json --out trace.json
 coder export --session 20261106-a1b2c3 --format otel --out trace.otlp
-coder export --cwd .                       # the last session of this directory
+coder export --cwd .                       # the newest session of this directory
 ```
 
 Without `--out` the trace goes to the standard output.
@@ -19,8 +19,25 @@ mini-swe-agent:
 ```json
 {
   "trajectory_format": "coder-agent-1.0",
-  "session": {"id": "20261106-a1b2c3", "cwd": "/home/me/project", "turn_count": 3, "total_cost": 0.42},
-  "events": [{"type": "user_message", "timestamp": 1762310400.0, "payload": {"content": "fix the test"}}],
+  "session": {
+    "id": "20261106-a1b2c3",
+    "cwd": "/home/me/project",
+    "created_at": 1762310400.0,
+    "updated_at": 1762310900.0,
+    "state": "done",
+    "model_name": "deepseek/deepseek-flash",
+    "permission_mode": "default",
+    "turn_count": 3,
+    "total_cost": 0.42
+  },
+  "events": [
+    {
+      "session_id": "20261106-a1b2c3",
+      "type": "user_message",
+      "timestamp": 1762310400.0,
+      "payload": {"content": "fix the test"}
+    }
+  ],
   "metrics": {
     "total_cost": 0.42,
     "total_tokens_in": 120433,
@@ -32,10 +49,14 @@ mini-swe-agent:
     "per_model_cost": {"deepseek/deepseek-flash": 0.38},
     "duration_seconds": 412.3,
     "compactions": 3,
+    "summary_ratios": [0.06, 0.07, 0.05],
     "errors": 0
   }
 }
 ```
+
+`summary_ratios` holds one number per compaction: how much of the compacted
+history the summary kept. It is the gauge of the quality of the summary.
 
 ## The otel format
 
@@ -72,6 +93,7 @@ by purpose, by model and by tool:
 model: deepseek/deepseek-flash
 calls: 9
 tokens in the context: 120433
+tokens spent: 128854
 cost so far: $0.4200
 cost: $0.4200
 tokens: 120433 in, 8421 out

@@ -49,7 +49,7 @@ You write the documentation of a module. Read the code, then write the docs.
 
 | 字段 | 是什么 | 默认值 |
 |---|---|---|
-| `name` | 子 agent 的名字 | 文件名 |
+| `name` | 子 agent 的名字 | 文件名（不带扩展名） |
 | `description` | 它干什么用。主 agent 读的是这一条 | |
 | `tools` | 它能调的工具。一个列表，或者逗号隔开的字符串 | `read` `grep` `glob` `bash` |
 | `model_purpose` | 用哪个模型替它回答 | `cheap` |
@@ -79,6 +79,8 @@ You write the documentation of a module. Read the code, then write the docs.
   "findings": ["src/parser.py:42 parses the arguments"],
   "files_touched": [],
   "cost": 0.031,
+  "tokens_in": 12043,
+  "tokens_out": 987,
   "turns": 7,
   "purpose": "cheap"
 }
@@ -91,6 +93,8 @@ You write the documentation of a module. Read the code, then write the docs.
 | `findings` | 这个结论里的要点 |
 | `files_touched` | 它**改过**的文件。读过的文件不在里面 |
 | `cost` | 它花的钱 |
+| `tokens_in` | 它发出去的 token |
+| `tokens_out` | 它收到的 token |
 | `turns` | 它调了几次模型 |
 | `purpose` | 替它回答的模型是哪个用途 |
 

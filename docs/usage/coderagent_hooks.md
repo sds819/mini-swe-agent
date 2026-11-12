@@ -30,7 +30,9 @@ hooks:
 | `strict` | When the hook fails, block the action instead of letting it through | false |
 
 The hooks of the project live in `.coderagent/config.yaml`, the hooks of the
-user in `~/.coderagent/config.yaml`. A plugin may bring hooks too.
+user in `~/.coderagent/config.yaml`. A plugin may bring hooks too. The two
+files are merged like the rest of the configuration: the events are merged,
+but the list of the hooks of one event is replaced by the list of the user.
 
 The matcher is matched against the name of the tool, so it only means
 something for `PreToolUse` and `PostToolUse`. Leave it empty for the other
@@ -45,7 +47,10 @@ events.
 | `PreToolUse` | Before the tool runs | Allow, deny, or rewrite the arguments |
 | `PostToolUse` | After the tool ran | Add context, or block the result |
 | `Stop` | The agent wants to stop | Send it back to work |
-| `SessionEnd` | The session ends | Nothing. It is a notification |
+| `SessionEnd` | The turn ends | Nothing. It is a notification |
+
+`SessionEnd` runs at the end of every turn, not only when the whole session
+is over.
 
 Each event has its own payload:
 
@@ -78,9 +83,10 @@ The keys are:
 - `decision`: `allow`, `deny` or `block`.
 - `reason`: why. It goes back to the model as the error of the tool.
 - `additionalContext`: something for the model to read.
-- `updatedInput`: the new input of the moment. For `PreToolUse` and
-  `PostToolUse` it is a mapping and it replaces the arguments of the tool. For
-  `UserPromptSubmit` it is a string and it replaces the prompt.
+- `updatedInput`: the new input of the moment. For `PreToolUse` it is a
+  mapping and it replaces the arguments of the tool. For `UserPromptSubmit` it
+  is a string and it replaces the prompt. At `PostToolUse` the tool has already
+  run, so a mapping there replaces nothing.
 
 Nothing on the standard output means the hook has no opinion. The output of
 several hooks is put together: a `deny` wins over everything, the contexts are
@@ -92,12 +98,12 @@ concatenated and the last `updatedInput` wins.
 |---|---|
 | `PreToolUse` denies | The tool call fails, the reason goes back to the model |
 | `PreToolUse` rewrites the arguments | The tool runs with the new arguments |
-| `PostToolUse` denies | The result of the tool becomes an error |
+| `PostToolUse` denies | The message that goes back to the model becomes an error. The log keeps the result of the tool |
 | `PostToolUse` adds context | The context is appended to the result of the tool |
 | `UserPromptSubmit` denies | The turn ends with an error, the model is not called |
 | `UserPromptSubmit` adds context | The context is appended to the prompt |
 | `UserPromptSubmit` rewrites the prompt | The model sees the new prompt, the log keeps both |
-| `Stop` denies | The agent goes on, the reason is a new message for it |
+| `Stop` denies | The agent goes on, the reason is a new message for it. At most three times per turn |
 
 The `PreToolUse` hook runs **before** the permission check, so the command
 that is approved is the command that was rewritten.

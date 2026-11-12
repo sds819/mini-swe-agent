@@ -44,8 +44,13 @@ Without any rule the routing follows a policy of its own:
 | The state of the session | What happens |
 |---|---|
 | The budget is 80% used | A cheaper model takes over |
+| The token budget is 80% used | A cheaper model takes over |
 | The context is over 50k tokens | A stronger model takes over |
 | The session is over 30 turns | A stronger model takes over |
+
+The budget is `agent.cost_limit` and the token budget is `agent.token_limit`. A
+model without a price spends no money, so the token budget is the budget that
+counts for it.
 
 A stronger model only takes over when `routing.strong` is set. A cheaper one
 only takes over when `routing.cheap` is set.
@@ -99,10 +104,10 @@ message comes into the conversation of the interface:
 Switched from deepseek/deepseek-flash to anthropic/claude-opus-4-1: the context has grown
 ```
 
-The reason is one of these: the budget is nearly used up, the context has
-grown, the session has many turns, or the rule that held. In the trace the
-change is a `state_change` event, with the model, the previous one and the
-reason.
+The reason is one of these: the budget is nearly used up, the token budget is
+nearly used up, the context has grown, the session has many turns, or the rule
+that held. In the trace the change is a `state_change` event, with the model,
+the previous one and the reason.
 
 ## Changing the model by hand
 

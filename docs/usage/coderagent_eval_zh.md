@@ -48,7 +48,7 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 ```
 
 `verify` 就是这个任务的判据：全部命令 exit 0 才算通过。
-**没有 `verify` 的任务永远不算通过**，所以一个 suite 不可能靠「什么都不做」通过。
+**没有 `verify` 的任务在加载 suite 时就被拒绝**，所以一个 suite 不可能靠「什么都不做」通过。
 
 `prompts:` 给 agent 多轮：同一个会话里一个接一个。**只有一个 prompt 的任务永远不会压缩**——
 切点必须落在轮边界上，没发生过的轮切不了。想看到压缩、想量摘要多大，任务就得有第二个 prompt。
@@ -56,6 +56,8 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 `expect: fail` 是给那些**必须不通过**的任务用的：它是 suite 的保险丝——
 一个从来不失败的判据，会让每个任务都通过。
 报告里每个任务带 `as_expected`（它有没有做到该做的），summary 里数了 `unexpected`（没做到的有几个）。
+保险丝按该有的样子失败了，在报告的通过率里**仍然算一个失败任务**：
+通过率数的是 verify 命令说了什么，把保险丝排除在外的是对比那一步。
 
 `require_tools` 写这个任务对工具的要求：这些要求里**有一条**要满足。
 光看任务的结果是不够的：agent 用 shell 把文件重写一遍，照样能让检查通过，
@@ -146,7 +148,8 @@ summary 里。
 ## fingerprint
 
 fingerprint 是这次运行所用配置的哈希：模型、system prompt、工具、权限模式、上下文、沙箱。
-**两次运行 fingerprint 相同才可比**；不同，说明 harness 变了，数字自然不一样。
+**两次运行 fingerprint 相同才可比**；不同，说明配置变了，数字自然不一样。
+它哈希的是**配置**而不是代码，所以只改了代码、没改配置的 harness 改动，fingerprint 不变。
 
 fingerprint 的输入也原样放在报告里，所以两份报告一 diff，就能看出**是哪一项**变了：
 
@@ -160,8 +163,9 @@ diff <(jq -S .tasks before.json) <(jq -S .tasks after.json)
 会话、checkpoint、规则、用户记忆都被重定向到临时目录，
 所以跑一次 eval 不会碰用户的数据，也不会碰仓库。
 
-文件类工具出不了工作目录，`bypass` 模式也不行。
-但 `bash` 可以：**本地跑 eval，模型写的命令就在你的机器上执行。**
+文件类工具出不了工作目录，`bypass` 模式也不行；`bash` 也一样：
+命令里写了工作目录以外的路径，任何模式下都被拒。
+但**本地跑 eval，模型写的命令就在你的机器上执行**。
 请在容器里跑，或者在配置里换一个 `sandbox.type`。
 
 ## 对比
@@ -177,7 +181,8 @@ coder eval-compare after.json --against before.json
 
 ```bash
 coder eval-compare after.json \
-  [--against before.json] [--max-regressions N] [--max-drop R] [--format text|json]
+  [--against before.json] [--max-regressions N] [--max-drop R] \
+  [--same-config] [--format text|json] [--out FILE]
 ```
 
 - 不给 `--against` 时，只检查这份报告本身：任务没做到该做的、或者 harness 没能评判它，都是问题。
@@ -185,6 +190,8 @@ coder eval-compare after.json \
   真实模型不是确定性的，所以 live suite 需要留点余量；脚本 suite 不需要。
 - 给了 `--against` 时，额度只管回归和通过率的下降：被额度原谅的回归不会**再报一遍**。
   但保险丝被打破（`expect: fail` 的任务通过了）和 harness 评判不了的任务，任何额度都不原谅。
+- `--same-config` 在两次运行配置不同的时候**什么都不说**：
+  两份不同配置的数字说明不了这次改动，对比于是闭嘴，退出码是零。
 
 ## 拉取请求的检查
 
@@ -201,19 +208,21 @@ coder eval-compare head.json --against base.json
 CI 跑的是 `evals/offline`：每个任务都是脚本化的，所以这个检查**不需要 API key**，
 而且每次说的都是同一件事。它里面还有一个**必须不通过**的任务，
 所以「判据从来不失败」这种坏情况藏不住。
+对比的两次跑都用这同一个 suite；这个 PR 决定这个检查要不要跑，看它动了哪些文件。
 
 `live` 这个 job 拿 `evals/basic` 和真实模型做同样的事。它只能手动触发，
 需要模型的密钥，而且**什么都不原谅**：模型不是确定性的，
 所以这个 job 失败是「再跑一遍」的理由，不是结论。
+它用 `--same-config` 来对比，所以改了配置的那次跑什么都不说，而不是把账算在这次改动上。
 
 两个 job 的灵敏度不一样。脚本那个是精确的：harness 弄坏一个工具，
 对应的任务就会失败，job 会说出来。live 那个不是：模型碰到坏掉的工具
-常常会绕道走，所以一个坏掉的 harness 可能只让八个任务里的一个失败。
+常常会绕道走，所以一个坏掉的 harness 可能只让九个任务里的一个失败。
 **脚本那个是闸门，live 那个是信号。**
 
 ## 样例任务集
 
-`evals/basic` 里有八个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
+`evals/basic` 里有九个任务。它们都没有 `script`，所以跑的是真实模型，需要 API key：
 
 ```bash
 coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
@@ -228,11 +237,12 @@ coder eval evals/basic --label live-1 --format json --out /tmp/eval.json
 | `cli-flag` | 脚本无视了传进来的参数 |
 | `config-value` | 配置文件里的一个值要改 |
 | `grep-count` | 问仓库里的文件，然后把这个答案写进文件 |
+| `long-conversation` | 一个会话里的好几轮，所以上下文得被压缩 |
 | `no-op` | 一个已经做好的任务：agent 得**什么都别改** |
 
 最后一个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。
 
-八个任务里有五个把要改的文件「保护」起来：任务自己的规则挡住其它所有写法，
+九个任务里有五个把要改的文件「保护」起来：任务自己的规则挡住其它所有写法，
 而且任务要求 `edit` 工具**在这个文件上**成功用过。
 所以 `edit` 一坏，任务就失败，而不是被绕过去。
 
