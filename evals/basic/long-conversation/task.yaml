@@ -1,0 +1,21 @@
+id: long-conversation
+prompts:
+  - |
+    Read notes.txt. How many lines does it have, and how many of them start
+    with "keep"? Answer with the two numbers.
+  - |
+    Read notes.txt again. What is the first line and what is the last line?
+  - |
+    Read lines 100 to 105 of notes.txt and tell me what they say.
+  - |
+    Now write the number of lines that start with "keep" into result.txt.
+    Write only the number, nothing else.
+verify:
+  - python -c "import re; t = open('result.txt').read(); m = re.search(r'\d+', t); assert m and int(m.group()) == 120, t"
+tags: [context]
+config:
+  - context.context_window=12000
+  - context.reserved_output=2000
+  - context.compact_threshold=0.15
+  - context.keep_recent_turns=1
+  - context.keep_recent_token_ratio=0.01

@@ -127,6 +127,33 @@ def test_a_requirement_without_a_tool_is_an_error(tmp_path):
         load_task(directory)
 
 
+def test_a_task_with_several_prompts_is_read(tmp_path):
+    """More than one prompt means more than one turn, and only a turn can be compacted."""
+    directory = tmp_path / "the-task"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("prompts:\n  - first\n  - second\nverify:\n  - true\n", encoding="utf-8")
+    task = load_task(directory)
+    assert task.prompts == ["first", "second"]
+    assert task.prompt == "first"
+
+
+def test_a_task_with_one_prompt_keeps_it(tmp_path):
+    directory = tmp_path / "the-task"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("prompt: only\nverify:\n  - true\n", encoding="utf-8")
+    task = load_task(directory)
+    assert task.prompts == ["only"]
+    assert task.prompt == "only"
+
+
+def test_a_task_without_a_prompt_is_an_error(tmp_path):
+    directory = tmp_path / "no-prompt"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("verify:\n  - true\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_task(directory)
+
+
 def test_the_tasks_of_a_suite_are_sorted_and_the_files_ignored(tmp_path):
     tasks = load_suite(_suite(tmp_path))
     assert [task.id for task in tasks] == ["alpha", "beta"]

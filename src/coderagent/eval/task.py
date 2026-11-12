@@ -40,6 +40,14 @@ class ToolRequirement:
 class Task:
     id: str
     prompt: str
+    """The first prompt of the task."""
+    prompts: list[str] = field(default_factory=list)
+    """Every prompt of the task. They run one after the other in the same session.
+
+    A task with one prompt can never compact: the cut of the history has to land
+    on a turn boundary, and a turn that never happened cannot be cut. A task that
+    wants to see the compaction needs more than one prompt.
+    """
     verify: list[str] = field(default_factory=list)
     """The commands that decide whether the task passed. A task without one never passes."""
     setup: list[str] = field(default_factory=list)
@@ -81,9 +89,15 @@ def load_task(directory: Path) -> Task:
     expect = str(data.get("expect") or "pass")
     if expect not in ("pass", "fail"):
         raise ValueError(f"the task {directory} expects '{expect}', which is neither 'pass' nor 'fail'")
+    prompts = [str(prompt) for prompt in data.get("prompts") or [] if str(prompt).strip()]
+    if not prompts and str(data.get("prompt") or "").strip():
+        prompts = [str(data["prompt"])]
+    if not prompts:
+        raise ValueError(f"the task {directory} has no prompt")
     return Task(
         id=str(data.get("id") or directory.name),
-        prompt=str(data.get("prompt") or ""),
+        prompt=prompts[0] if prompts else "",
+        prompts=prompts,
         verify=[str(command) for command in data["verify"]],
         setup=[str(command) for command in data.get("setup") or []],
         expect=expect,

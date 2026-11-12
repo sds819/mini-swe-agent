@@ -26,6 +26,7 @@ def _task(
     timeout: int = 300,
     expect: str = "pass",
     require_tools: list | None = None,
+    prompts: list[str] | None = None,
 ) -> Task:
     """A task on the disk, with its fixture."""
     directory = tmp_path / "the-task"
@@ -37,7 +38,7 @@ def _task(
     (directory / "task.yaml").write_text(
         yaml.safe_dump(
             {
-                "prompt": "Do it.",
+                **({"prompts": prompts} if prompts else {"prompt": "Do it."}),
                 "verify": verify or ["true"],
                 "script": script,
                 "timeout": timeout,
@@ -171,6 +172,42 @@ def test_the_tool_has_to_work_on_the_file_of_the_task(tmp_path):
     assert result.verify[0].exit_code == 0, "the file is right, the tool did not work on it"
     assert result.passed is False
     assert "calc.py" in result.error
+
+
+def test_a_task_with_several_prompts_runs_a_turn_for_each(tmp_path):
+    """The prompts of a task run one after the other, in the same session."""
+    task = _task(
+        tmp_path,
+        [
+            {"content": "Looking.", "tool_calls": [{"tool": "read", "args": {"path": "calc.py"}}]},
+            {"content": "First answer."},
+            {"content": "Second answer."},
+        ],
+        {"calc.py": CALC},
+        prompts=["Look at calc.py.", "Now say something else."],
+    )
+    result, store = _run(task, tmp_path)
+    events = store.events(result.session_id)
+    questions = [event.payload["content"] for event in events if event.type == EventType.USER_MESSAGE]
+    assert questions == ["Look at calc.py.", "Now say something else."]
+    assert result.model_calls == 3
+    assert result.passed is True
+
+
+def test_a_broken_turn_ends_the_task(tmp_path):
+    """A turn that failed leaves the session broken, so the later prompts do not run."""
+    task = _task(
+        tmp_path,
+        [{"content": "First answer.", "tool_calls": [{"tool": "read", "args": {"path": "calc.py"}}]}],
+        {"calc.py": CALC},
+        prompts=["Look at calc.py.", "Now say something else."],
+    )
+    result, store = _run(task, tmp_path)
+    events = store.events(result.session_id)
+    questions = [event.payload["content"] for event in events if event.type == EventType.USER_MESSAGE]
+    assert questions == ["Look at calc.py."]
+    assert result.stop_reason == "error"
+    assert result.error_kind == "script"
 
 
 def test_a_script_that_runs_out_is_an_error_of_the_harness(tmp_path):

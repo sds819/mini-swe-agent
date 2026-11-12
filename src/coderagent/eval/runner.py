@@ -275,7 +275,14 @@ def run_task(
     deadline = time.monotonic() + task.timeout
     loop.cancel = lambda: time.monotonic() > deadline
     started = time.monotonic()
-    result = loop.run_turn(task.prompt)
+    result = None
+    for prompt in task.prompts or [task.prompt]:
+        result = loop.run_turn(prompt)
+        if result.stop_reason == "error":
+            """A broken turn ends the task: the later prompts would run on a broken session."""
+            break
+    if result is None:
+        raise ValueError(f"the task {task.id} has no prompt")
     duration = time.monotonic() - started
     events = store.events(result.session_id)
     metrics = collect(events)

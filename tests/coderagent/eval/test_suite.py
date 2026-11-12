@@ -18,6 +18,7 @@ IDS = [
     "create-file",
     "grep-count",
     "import-error",
+    "long-conversation",
     "no-op",
     "off-by-one",
     "rename-symbol",
