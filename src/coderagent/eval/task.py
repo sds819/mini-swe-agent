@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
 from minisweagent.config import get_config_from_spec
 
 TASK_FILE = "task.yaml"
@@ -17,6 +18,22 @@ TASK_FILE = "task.yaml"
 
 DEFAULT_TIMEOUT = 300
 DEFAULT_VERIFY_TIMEOUT = 300
+
+
+@dataclass
+class ToolRequirement:
+    tools: list[str]
+    """The tools that may do the work. One of them has to have worked."""
+    paths: list[str] = field(default_factory=list)
+    """The files the work is about. One of them has to have been touched by the tool.
+
+    Empty means that the file does not matter. A file matters when the model
+    could take another route: an edit of another file is not the work of the
+    task.
+    """
+
+    def to_dict(self) -> dict:
+        return {"tools": list(self.tools), "paths": list(self.paths)}
 
 
 @dataclass
@@ -38,8 +55,8 @@ class Task:
     verify_timeout: int = DEFAULT_VERIFY_TIMEOUT
     """Seconds each verify command may take."""
     tags: list[str] = field(default_factory=list)
-    require_tools: list[str] = field(default_factory=list)
-    """The tools the task needs. One of them must have been used successfully.
+    require_tools: list[ToolRequirement] = field(default_factory=list)
+    """What the task needs from the tools. One of the requirements has to be met.
 
     A task that changes a file with the `edit` tool and says so cannot be
     solved by another route, so a broken tool shows up as a failed task.
@@ -73,11 +90,39 @@ def load_task(directory: Path) -> Task:
         timeout=int(data.get("timeout") or DEFAULT_TIMEOUT),
         verify_timeout=int(data.get("verify_timeout") or DEFAULT_VERIFY_TIMEOUT),
         tags=[str(tag) for tag in data.get("tags") or []],
-        require_tools=[str(tool) for tool in data.get("require_tools") or []],
+        require_tools=_requirements(data.get("require_tools")),
         script=list(data.get("script") or []),
         config=[str(spec) for spec in data.get("config") or []],
         path=directory,
     )
+
+
+def _requirements(data) -> list[ToolRequirement]:
+    """The requirements of a task: the tools that have to work, and the files they have to touch.
+
+    A requirement is either the name of a tool or a mapping with the tools and
+    the files:
+    ```yaml
+    require_tools:
+      - tools: [edit, multi_edit]
+        paths: [calc.py]
+    ```
+    """
+    requirements = []
+    for entry in data or []:
+        if isinstance(entry, str):
+            requirement = ToolRequirement(tools=[entry])
+        elif isinstance(entry, dict):
+            requirement = ToolRequirement(
+                tools=[str(tool) for tool in entry.get("tools") or []],
+                paths=[str(path) for path in entry.get("paths") or []],
+            )
+        else:
+            raise ValueError(f"the requirement {entry!r} is neither a tool nor a mapping")
+        if not requirement.tools:
+            raise ValueError(f"the requirement {entry!r} names no tool")
+        requirements.append(requirement)
+    return requirements
 
 
 def load_suite(directory: Path) -> list[Task]:

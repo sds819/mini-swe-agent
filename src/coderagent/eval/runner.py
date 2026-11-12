@@ -129,13 +129,65 @@ def run_commands(commands: list[str], environment, timeout: int) -> list[VerifyR
     return results
 
 
-def _tools_used(events: list) -> set[str]:
-    """The tools that ran without an error."""
-    return {
-        str(event.payload.get("tool") or "")
-        for event in events
-        if event.type == EventType.TOOL_RESULT and not event.payload.get("is_error")
-    }
+def _successful_calls(events: list) -> list[tuple[str, str]]:
+    """The tool calls that ran without an error: the tool and the file it touched.
+
+    The file is empty when the log does not say: a call of a sub agent is
+    there, but the way it called the tool is not.
+    """
+    paths = {}
+    for event in events:
+        if event.type == EventType.TOOL_CALL:
+            for action in event.payload.get("actions") or []:
+                paths[str(action.get("tool_call_id") or "")] = str((action.get("args") or {}).get("path") or "")
+    calls = []
+    for event in events:
+        if event.type != EventType.TOOL_RESULT or event.payload.get("is_error"):
+            continue
+        tool = str(event.payload.get("tool") or "")
+        if not tool:
+            continue
+        path = paths.get(str(event.payload.get("tool_call_id") or "")) or _path_of_diff(event.payload.get("diff"))
+        calls.append((tool, path))
+    return calls
+
+
+def _path_of_diff(diff) -> str:
+    """The file a diff is about."""
+    for line in str(diff or "").splitlines():
+        if line.startswith("--- "):
+            return line[4:].removeprefix("a/")
+    return ""
+
+
+def _met(requirement, calls: list[tuple[str, str]], workdir: Path) -> bool:
+    """Whether a call met a requirement: the right tool, on the right file."""
+    for tool, path in calls:
+        if tool not in requirement.tools:
+            continue
+        if not requirement.paths or not path or _is_one_of(path, requirement.paths, workdir):
+            return True
+    return False
+
+
+def _is_one_of(path: str, wanted: list[str], workdir: Path) -> bool:
+    """Whether a path is one of the files of a requirement."""
+    target = _resolve(path, workdir)
+    return any(target == _resolve(one, workdir) for one in wanted)
+
+
+def _resolve(path: str, workdir: Path) -> Path:
+    """Where a path is, relative to the working directory of the task."""
+    candidate = Path(path)
+    return (candidate if candidate.is_absolute() else workdir / candidate).resolve()
+
+
+def _describe(requirement) -> str:
+    """What a requirement asks for, in a sentence."""
+    tools = " or ".join(requirement.tools)
+    if requirement.paths:
+        return f"one of the tools '{tools}' on {' or '.join(requirement.paths)}"
+    return f"one of the tools '{tools}'"
 
 
 def prepare_workdir(task: Task, workdir: Path) -> Path:
@@ -227,14 +279,19 @@ def run_task(
     verify = run_commands(task.verify, loop.sandbox, task.verify_timeout)
     script_error = result.stop_reason == "error" and SCRIPT_ERROR in result.error
     error_kind = "script" if script_error else ""
-    used = _tools_used(events)
-    needed = task.require_tools and not any(tool in used for tool in task.require_tools)
-    """The task needs one of its tools, and none of them worked."""
+    used = _successful_calls(events)
+    needed = bool(task.require_tools) and not any(
+        _met(requirement, used, workdir) for requirement in task.require_tools
+    )
+    """The task needs a tool, and no call did what it asks for."""
     passed = not error_kind and bool(task.verify) and all(item.exit_code == 0 for item in verify) and not needed
     error = result.error
     if needed:
         error = f"{error}. " if error else ""
-        error += f"the task needs one of the tools '{', '.join(task.require_tools)}', and none of them worked"
+        error += (
+            f"the task needs {' or '.join(_describe(requirement) for requirement in task.require_tools)}, "
+            "and no call did that"
+        )
     return TaskResult(
         id=task.id,
         mode=mode,

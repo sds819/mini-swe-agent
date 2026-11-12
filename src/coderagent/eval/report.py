@@ -117,7 +117,9 @@ def fingerprint_inputs(config: Config, model: str, permission_mode: str = "", ta
         "context": config.context.model_dump(),
         "sandbox.type": config.sandbox.type,
         "tasks": {task.id: task_overrides(task) for task in tasks or []},
-        "tasks.require_tools": {task.id: task.require_tools for task in tasks or []},
+        "tasks.require_tools": {
+            task.id: [requirement.to_dict() for requirement in task.require_tools] for task in tasks or []
+        },
     }
 
 

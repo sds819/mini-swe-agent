@@ -88,7 +88,11 @@ def test_the_tasks_that_need_the_edit_tool_say_so(tmp_path):
     """A task that may only be edited needs the edit tool, or the suite cannot see a broken one."""
     needing = {task.id: task for task in load_suite(SUITE) if task.require_tools}
     assert set(needing) == {"cli-flag", "config-value", "import-error", "off-by-one", "rename-symbol"}
-    assert all(set(task.require_tools) <= {"edit", "multi_edit"} for task in needing.values())
+    assert all(
+        set(requirement.tools) <= {"edit", "multi_edit"}
+        for task in needing.values()
+        for requirement in task.require_tools
+    )
 
 
 def test_the_offline_suite_needs_no_api_key(tmp_path):

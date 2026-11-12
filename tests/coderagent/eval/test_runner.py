@@ -25,7 +25,7 @@ def _task(
     verify: list[str] | None = None,
     timeout: int = 300,
     expect: str = "pass",
-    require_tools: list[str] | None = None,
+    require_tools: list | None = None,
 ) -> Task:
     """A task on the disk, with its fixture."""
     directory = tmp_path / "the-task"
@@ -118,7 +118,9 @@ def test_a_task_that_needs_the_edit_tool_fails_without_it(tmp_path):
         [
             {
                 "content": "Rewriting the file.",
-                "tool_calls": [{"tool": "write", "args": {"path": "calc.py", "content": "def add_one(n):\n    return n + 1\n"}}],
+                "tool_calls": [
+                    {"tool": "write", "args": {"path": "calc.py", "content": "def add_one(n):\n    return n + 1\n"}}
+                ],
             },
             {"content": "The test passes."},
         ],
@@ -142,6 +144,33 @@ def test_a_task_that_needs_the_edit_tool_passes_with_it(tmp_path):
     )
     result, _ = _run(task, tmp_path)
     assert result.passed is True
+
+
+def test_the_tool_has_to_work_on_the_file_of_the_task(tmp_path):
+    """An edit of another file is not the work of the task, so the task does not pass."""
+    task = _task(
+        tmp_path,
+        [
+            {
+                "content": "Rewriting the file.",
+                "tool_calls": [
+                    {"tool": "write", "args": {"path": "calc.py", "content": "def add_one(n):\n    return n + 1\n"}}
+                ],
+            },
+            {
+                "content": "Editing another file.",
+                "tool_calls": [{"tool": "edit", "args": {"path": "notes.txt", "old_string": "x", "new_string": "y"}}],
+            },
+            {"content": "The test passes."},
+        ],
+        {"calc.py": CALC, "tests/test_calc.py": TEST, "notes.txt": "x"},
+        verify=["python -m pytest -q tests/test_calc.py"],
+        require_tools=[{"tools": ["edit", "multi_edit"], "paths": ["calc.py"]}],
+    )
+    result, _ = _run(task, tmp_path)
+    assert result.verify[0].exit_code == 0, "the file is right, the tool did not work on it"
+    assert result.passed is False
+    assert "calc.py" in result.error
 
 
 def test_a_script_that_runs_out_is_an_error_of_the_harness(tmp_path):

@@ -93,6 +93,40 @@ def test_an_expectation_that_is_neither_pass_nor_fail_is_an_error(tmp_path):
         load_task(directory)
 
 
+def test_the_requirements_of_the_task_are_read(tmp_path):
+    """A requirement names the tools that have to work, and the files they have to touch."""
+    directory = tmp_path / "the-task"
+    directory.mkdir()
+    (directory / "task.yaml").write_text(
+        "prompt: hi\nverify:\n  - true\nrequire_tools:\n  - tools: [edit, multi_edit]\n    paths: [calc.py]\n",
+        encoding="utf-8",
+    )
+    task = load_task(directory)
+    assert len(task.require_tools) == 1
+    assert task.require_tools[0].tools == ["edit", "multi_edit"]
+    assert task.require_tools[0].paths == ["calc.py"]
+
+
+def test_a_requirement_may_be_the_name_of_a_tool_alone(tmp_path):
+    directory = tmp_path / "the-task"
+    directory.mkdir()
+    (directory / "task.yaml").write_text("prompt: hi\nverify:\n  - true\nrequire_tools:\n  - edit\n", encoding="utf-8")
+    task = load_task(directory)
+    assert task.require_tools[0].tools == ["edit"]
+    assert task.require_tools[0].paths == []
+
+
+def test_a_requirement_without_a_tool_is_an_error(tmp_path):
+    """A requirement that names no tool says nothing."""
+    directory = tmp_path / "the-task"
+    directory.mkdir()
+    (directory / "task.yaml").write_text(
+        "prompt: hi\nverify:\n  - true\nrequire_tools:\n  - paths: [calc.py]\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError):
+        load_task(directory)
+
+
 def test_the_tasks_of_a_suite_are_sorted_and_the_files_ignored(tmp_path):
     tasks = load_suite(_suite(tmp_path))
     assert [task.id for task in tasks] == ["alpha", "beta"]
