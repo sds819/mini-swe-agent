@@ -3961,7 +3961,7 @@
 <p>这份文档只提问，不回答。答案见 <a href="../coderagent-answers/">coderagent-answers.md</a>。</p>
 <p>提问的出发点：一个 coding agent 要能被用起来，靠的不是「模型够聪明」，而是六件很具体的事——
 <strong>上下文放得下、工具管得住、任务调得动、状态存得回、效果量得准、出错救得回来</strong>。
-下面的 33 个问题就是照这六件事问 coder agent 的，每一问都能在代码里找到答案。</p>
+下面的 41 个问题就是照这六件事问 coder agent 的，每一问都能在代码里找到答案。</p>
 </blockquote>
 <h2 id="a">a. 上下文是如何管理的</h2>
 <p><strong>a1.</strong> 一次请求发给模型的消息由哪几部分组成？顺序是什么？每部分是什么角色（system / user / assistant）？
@@ -3978,7 +3978,9 @@
 <strong>b5.</strong> 有哪几种权限模式？每种模式下各类工具的默认判定是什么？
 <strong>b6.</strong> 权限规则文件在哪里？项目规则和用户规则谁说了算？规则的匹配语义是什么（glob？正则？工具名？）
 <strong>b7.</strong> <code>bash</code> 这种能表达任何意图的命令怎么管？它是怎么被切分和判定的？
-<strong>b8.</strong> <code>edit</code> / <code>multi_edit</code> 这类最关键的写文件工具，语义上有什么硬性保证？</p>
+<strong>b8.</strong> <code>edit</code> / <code>multi_edit</code> 这类最关键的写文件工具，语义上有什么硬性保证？
+<strong>b9.</strong> 模型的一次工具调用，从模型返回到结果回到模型，中间经过哪几步？哪几步在执行之前？
+<strong>b10.</strong> 模型会自己造一个不存在的工具，或者乱调工具吗？harness 怎么挡、怎么发现？</p>
 <h2 id="c">c. 任务如何调度</h2>
 <p><strong>c1.</strong> 一轮用户输入（turn）在代码里的主循环长什么样？哪些步骤是每轮都做的？
 <strong>c2.</strong> 一轮会以哪些原因结束？每个停止原因分别代表什么？

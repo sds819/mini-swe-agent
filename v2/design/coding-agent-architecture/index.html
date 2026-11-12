@@ -3707,10 +3707,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#subagent" class="md-nav__link">
+  <a href="#subagentm4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Subagent（后置）
+        Subagent（M4 已落地）
       
     </span>
   </a>
@@ -4660,10 +4660,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#subagent" class="md-nav__link">
+  <a href="#subagentm4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Subagent（后置）
+        Subagent（M4 已落地）
       
     </span>
   </a>
@@ -4904,6 +4904,12 @@
 <blockquote>
 <p>目标：在 mini-SWE-agent 的极简哲学之上，构建一个对标 Codex CLI / Claude Code 的交互式 coding agent。
 技术栈：Python 3.10+ / litellm / pydantic / typer / jinja2，代码位于 <code>src/coderagent/</code>。</p>
+<p><strong>这份文档是设计稿</strong>，写于 M0 之前，是「为什么这么分层、这么定」的依据。
+M0–M5 落地之后，几处实现与草图不同（下文逐条标出）。要看<strong>现在长什么样</strong>，
+读 <a href="../coderagent-answers/">coderagent-answers.md</a>（逐题作答）、
+<a href="../coderagent-context/">coderagent-context.md</a>（上下文专题）和
+<a href="../coderagent-design-logic/">coderagent-design-logic.md</a>（设计逻辑）；要看<strong>怎么一步步做出来的</strong>，
+读 <a href="milestones/">milestones/</a> 下的五份里程碑文档。</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 定位与差异</h2>
@@ -5018,14 +5024,14 @@
 <td>⚠️</td>
 <td>✅ Task</td>
 <td>❌</td>
-<td>✅ 后置</td>
+<td>✅ M4 已落地</td>
 </tr>
 <tr>
 <td>Hooks</td>
 <td>❌</td>
 <td>✅</td>
 <td>❌</td>
-<td>✅ 后置</td>
+<td>✅ M3 已落地</td>
 </tr>
 <tr>
 <td>终端 diff 预览</td>
@@ -5084,27 +5090,33 @@
 <div class="highlight"><pre><span></span><code>User input
    │
    ▼
-Session.append_user_msg ──► ContextEngine.build_messages()  ← 注入 CLAUDE.md/AGENTS.md
+ContextEngine.append(user message) ──► ContextEngine.build_messages()  ← 注入 CLAUDE.md/AGENTS.md
    │
    ▼
-AgentLoop.step() ──► ModelGateway.query(stream=True)
+AgentLoop.run_turn() ──► ModelGateway.query_stream()
    │                     │
    │                     ▼  assistant msg (含 tool_calls) + reasoning
    │                     │
    │                     ▼
    │              ToolExecutor.plan(actions)
-   │                     │  ← PermissionPolicy.check() → 可能触发审批 → EventBus
+   │                     │  ← PermissionPolicy.evaluate() → 可能触发审批 → EventBus
    │                     ▼
    │              并行执行 → Environment.execute()
    │                     │
    │                     ▼
-   │              ToolResult[] → ContextEngine.append_tool_results()
+   │              observation[] → ContextEngine.extend()
    │
    └──► 重复直到 stop_reason / 限额 / 用户中断
          │
          ▼
-   SessionStore.persist()  →  .coderagent/sessions/&lt;id&gt;.jsonl
+   SessionStore.append()  →  &lt;config_home&gt;/sessions/&lt;id&gt;.jsonl
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：主循环的方法叫 <code>run_turn()</code>（不是 <code>step()</code>），消息进上下文走
+<code>ContextEngine.append()</code> / <code>extend()</code>（不是 <code>Session.append_user_msg()</code>），
+权限求值用 <code>PermissionPolicy.evaluate()</code>（<code>check()</code> 是它的薄封装），
+事件日志落在 <code>&lt;config_home&gt;/sessions/</code>（不是 <code>.coderagent/sessions/</code>）。</p>
+</blockquote>
 <p><strong>三种前端，一套内核</strong>：CLI（typer）、TUI（textual）、Web（FastAPI + SSE）跑的是同一套
 loop / 工具 / 权限 / 事件日志；TUI 与 Web 都是 <code>EventBus</code> 的<strong>订阅者</strong>，不各自实现循环。
 Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线程里跑，再把 <code>Event</code> 翻译成前端
@@ -5141,47 +5153,62 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <span class="w">    </span><span class="sd">"""会话持久化。JSONL 追加写，天然支持流式落盘与崩溃恢复。"""</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cwd</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Session</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Session</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Session</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cwd</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Session</span><span class="p">]:</span> <span class="o">...</span>
 </code></pre></div>
 <p><strong>事件溯源</strong>：所有状态变更都以 <code>event</code> 追加到 JSONL，重放即可恢复。
-事件类型：<code>user_message</code> / <code>assistant_message</code> / <code>tool_call</code> / <code>tool_result</code> / <code>approval_request</code> / <code>approval_response</code> / <code>state_change</code> / <code>compaction</code> / <code>error</code>。</p>
+事件类型见 <code>core/events.py</code> 的 <code>EventType</code>（15 个）：<code>user_message</code> / <code>assistant_message</code> /
+<code>text_delta</code> / <code>reasoning</code> / <code>tool_call</code> / <code>tool_result</code> / <code>approval_request</code> /
+<code>approval_response</code> / <code>state_change</code> / <code>turn_end</code> / <code>verify</code> / <code>compaction</code> /
+<code>reflection</code> / <code>reverted_to</code> / <code>error</code>。</p>
 <p><code>EventBus</code> 用于解耦：L5 的 UI 订阅事件流渲染，L2 的工具执行发布事件，L4 的模型网关发布 token 流。</p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EventBus</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cb</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">EventType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">:</span> <span class="n">EventType</span><span class="p">,</span> <span class="n">cb</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：会话是<strong>重放</strong>出来的，所以 <code>SessionStore</code> 的方法叫 <code>rebuild()</code>
+而不是 <code>load()</code>；事件是 <code>Event</code> 对象而不是裸 dict；<code>EventBus</code> 按 <code>EventType</code> 订阅，
+不是按字符串 topic。</p>
+</blockquote>
 <h3 id="42-l1">4.2 L1 执行层</h3>
 <p>直接复用 <code>minisweagent.environments</code>，但扩展 <code>Environment</code> 协议以支持<strong>多命令并行</strong>与<strong>工作目录隔离</strong>：</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/core/environment.py</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">CodingEnvironment</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""并行执行多个独立命令（Claude Code 风格的多工具调用）。"""</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""返回环境指纹（镜像 ID / 容器 ID），用于 checkpoint。"""</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">restore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/builtin/shell.py</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CodingEnvironment</span><span class="p">(</span><span class="n">LocalEnvironment</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""本机 subprocess 环境：超时 kill 进程组、去掉 mini 的「任务完成」哨兵。"""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span> <span class="o">...</span>
 </code></pre></div>
 <p>实现策略：
 - <strong>默认</strong>：<code>minisweagent.environments.local.LocalEnvironment</code> + <code>docker.DockerEnvironment</code>（后者作为 <code>--sandbox docker</code>）。
 - <strong>checkpoint</strong>：在 <code>LocalEnvironment</code> 上用 <code>git stash</code>/<code>git diff</code> 快照文件树；在 Docker 上用 <code>docker commit</code> 快照镜像。</p>
+<blockquote>
+<p>实现与草图的差别：没有单独的 <code>core/environment.py</code>，环境装配在 <code>core/sandbox.py</code>
+的 <code>build_environment()</code> 里，落地类是 <code>tools/builtin/shell.py</code> 的 <code>CodingEnvironment</code>。
+草图里的 <code>execute_batch()</code> / <code>snapshot()</code> / <code>restore()</code> <strong>没有实现</strong>：
+并行调度放在 <code>ToolExecutor</code> 里（读类工具并行、写类串行），
+检查点是<strong>文件级</strong>的（<code>core/checkpoint.py</code> 记「改之前的内容」），不是环境快照。</p>
+</blockquote>
 <h3 id="43-l2">4.3 L2 工具层（核心增量）</h3>
 <p>mini 只有 <code>bash</code>。我们要引入<strong>结构化工具注册表</strong>，但保留 bash 作为「逃生舱」——这是 Claude Code 的关键设计取舍：专用工具精确可靠，bash 兜底灵活。</p>
 <div class="highlight"><pre><span></span><code>coderagent/tools/
 ├── registry.py       # ToolRegistry：注册、schema 生成、名称解析
-├── base.py           # Tool 抽象 + ToolResult
-├── context.py        # ToolContext（cwd、session、bus、policy 的注入容器）
+├── base.py           # Tool 抽象 + ToolResult + ToolContext
 ├── builtin/
-│   ├── fs.py         # read, write, edit, multi_edit, notebook_edit
+│   ├── fs.py         # read, write, edit, multi_edit
 │   ├── search.py     # glob, grep, ls
-│   ├── shell.py      # bash
-│   ├── web.py        # web_fetch, web_search
-│   ├── todo.py       # todo_write, update_plan
-│   └── task.py       # task（子 Agent 委派，后置）
+│   ├── shell.py      # bash, bash_output, bash_kill
+│   ├── todo.py       # todo_write
+│   ├── task.py       # task（子 Agent 委派）
+│   └── skill.py      # skill（加载技能）
 └── mcp.py            # MCP client → 动态注册为工具
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：<code>ToolContext</code> 落在 <code>base.py</code>（没有单独的 <code>context.py</code>）；
+<code>web.py</code>（<code>web_fetch</code> / <code>web_search</code>）<strong>没有实现</strong>，<code>notebook_edit</code> 和 <code>update_plan</code> 也没有；
+<code>task</code> 与 <code>skill</code> 已经在 M4 落地，不是「后置」。</p>
+</blockquote>
 <h4 id="_1">工具抽象</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/base.py</span>
 <span class="nd">@dataclass</span>
@@ -5215,11 +5242,11 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <ul>
 <li><strong><code>edit</code></strong>：字符串精确匹配替换。<strong>必须</strong>要求 <code>old_string</code> 在文件中唯一，否则报错返回。这避免了 <code>sed</code> 式的模糊替换风险。</li>
 <li><strong><code>read</code></strong>：支持 <code>offset</code>/<code>limit</code>，默认带行号（<code>cat -n</code> 风格），大文件自动截断并提示。</li>
-<li><strong><code>grep</code></strong>：优先调用 <code>rg</code>，无 <code>rg</code> 时回退 <code>grep -r</code>。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。</li>
+<li><strong><code>grep</code></strong>：<strong>纯 Python 实现</strong>（不用 <code>rg</code>，也不退到 <code>grep -r</code>——<code>rg</code> 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。</li>
 <li><strong><code>glob</code></strong>：按 pattern 排序返回路径列表，超出上限截断。</li>
-<li><strong><code>bash</code></strong>：默认 timeout 120s；<code>run_in_background=True</code> 时返回 task id，长命令不阻塞。</li>
-<li><strong><code>todo_write</code> / <code>update_plan</code></strong>：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。</li>
-<li><strong><code>web_fetch</code> / <code>web_search</code></strong>：带域名白名单。</li>
+<li><strong><code>bash</code></strong>：默认 timeout 120s（<code>tools.bash_timeout</code>）；长命令不阻塞，配 <code>bash_output</code> / <code>bash_kill</code> 取回结果与杀掉进程。</li>
+<li><strong><code>todo_write</code></strong>：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。</li>
+<li><strong><code>web_fetch</code> / <code>web_search</code></strong>：<strong>未实现</strong>（<code>TRIM_ORDER</code> 里留了位置，将来加工具时直接可用）。</li>
 </ul>
 <h4 id="_2">权限策略</h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/permissions.py</span>
@@ -5330,27 +5357,41 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BudgetGuard</span><span class="p">:</span>
     <span class="n">context_window</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">reserved_output</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span>
-    <span class="n">reserve_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span>
+    <span class="n">reserved_output</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
+    <span class="n">compact_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">limit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">should_compact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">estimated_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">trim_tool_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">ToolResult</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToolResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""超长输出裁剪：保留头尾，中间标注省略行数。"""</span>
 </code></pre></div>
-<p>工具输出裁剪沿用 mini 的 <code>observation_template</code> 思路（头尾各 5000 字符），但改为<strong>按 token 预算</strong>而非固定字符数。</p>
+<p>工具输出裁剪在 <code>core/tokens.py</code>：<code>trim_text()</code> / <code>trim_lines()</code> 按 <strong>token 预算</strong>保留
+<strong>头 40% + 尾 40%</strong>，中间写明省略了多少行、多少 token，并告诉模型怎么把内容找回来
+（<code>use grep/offset to view that region</code>）。</p>
+<blockquote>
+<p>实现与草图的差别：没有 <code>reserve_ratio</code>（预留是绝对值 <code>reserved_output</code>，默认 8000），
+裁剪函数也不在 <code>BudgetGuard</code> 上，而在 <code>core/tokens.py</code>；裁剪按 token 而非固定字符数
+这条决策保留了下来。</p>
+</blockquote>
 <h3 id="45-l4">4.5 L4 模型网关</h3>
 <p>mini 是「一个 Model 实例」。Coding agent 需要<strong>网关</strong>：</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/core/model_gateway.py</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/models/gateway.py</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelGateway</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""按用途路由到不同模型，统一流式、重试、成本统计。"""</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">bus</span><span class="p">:</span> <span class="n">EventBus</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="n">ModelBackend</span><span class="p">):</span> <span class="o">...</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"main"</span><span class="p">,</span>
-              <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ModelEvent</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ModelEvent</span><span class="p">]:</span> <span class="o">...</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"summarize"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+              <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""非流式便捷方法，用于压缩/经验沉淀等后台调用。"""</span>
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：网关在 <code>models/gateway.py</code>（不是 <code>core/model_gateway.py</code>），
+而且<strong>是同步的</strong>——<code>query_stream()</code> 返回 <code>Iterator[ModelEvent]</code>，不是 <code>AsyncIterator</code>；
+路由不在网关里，是独立的 <code>models/router.py</code>（<code>ModelRouter</code>）。</p>
+</blockquote>
 <p><strong>用途路由（purpose）</strong>：</p>
 <table>
 <thead>
@@ -5403,13 +5444,26 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <div class="highlight"><pre><span></span><code>coder [task]                       # 主入口，等价于 mini
   -m/--model            模型
   -c/--config           配置（YAML + key=value 覆盖）
-  --mode                default|acceptEdits|plan|bypass
-  --sandbox             local|docker|bubblewrap
+  --permission-mode      default|acceptEdits|plan|bypass|readonly
   --resume &lt;id&gt;         恢复会话
   --continue            恢复最近会话
+  --fork &lt;id&gt;           复制会话到新的一条继续
+  --list                列出本目录的会话
+  --tui                 启动终端界面
   --print               非交互模式，输出到 stdout（供脚本/CI 使用）
-  --output-format       text|json|stream-json
+  --output-format       text|json
+
+coder web              # 浏览器版（FastAPI + SSE）
+coder eval &lt;suite&gt;     # 跑一批任务，出 JSON 报告
+coder eval-compare     # 比两次运行
+coder export           # 导出会话 trace
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：权限模式的开关叫 <code>--permission-mode</code>（不是 <code>--mode</code>），多一档 <code>readonly</code>；
+没有 <code>--sandbox</code> 这个命令行开关（沙箱走配置 <code>sandbox.type</code>）；
+<code>--output-format</code> 只有 <code>text|json</code>（没有 <code>stream-json</code>）；多了 <code>--fork</code> / <code>--list</code> / <code>--tui</code>
+和四个子命令。</p>
+</blockquote>
 <h4 id="tuitextual">TUI（textual）</h4>
 <p><code>textual</code> 已在依赖中。TUI 承担：
 - 流式渲染 assistant 文本与 reasoning
@@ -5675,7 +5729,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 → <strong>403</strong>。</p>
 <h3 id="47-l6">4.7 L6 扩展层</h3>
 <h4 id="mcp">MCP 客户端</h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/mcp.py</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/config/schema.py</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MCPServerConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">command</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>          <span class="c1"># stdio</span>
@@ -5684,16 +5738,21 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
 
+<span class="c1"># src/coderagent/tools/mcp.py</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MCPClient</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""管理到 MCP server 的连接，把 server 暴露的 tool 转成 Tool。"""</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">MCPServerConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tool</span><span class="p">]:</span> <span class="o">...</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：server 的配置类是 <code>config/schema.py</code> 里的 <code>MCPServerConfig</code>（跟着配置走），
+不是 <code>tools/mcp.py</code> 里的类；客户端在 <code>tools/mcp.py</code>，每个 server 一个线程 + 自己的 event loop。</p>
+</blockquote>
 <ul>
 <li>传输：stdio（<code>mcp</code> python SDK 的 <code>stdio_client</code>）、SSE、Streamable HTTP</li>
 <li>工具命名：<code>mcp__&lt;server&gt;__&lt;tool&gt;</code></li>
 <li>生命周期：随 Session 创建/销毁；断线自动重连一次</li>
-<li>MCP server 提供的 resources/prompts 作为只读上下文注入</li>
+<li>MCP server 提供的 resources/prompts 作为只读上下文注入（<strong>未实现</strong>，目前只接工具）</li>
 </ul>
 <h4 id="hooks">Hooks</h4>
 <p>对齐 Claude Code 的事件点：</p>
@@ -5749,7 +5808,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
   ]
 }
 </code></pre></div>
-<h4 id="subagent">Subagent（后置）</h4>
+<h4 id="subagentm4">Subagent（M4 已落地）</h4>
 <p><code>task</code> 工具：主 agent 把一个独立子任务委派给子 agent（独立上下文、独立工具集、可指定模型档位），返回结构化结果。</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubagentSpec</span><span class="p">:</span>
@@ -5802,6 +5861,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <h2 id="6">6. 目录结构</h2>
 <div class="highlight"><pre><span></span><code>src/coderagent/
 ├── __init__.py              # 导出 Protocol 与版本
+├── paths.py                 # config_home()：用户级数据的唯一总开关
 ├── core/
 │   ├── protocols.py         # ModelBackend / ToolExecutor 协议
 │   ├── session.py           # Session, SessionStore, SessionState
@@ -5809,29 +5869,33 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 │   ├── loop.py              # AgentLoop（多轮主循环）
 │   ├── context.py           # ContextEngine（构建 prompt / 压缩）
 │   ├── history.py           # 消息历史抽象（按轮切分 / 切分点）
-│   ├── tokens.py            # token 估算器
-│   ├── budget.py            # BudgetGuard, 输出裁剪
+│   ├── tokens.py            # token 估算器 + 输出裁剪
+│   ├── budget.py            # BudgetGuard（窗口 / 阈值）
 │   ├── summarize.py         # 结构化摘要 schema 与生成
 │   ├── instructions.py      # CLAUDE.md / AGENTS.md 加载
-│   ├── memory.py            # 分层记忆读写
-│   └── checkpoint.py        # 文件树/容器快照与回滚
+│   ├── memory.py            # 分层记忆读取
+│   ├── checkpoint.py        # 文件级检查点与回滚
+│   ├── redact.py            # 密钥脱敏
+│   ├── sandbox.py           # build_environment()：装配执行环境
+│   ├── subagent.py          # 子 Agent 的定义与运行
+│   └── telemetry.py         # 指标与 trace
 ├── models/
-│   ├── gateway.py           # ModelGateway, 用途路由
+│   ├── gateway.py           # ModelGateway（记账 + 统一入口）
 │   ├── streaming.py         # ModelEvent, 增量 tool_call 拼接
 │   ├── router.py            # ModelRouter, 路由规则
-│   └── backends.py          # litellm 后端包装
+│   ├── backends.py          # litellm 后端包装
+│   └── litellm_config.py    # litellm 别名文件（model_list）
 ├── tools/
 │   ├── base.py              # Tool, ToolResult, ToolContext
 │   ├── registry.py          # ToolRegistry（schema 生成 / 预算裁剪）
 │   ├── executor.py          # ToolExecutor（解析 → 权限 → 执行）
 │   ├── permissions.py       # PermissionMode, Rule, PermissionPolicy, Approver
 │   ├── rules.py             # 规则文件加载与合并
-│   ├── builtin/{fs,search,shell,web,todo,task}.py
+│   ├── bash_policy.py       # bash 的分段与分类
+│   ├── builtin/{fs,search,shell,todo,task,skill}.py
 │   └── mcp.py               # MCP 客户端
-├── environments/
-│   └── local.py, docker.py  # 薄封装，底层复用 minisweagent.environments
 ├── ui/
-│   ├── cli.py               # typer 入口
+│   ├── cli.py               # typer 入口（coder / coder web / coder eval ...）
 │   ├── tui.py               # textual App
 │   ├── render.py            # 消息/diff 渲染
 │   ├── widgets/             # ToolCard, DiffView, ApprovalPrompt, StatusBar...
@@ -5840,7 +5904,13 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 ├── extensions/
 │   ├── hooks.py             # HookRunner
 │   ├── skills.py
-│   └── plugins.py
+│   ├── plugins.py
+│   └── reflect.py           # 经验沉淀（项目记忆 / 待确认偏好）
+├── eval/
+│   ├── task.py              # 任务与任务集的格式
+│   ├── runner.py            # 跑任务、隔离、判分
+│   ├── report.py            # 报告与 fingerprint
+│   └── compare.py           # 两次运行的对比
 ├── web/
 │   ├── __init__.py          # 只有 docstring：不 import fastapi（web extra 才是硬依赖）
 │   ├── app.py               # create_app：装配 app、静态资源、模板
@@ -5879,21 +5949,27 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <span class="w">  </span><span class="nt">max_retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 
 <span class="nt">agent</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w">            </span><span class="c1"># default|acceptEdits|plan|bypass</span>
-<span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
 <span class="w">  </span><span class="nt">cost_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
-<span class="w">  </span><span class="nt">auto_compact</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">token_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+
+<span class="nt">context</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">context_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200000</span>
+<span class="w">  </span><span class="nt">reserved_output</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
 <span class="w">  </span><span class="nt">compact_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.8</span>
+<span class="w">  </span><span class="nt">keep_recent_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">auto_compact</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 
 <span class="nt">tools</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">read</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">write</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">glob</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">grep</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ls</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bash</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">todo_write</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">web_fetch</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">read</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">write</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">multi_edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">glob</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">grep</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ls</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bash</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bash_output</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">bash_kill</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">todo_write</span><span class="p p-Indicator">]</span>
 <span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">  </span><span class="nt">bash_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span>
 <span class="w">  </span><span class="nt">max_output_tokens</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000</span>
-<span class="w">  </span><span class="nt">include_dirs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 
 <span class="nt">permissions</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">  </span><span class="nt">include_dirs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">  </span><span class="nt">deny_paths</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
 <span class="w">      </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"git</span><span class="nv"> </span><span class="s">status*"</span>
@@ -5914,6 +5990,12 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span><span class="w">              </span><span class="c1"># local|swerex_docker|bubblewrap|contree</span>
 <span class="w">  </span><span class="c1"># 其余选项原样传给环境（如 docker 的 run_args、image）</span>
 </code></pre></div>
+<blockquote>
+<p>实现与草图的差别：权限模式在 <code>permissions.mode</code>（不是 <code>agent.mode</code>），
+<code>include_dirs</code> 也在 <code>permissions</code> 下面（不是 <code>tools</code>）；
+压缩的开关在 <code>context</code> 段（<code>auto_compact</code> / <code>compact_threshold</code>），不在 <code>agent</code> 段；
+<code>agent.max_turns</code> 数的是<strong>模型调用</strong>次数，默认 50。</p>
+</blockquote>
 <h3 id="71">7.1 谁可以写配置</h3>
 <table>
 <thead>
@@ -6223,7 +6305,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <td>产出 <code>ModelEvent</code> 序列；工具调用在 <code>tool_call_done</code> 时完整</td>
 </tr>
 <tr>
-<td><code>HookRunner.run</code></td>
+<td><code>HookRunner.apply</code></td>
 <td>M3</td>
 <td>异常 / 超时不得阻断主流程（除非 <code>strict</code>）</td>
 </tr>
@@ -6326,7 +6408,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <tr>
 <td>上下文估算不准（tokenizer 差异）</td>
 <td>仍会 OOM</td>
-<td>预留 15% 余量 + 超限异常兜底触发强制压缩</td>
+<td>预留 <code>reserved_output</code>（默认 8000 token）+ 超限异常兜底触发强制压缩</td>
 </tr>
 <tr>
 <td>TUI 与 headless 行为分叉</td>

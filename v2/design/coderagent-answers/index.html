@@ -3639,6 +3639,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#b9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b9 模型的一次工具调用，是怎么一步步跑下来的？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b10 模型会自己造不存在的工具，或者乱调工具吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4501,6 +4523,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#b9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b9 模型的一次工具调用，是怎么一步步跑下来的？
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        b10 模型会自己造不存在的工具，或者乱调工具吗？
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4888,7 +4932,7 @@
 
 <h1 id="coding-agent">Coding Agent 答问录</h1>
 <blockquote>
-<p>这份文档回答 <a href="../coderagent-questions/">coderagent-questions.md</a> 里的 33 个问题。
+<p>这份文档回答 <a href="../coderagent-questions/">coderagent-questions.md</a> 里的 41 个问题。
 每条答案的格式是：<strong>结论</strong> → <strong>它落在哪</strong> → <strong>为什么这么定</strong>（取舍）。
 代码位置全部相对 <code>src/coderagent/</code>，测试相对 <code>tests/coderagent/</code>。</p>
 <p>读法建议：先看每节的「一句话」，需要动手时再顺着文件路径跳。设计层面的「为什么」见
@@ -5086,6 +5130,59 @@
 <li><strong>读类工具的输出有上限</strong>：<code>read</code> 默认 2000 行，超过 2000 字符的行会被截断并标出来；<code>glob</code> 最多 200 条路径；<code>grep</code> 最多 100 行内容；<code>bash</code> 输出按 <code>tools.max_output_tokens</code>（默认 8000）裁剪。</li>
 </ul>
 <p><strong>为什么</strong>：<code>edit</code> 的「唯一匹配」是 agent 改文件时最容易出错的地方（改错位置）。宁可让它失败要求重试，也不要让它猜。</p>
+<h3 id="b9">b9 模型的一次工具调用，是怎么一步步跑下来的？</h3>
+<p><strong>结论</strong>：从模型返回到结果回到模型，一共 6 步，分布在两个文件里。</p>
+<ol>
+<li><strong>取</strong>：<code>core/loop.py:206</code> 从 assistant 消息里取 <code>tool_calls</code>。没有 <code>tool_calls</code> 就意味着模型说完了，这一轮结束（或者进入 verify 重试）。</li>
+<li><strong>规整</strong>：<code>executor.plan()</code>（<code>executor.py:51</code>）把原始 tool call 变成统一形状：<code>{"tool", "tool_call_id", "args", "raw"}</code>。这一步只做 JSON 解析——参数不是合法 JSON，或者解析出来不是<strong>对象</strong>，就在这里记下 <code>error</code>，<strong>不会走到执行</strong>。</li>
+<li><strong>记账</strong>：<code>loop.py:225</code> 发一个 <code>TOOL_CALL</code> 事件，<strong>在执行之前</strong>。事件里是全部 action 和它们的参数——所以「模型打算干什么」永远早于「它干了什么」被记下来。被拒的 action 也会出现在这里。</li>
+<li><strong>准备</strong>：<code>executor._prepare()</code>（<code>executor.py:93</code>）对每个 action 依次做四件事：</li>
+<li><strong>查注册表</strong>：<code>registry.get(name)</code>，找不到就直接记错（见 b10）；</li>
+<li><strong>PreToolUse hook</strong>：可以阻断，也可以改写参数（改写后的参数才是被权限判定的那一份）；</li>
+<li><strong>权限判定</strong>：<code>policy.evaluate(tool, args)</code>；</li>
+<li><strong>审批</strong>：<code>ask</code> 的去问 approver（headless 下由 <code>HeadlessApprover</code> 回答）。</li>
+<li><strong>执行</strong>：<code>_run()</code>（<code>executor.py:149</code>）——先 <code>on_path</code>（让上下文引擎捡起该目录的指令），写类工具先 <code>before_write</code>（打 checkpoint），然后 <code>tool.run(args, ctx)</code>。工具抛异常 → 变成给模型看的错误文本（见 b4），<strong>整轮不中断</strong>。</li>
+<li><strong>回话</strong>：结果发 <code>TOOL_RESULT</code> 事件（含 diff），observation 一定带 <code>tool_call_id</code>（<code>executor.py:178</code>），模型才能把结果对上号。</li>
+</ol>
+<p><strong>为什么</strong>：权限和 hook 都在<strong>执行之前</strong>判定，所以「被拒绝的工具」永远不会真的动过文件；而 <code>TOOL_CALL</code> 在执行之前记账，所以事后复盘时能看出模型<strong>本来想做什么</strong>——这两件事都是评测「模型乱调工具」的依据。</p>
+<h3 id="b10">b10 模型会自己造不存在的工具，或者乱调工具吗？</h3>
+<p><strong>结论</strong>：<strong>会</strong>，但每一类都有确定的落点，而且<strong>不会有任何越界的副作用</strong>。</p>
+<p><strong>造工具（调一个不存在的名字）</strong>：<code>executor.py:97</code> 查注册表，查不到 → observation 变成
+<code>Error: unknown tool 'xxx'. Available tools: read, write, edit, ...</code>。
+<strong>工具不会执行</strong>，模型看到的是一段普通的 tool result（带 <code>tool_call_id</code>），下一轮它要么改用真名字，要么就卡在那儿反复试。
+已注册的工具<strong>只有注册表里的那些</strong>——MCP 工具叫 <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>，插件工具用插件自己的名字，模型凭空说的名字不在表里。</p>
+<p><strong>乱调（调了不该调的工具）</strong>：由三层挡：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>挡住什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>权限模式</td>
+<td><code>plan</code> / <code>readonly</code> 下写类工具<strong>直接 deny</strong>；<code>default</code> 下写类工具要 ask；<code>bypass</code> 下才全放行</td>
+</tr>
+<tr>
+<td>规则文件</td>
+<td>项目 / 用户的 <code>rules.yaml</code> 可以对具体工具 + 路径给 allow / ask / deny，deny 永远赢</td>
+</tr>
+<tr>
+<td>越界检查</td>
+<td><code>within_bounds()</code> 在<strong>任何模式</strong>（含 <code>bypass</code>）下都挡住工作目录之外的路径</td>
+</tr>
+</tbody>
+</table>
+<p><strong>bash 的特殊处理</strong>：命令按 <code>&amp;&amp;</code> / <code>||</code> / <code>;</code> / <code>|</code> / 换行切段（尊重引号），逐段判定，整条命令取<strong>最严</strong>的一段。所以 <code>echo hi &amp;&amp; rm -rf /</code> 不会因为前半段安全就放行。</p>
+<p><strong>参数不对</strong>：工具自己做类型检查（<code>fs.py</code> 里 <code>path</code> 必须是 str、<code>old_string</code> 必须是 str、<code>multi_edit</code> 的 <code>edits</code> 必须是 list……），不满足就报错；类型转换类的异常（比如把 str 当 int 用）在 <code>executor.py:160</code> 被兜住，变成给模型看的错误文本。</p>
+<p><strong>子 agent</strong>：白名单之外的工具在子 agent 的注册表里<strong>根本不存在</strong>（<code>core/subagent.py:195</code>），所以子 agent 也调不到。</p>
+<p><strong>怎么发现模型乱调</strong>：
+- <code>TOOL_CALL</code> 事件在执行前记下全部参数——事后能逐条回看模型「想干什么」；
+- 评测报告里的 <code>tool_errors</code> 数失败的工具调用（被权限拒绝的也算）；
+- <code>require_tools</code> 要求某些任务<strong>必须</strong>用某个工具改某个文件（<code>evals/basic</code> 里五个任务这样写）——用 shell 绕过去不算完成；
+- <code>no-op</code> 任务反过来测「不该改的时候别改」。</p>
+<p><strong>为什么</strong>：模型是概率的，它一定会偶尔喊错工具名、偶尔调错参数。harness 的责任不是让模型永不犯错，而是<strong>让每次犯错都变成模型能读懂的普通消息，并且有确定的后果边界</strong>（不执行、不越界、留痕）。</p>
 <hr>
 <h2 id="c">c. 任务如何调度</h2>
 <h3 id="c1-turn">c1 一轮 turn 的主循环长什么样？</h3>
@@ -5206,7 +5303,7 @@
 <p><strong>结论</strong>：<code>core/events.py</code> + <code>core/session.py</code>。</p>
 <ul>
 <li><strong>文件</strong>：<code>&lt;config_home&gt;/sessions/&lt;session_id&gt;.jsonl</code>，<strong>一行一个 JSON 对象</strong>：<code>{"type", "session_id", "timestamp", "payload"}</code>。</li>
-<li><strong>事件类型</strong>（<code>EventType</code>，16 个）：<code>user_message</code>、<code>assistant_message</code>、<code>text_delta</code>、<code>reasoning</code>、<code>tool_call</code>、<code>tool_result</code>、<code>approval_request</code>、<code>approval_response</code>、<code>state_change</code>、<code>turn_end</code>、<code>verify</code>、<code>compaction</code>、<code>reflection</code>、<code>reverted_to</code>、<code>error</code>。其中 <code>text_delta</code> / <code>reasoning</code> <strong>只发总线、不写日志</strong>（流式文本太碎，会把日志撑爆）。</li>
+<li><strong>事件类型</strong>（<code>EventType</code>，15 个）：<code>user_message</code>、<code>assistant_message</code>、<code>text_delta</code>、<code>reasoning</code>、<code>tool_call</code>、<code>tool_result</code>、<code>approval_request</code>、<code>approval_response</code>、<code>state_change</code>、<code>turn_end</code>、<code>verify</code>、<code>compaction</code>、<code>reflection</code>、<code>reverted_to</code>、<code>error</code>。其中 <code>text_delta</code> / <code>reasoning</code> <strong>只发总线、不写日志</strong>（流式文本太碎，会把日志撑爆）。</li>
 <li><strong>会话 id</strong>：<code>YYYYMMDD-xxxxxx</code>（日期 + 6 位 hex）。</li>
 <li><strong>写入</strong>：每行 flush + <code>os.fsync</code>。</li>
 <li><strong>为什么唯一</strong>：<strong>钱、token、上下文、todo 都不另存一份</strong>，全部从事件日志重放算出来。<code>rebuild()</code> 重放时顺带算出 <code>metrics = collect(events)</code>，成本和 token 直接取自日志。</li>
@@ -5214,7 +5311,7 @@
 </ul>
 <p><strong>为什么</strong>：一份日志同时回答「当时发生了什么」「花了多少钱」「现在对话到哪了」「怎么恢复」，比维护四份状态互相同步要可靠得多。</p>
 <h3 id="d3">d3 关掉程序能接着聊吗？</h3>
-<p><strong>结论</strong>：能。<code>SessionStore.rebuild(session_id)</code> 重放 JSONL，恢复对话历史、摘要、todo、状态、成本。</p>
+<p><strong>结论</strong>：能。会话状态和对话内容都是从 JSONL <strong>重放</strong>出来的——<code>SessionStore.rebuild(session_id)</code> 恢复状态、todo、成本，<code>ContextEngine.restore()</code> 恢复对话历史和摘要。</p>
 <ul>
 <li><strong><code>/resume</code></strong>（<code>ui/commands/resume.py</code>）：列出会话、<code>latest_session()</code> 取最近一个、<code>resume()</code> 就是 <code>store.rebuild()</code>。</li>
 <li><strong>切到旧会话</strong>：<code>AgentLoop.switch_to(session)</code> 重建 <code>ContextEngine</code>（带着 config、memory 配置、摘要模型、权限策略），然后 <code>context.restore()</code>——历史和摘要从日志里<strong>重放</strong>回来（包括 <code>COMPACTION</code> 事件的截断、<code>REVERTED</code> 事件的回退）。</li>
@@ -5629,6 +5726,10 @@
 <li><strong><code>model.max_retries</code> 没接进 backend</strong>：只有 <code>coder web</code> 读它；终端里想缩短重试只能用环境变量 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code>。</li>
 <li><strong>子 agent 的 tool call 不进事件日志</strong>：只发总线，所以从日志看不出子 agent 动过哪些文件（它的结果 JSON 里有 <code>files_touched</code>）。</li>
 <li><strong><code>core/memory.py</code> 是只读的，但「memory 特性」不是</strong>——写入发生在 <code>extensions/reflect.py</code>，由 <code>settle_session()</code> 驱动。</li>
+<li><strong>被裁掉的工具仍然能执行</strong>：<code>registry.schemas()</code> 裁的是<strong>发给模型的 schema</strong>，注册表本身没动。模型如果还记得某个被裁掉的工具的名字，照样调得动。</li>
+<li><strong>权限层判不了「合不合适」</strong>：它判的是「这个工具在这个模式下、这条命令是否被允许」，不判「这个任务该不该用这个工具」。</li>
+<li><strong>参数不做 schema 级校验</strong>：schema 只是发给模型的说明，执行前不按它校验；类型不对由工具自己抛，被兜成错误文本。</li>
+<li><strong><code>TRIM_ORDER</code> 是写死的</strong>：不按任务类型裁——一个读代码的任务和一个大改的任务，裁掉的工具是一样的。</li>
 </ol>
 
 
