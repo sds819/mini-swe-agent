@@ -367,7 +367,7 @@
 **结论**：`core/events.py` + `core/session.py`。
 
 - **文件**：`<config_home>/sessions/<session_id>.jsonl`，**一行一个 JSON 对象**：`{"type", "session_id", "timestamp", "payload"}`。
-- **事件类型**（`EventType`，16 个）：`user_message`、`assistant_message`、`text_delta`、`reasoning`、`tool_call`、`tool_result`、`approval_request`、`approval_response`、`state_change`、`turn_end`、`verify`、`compaction`、`reflection`、`reverted_to`、`error`。其中 `text_delta` / `reasoning` **只发总线、不写日志**（流式文本太碎，会把日志撑爆）。
+- **事件类型**（`EventType`，15 个）：`user_message`、`assistant_message`、`text_delta`、`reasoning`、`tool_call`、`tool_result`、`approval_request`、`approval_response`、`state_change`、`turn_end`、`verify`、`compaction`、`reflection`、`reverted_to`、`error`。其中 `text_delta` / `reasoning` **只发总线、不写日志**（流式文本太碎，会把日志撑爆）。
 - **会话 id**：`YYYYMMDD-xxxxxx`（日期 + 6 位 hex）。
 - **写入**：每行 flush + `os.fsync`。
 - **为什么唯一**：**钱、token、上下文、todo 都不另存一份**，全部从事件日志重放算出来。`rebuild()` 重放时顺带算出 `metrics = collect(events)`，成本和 token 直接取自日志。
@@ -377,7 +377,7 @@
 
 ### d3 关掉程序能接着聊吗？
 
-**结论**：能。`SessionStore.rebuild(session_id)` 重放 JSONL，恢复对话历史、摘要、todo、状态、成本。
+**结论**：能。会话状态和对话内容都是从 JSONL **重放**出来的——`SessionStore.rebuild(session_id)` 恢复状态、todo、成本，`ContextEngine.restore()` 恢复对话历史和摘要。
 
 - **`/resume`**（`ui/commands/resume.py`）：列出会话、`latest_session()` 取最近一个、`resume()` 就是 `store.rebuild()`。
 - **切到旧会话**：`AgentLoop.switch_to(session)` 重建 `ContextEngine`（带着 config、memory 配置、摘要模型、权限策略），然后 `context.restore()`——历史和摘要从日志里**重放**回来（包括 `COMPACTION` 事件的截断、`REVERTED` 事件的回退）。
