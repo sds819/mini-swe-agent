@@ -38,6 +38,7 @@ class Report:
         graded = [task for task in self.tasks if not task.error_kind]
         passed = [task for task in graded if task.passed]
         unexpected = [task for task in self.tasks if not task.as_expected]
+        ratios = [ratio for task in self.tasks for ratio in task.summary_ratios]
         return {
             "tasks": len(self.tasks),
             "passed": len(passed),
@@ -50,6 +51,9 @@ class Report:
             "total_tokens_out": sum(task.tokens_out for task in self.tasks),
             "total_model_calls": sum(task.model_calls for task in self.tasks),
             "total_tool_calls": sum(task.tool_calls for task in self.tasks),
+            "compactions": sum(task.compactions for task in self.tasks),
+            "summary_ratio_mean": round(sum(ratios) / len(ratios), 4) if ratios else 0.0,
+            "summary_ratio_max": round(max(ratios), 4) if ratios else 0.0,
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -95,6 +99,12 @@ class Report:
             f"cost ${summary['total_cost']:.4f}  tokens {summary['total_tokens_in']} in / "
             f"{summary['total_tokens_out']} out  {summary['total_model_calls']} model calls"
         )
+        if summary["compactions"]:
+            lines.append(
+                f"{summary['compactions']} compactions: the summaries kept "
+                f"{summary['summary_ratio_mean'] * 100:.1f}% of the compacted history on average "
+                f"(worst {summary['summary_ratio_max'] * 100:.1f}%)"
+            )
         return "\n".join(lines)
 
 

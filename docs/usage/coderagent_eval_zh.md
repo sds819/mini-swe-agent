@@ -107,7 +107,8 @@ coder eval <suite> \
     "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "unexpected": 0,
     "pass_rate": 0.667,
     "total_cost": 0.0412, "total_tokens_in": 12345, "total_tokens_out": 6789,
-    "total_model_calls": 12, "total_tool_calls": 30
+    "total_model_calls": 12, "total_tool_calls": 30,
+    "compactions": 1, "summary_ratio_mean": 0.12, "summary_ratio_max": 0.12
   },
   "tasks": [
     {
@@ -116,7 +117,8 @@ coder eval <suite> \
       "stop_reason": "end_turn", "error": "", "error_kind": "",
       "cost": 0.012, "tokens_in": 800, "tokens_out": 200,
       "model_calls": 7, "tool_calls": 9, "tool_errors": 1, "approvals": 0,
-      "compactions": 0, "duration_seconds": 5.1, "session_id": "20261111-a1b2c3",
+      "compactions": 1, "summary_ratios": [0.12],
+      "duration_seconds": 5.1, "session_id": "20261111-a1b2c3",
       "setup": [],
       "verify": [
         {"command": "python -m pytest -q tests/test_calc.py",
@@ -133,6 +135,10 @@ token 来自 provider，是可靠的。
 `model_calls` 只数主循环的调用；子 agent 的调用不在里面，它们的**成本**在。
 
 `tool_errors` 数失败的工具调用，被权限拒绝的也算。
+
+`summary_ratios` 每次压缩给一个数：摘要多大，对着它替换掉的那段历史多大。
+这个比值突然变大，要么是摘要变啰嗦了，要么是原文变啰嗦了。均值和最差值在整轮运行的
+summary 里。
 
 ## fingerprint
 

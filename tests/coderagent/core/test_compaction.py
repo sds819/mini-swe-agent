@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from coderagent.config.schema import ContextConfig
 from coderagent.core.context import ContextEngine
 from coderagent.core.events import EventBus, EventType
@@ -213,6 +215,20 @@ def test_the_cost_of_the_summary_is_recorded_and_booked(tmp_path):
     assert engine.compact()
     events = engine.store.events(engine.session.id)
     assert [event.payload["cost"] for event in events if event.type == EventType.COMPACTION] == [0.05]
+
+
+def test_the_event_says_how_much_of_the_history_the_summary_kept(tmp_path):
+    """The ratio is the size of the summary against the size of what it replaces."""
+    config = ContextConfig(keep_recent_turns=1, keep_recent_token_ratio=0.0)
+    engine = make_engine(tmp_path, config=config)
+    _fill_long(engine, 4)
+    assert engine.compact()
+    event = next(event for event in engine.store.events(engine.session.id) if event.type == EventType.COMPACTION)
+    assert event.payload["tokens"] > 0
+    assert event.payload["summary_tokens"] > 0
+    assert event.payload["summary_ratio"] == pytest.approx(
+        event.payload["summary_tokens"] / event.payload["tokens"], abs=0.001
+    )
 
 
 class ChunkModel:

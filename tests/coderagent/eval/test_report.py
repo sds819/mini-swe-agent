@@ -64,6 +64,17 @@ def test_the_tasks_of_the_harness_are_not_graded(tmp_path):
     assert report.summary["pass_rate"] == 0.5
 
 
+def test_the_report_shows_the_size_of_the_summaries(tmp_path):
+    """A summary that grows is a summary that says less."""
+    report = _report(tmp_path)
+    report.tasks[0].summary_ratios = [0.1, 0.4]
+    report.tasks[0].compactions = 2
+    assert report.summary["compactions"] == 2
+    assert report.summary["summary_ratio_mean"] == 0.25
+    assert report.summary["summary_ratio_max"] == 0.4
+    assert "25.0% of the compacted history" in report.to_text()
+
+
 def test_the_text_report_shows_the_tasks_and_the_totals(tmp_path):
     text = _report(tmp_path).to_text()
     assert "off-by-one" in text

@@ -229,13 +229,17 @@ class ContextEngine:
         self.summaries = [summary]
         self.history.messages = self.history.messages[cut:]
         self.last_compact_turn = self.session.turn_count
+        source_tokens = estimate_tokens(compacted)
+        summary_tokens = estimate_tokens([{"role": "user", "content": summary.render()}])
         event = Event(
             type=EventType.COMPACTION,
             session_id=self.session.id,
             timestamp=time.time(),
             payload={
                 "compacted_messages": cut,
-                "tokens": estimate_tokens(compacted),
+                "tokens": source_tokens,
+                "summary_tokens": summary_tokens,
+                "summary_ratio": round(summary_tokens / source_tokens, 4) if source_tokens else 0.0,
                 "cost": cost,
                 "summary": summary.to_dict(),
                 "summaries": [item.to_dict() for item in self.summaries],

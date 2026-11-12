@@ -66,7 +66,8 @@
 - **永远只有一份摘要**：`self.summaries = [summary]` 是**替换**不是追加。所以第二次压缩时，**上一份摘要会作为额外输入喂给模型**——否则摘要会越堆越多把预算吃光。
 - **失败判定**：解析不出 JSON → 失败；**压缩掉的段落里有写操作、但摘要里 `files_touched` 是空的** → 也算失败（模型忘了改过文件，说明它没读懂）。失败就**重试一次**。
 - **两次都失败** → `conservative_summary()` 兜底：`goal` 写「对话前半部分被压缩了」，`findings` 放最后 5 条消息（每条截 400 字），`next_steps` 写「重新读一遍提到的文件来恢复细节」。
-- **落地**：写一条 `EventType.COMPACTION` 事件（`compacted_messages` / `tokens` / `cost` / `summary`），历史被截断成 `history.messages[cut:]`。
+- **落地**：写一条 `EventType.COMPACTION` 事件（`compacted_messages` / `tokens` / `summary_tokens` / `summary_ratio` / `cost` / `summary`），历史被截断成 `history.messages[cut:]`。
+- **历史装不下一个提示词时**：按 map-reduce 做——`chunk_messages()` 按轮切块，每块摘要一次，再用 `merge_prompt()` 把若干 partial 合成一份（带上一份摘要）；合并失败时用纯代码的 `merge_summaries()` 拼起来，一条不丢。
 
 **为什么**：摘要失败不能变成「静默丢历史」。兜底摘要很笨，但它诚实地告诉模型「你丢了东西，去重读」。
 

@@ -66,6 +66,8 @@ class TaskResult:
     tool_errors: int = 0
     approvals: int = 0
     compactions: int = 0
+    summary_ratios: list[float] = field(default_factory=list)
+    """How much of the compacted history each summary kept. One number per compaction."""
     duration_seconds: float = 0.0
     session_id: str = ""
     setup: list[VerifyResult] = field(default_factory=list)
@@ -89,6 +91,7 @@ class TaskResult:
             "tool_errors": self.tool_errors,
             "approvals": self.approvals,
             "compactions": self.compactions,
+            "summary_ratios": list(self.summary_ratios),
             "duration_seconds": self.duration_seconds,
             "session_id": self.session_id,
             "setup": [result.to_dict() for result in self.setup],
@@ -309,6 +312,7 @@ def run_task(
         tool_errors=_tool_errors(events),
         approvals=getattr(approver, "count", 0),
         compactions=metrics.compactions,
+        summary_ratios=list(metrics.summary_ratios),
         duration_seconds=duration,
         session_id=result.session_id,
         setup=setup,

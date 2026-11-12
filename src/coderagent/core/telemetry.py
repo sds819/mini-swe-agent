@@ -30,6 +30,8 @@ class Metrics:
     per_model_cost: dict[str, float] = field(default_factory=dict)
     duration_seconds: float = 0.0
     compactions: int = 0
+    summary_ratios: list[float] = field(default_factory=list)
+    """How much of the compacted history each summary kept. One number per compaction."""
     errors: int = 0
 
     def to_dict(self) -> dict[str, Any]:
@@ -85,6 +87,8 @@ def collect(events: list[Event]) -> Metrics:
             cost = float(payload.get("cost") or 0.0)
             metrics.total_cost += cost
             metrics.per_purpose_cost["summarize"] = metrics.per_purpose_cost.get("summarize", 0.0) + cost
+            if "summary_ratio" in payload:
+                metrics.summary_ratios.append(float(payload.get("summary_ratio") or 0.0))
         elif event.type == EventType.REFLECTION:
             cost = float(payload.get("cost") or 0.0)
             metrics.total_cost += cost

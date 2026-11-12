@@ -191,6 +191,36 @@ while estimate_tokens(messages[cut:]) > limit:
 
 **为什么是结构化字段而不是散文**：模型要记住「还剩什么没做完」，靠 JSON 字段比靠一段话稳得多。
 
+### 4.5 摘要分块：历史装不下一个提示词的时候
+
+被压缩掉的那段历史可能**比一次提示词还大**。旧的做法是把它整个塞进一次调用：
+超了 → provider 溢出 → 重试一次 → 还是超 → 只剩最后 5 条消息活着，其余静默蒸发。
+
+现在按 **map-reduce** 做（`core/summarize.py` 的 `chunk_messages()` + `merge_prompt()`，
+`core/context.py:284-306` 的 `_summarize()`）：
+
+```
+被压缩的历史
+   │
+   ├─ chunk_messages(messages, limit)   按轮切成若干块（轮不拆；单轮超大才在消息边界拆）
+   │
+   ├─ 每块一次 summarize_prompt  →  若干份 partial summary
+   │
+   └─ 一次 merge_prompt(parts, previous)  →  一份 summary（previous = 上一轮的摘要）
+```
+
+- **单块时走老路径**：不额外调用，不额外花钱，行为与从前完全一致。
+- **合并失败也不丢东西**：`merge_summaries()`（纯代码，不调模型）把若干份 partial 拼起来——
+  goal 取最后一份非空的，列表去重拼接，`files_touched` 按 path 去重（后者覆盖前者）。
+  结果比模型合并啰嗦，但**一条都不丢**。
+- **上一份摘要进合并提示词**：第二次压缩不会丢第一次的结论（见 §5.4）。
+
+块的大小由 `context.summary_chunk_tokens` 决定；为 0 时按摘要模型的窗口算
+（`window - reserved_output - 2000`，`context.py:320-328`）。
+
+**为什么值得多花一次模型调用**：一次超长的提示词失败，是**整段历史**的损失；
+分块之后失败只影响一块，而且还能机械兜底。
+
 ---
 
 ## 5. 完整性：六道保真机制
@@ -201,12 +231,18 @@ while estimate_tokens(messages[cut:]) > limit:
 ### 5.1 压缩是「移出窗口」，不是「删除事实」
 
 被切掉的原文**永远在事件日志里**（JSONL 追加写，`core/session.py`）。
-`COMPACTION` 事件记下切了多少条、多大、多贵、摘要全文（`context.py:219-232`）：
+`COMPACTION` 事件记下切了多少条、多大、多贵、摘要全文（`context.py:217-248`）：
 
 ```json
-{"compacted_messages": 42, "tokens": 18342, "cost": 0.012,
+{"compacted_messages": 42, "tokens": 18342, "summary_tokens": 1204,
+ "summary_ratio": 0.0656, "cost": 0.012,
  "summary": {...}, "summaries": [{...}]}
 ```
+
+`summary_ratio` = 摘要多大 / 被替换掉的那段原文多大。**这个比值是摘要质量的仪表盘**：
+它突然变大，要么是摘要变啰嗦了，要么是被摘的那段变啰嗦了。
+`telemetry.collect()` 把它收进 `Metrics.summary_ratios`，
+评测报告里给出均值和最差值（`eval/report.py`）。
 
 `restore()` 重放日志时按 `compacted_messages` 截断（`context.py:86-88`），原文随时能取回。
 
@@ -253,11 +289,12 @@ Summary(
 `summaries` **永远只有一份**——`self.summaries = [summary]`（`context.py:216`）是**替换**不是追加。
 否则摘要会越堆越多把预算吃光（第二份摘要的输入里已经有第一份，再加一份就是复利）。
 
-但压缩第 N 次时，**上一份摘要会作为额外输入喂给模型**（`context.py:270-271`）：
+但压缩第 N 次时，**上一份摘要会作为额外输入喂给模型**（`context.py:291-304`）：
 
 ```python
-previous = self._summary_text()
-payload = [*messages, {"role": "user", "content": previous}] if previous else list(messages)
+previous = self.summaries[-1] if self.summaries else None
+# 单块：作为一条 user 消息接在历史后面
+# 多块：作为 merge_prompt 的 previous 参数
 ```
 
 所以第二次压缩之后，第一次的结论还在——只是被合并进了新摘要。**摘要会被压缩，但不会被遗忘。**
@@ -318,6 +355,10 @@ summary.recent_errors = errors[-3:]
    合法，但严格说不是自然对话形态。
 7. **压缩的切点不记「为什么」**。`COMPACTION` 事件记了切了多少条和摘要，但没记触发原因
    （预算到了 / 轮数到了 / provider 溢出）。要区分得看日志上下文。
+8. **合并比合并前的摘要更容易丢细节**。分块之后多了一次「partial → 一份」的重述，
+   这一层同样是模型的二次转述。机械兜底（`merge_summaries`）不丢，但更啰嗦。
+9. **摘要质量的度量只有一个比值**。`summary_ratio` 能看出摘要变大了，
+   但看不出它变**大得对不对**——一份啰嗦但完整的摘要和一个丢了一半的摘要，比值可能一样。
 
 ---
 
@@ -338,10 +379,13 @@ summary.recent_errors = errors[-3:]
                               _cut_index() 切在轮边界，两规则取严
                                                 │
                                                 ▼
-                          _summarize() 结构化 JSON，失败重试一次，再失败兜底
+                     _summarize()：装不下就分块，每块一份 partial
                                                 │
                                                 ▼
-                        COMPACTION 事件（切了多少 / 多大 / 多贵 / 摘要全文）
+                        merge_prompt() 把 partial 合成一份（带上一份摘要）
+                                                │
+                                                ▼
+                        COMPACTION 事件（切了多少 / 多大 / 多贵 / 摘要全文 / 比值）
 ```
 
 ---

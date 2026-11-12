@@ -137,6 +137,11 @@ def test_the_compactions_and_the_errors_are_counted():
     assert metrics.errors == 1
 
 
+def test_the_ratio_of_the_summary_is_collected():
+    metrics = collect([_event(EventType.COMPACTION, {"summary_ratio": 0.25}), _event(EventType.COMPACTION, {})])
+    assert metrics.summary_ratios == [0.25]
+
+
 def test_the_duration_is_the_time_between_the_events():
     metrics = collect([_event(EventType.USER_MESSAGE, {"content": "hi"}, 1.0), _assistant(timestamp=4.0)])
     assert metrics.duration_seconds == 3.0

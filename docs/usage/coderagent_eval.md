@@ -121,7 +121,8 @@ coder eval <suite> \
     "tasks": 3, "passed": 2, "failed": 1, "errors": 0, "unexpected": 0,
     "pass_rate": 0.667,
     "total_cost": 0.0412, "total_tokens_in": 12345, "total_tokens_out": 6789,
-    "total_model_calls": 12, "total_tool_calls": 30
+    "total_model_calls": 12, "total_tool_calls": 30,
+    "compactions": 1, "summary_ratio_mean": 0.12, "summary_ratio_max": 0.12
   },
   "tasks": [
     {
@@ -130,7 +131,8 @@ coder eval <suite> \
       "stop_reason": "end_turn", "error": "", "error_kind": "",
       "cost": 0.012, "tokens_in": 800, "tokens_out": 200,
       "model_calls": 7, "tool_calls": 9, "tool_errors": 1, "approvals": 0,
-      "compactions": 0, "duration_seconds": 5.1, "session_id": "20261111-a1b2c3",
+      "compactions": 1, "summary_ratios": [0.12],
+      "duration_seconds": 5.1, "session_id": "20261111-a1b2c3",
       "setup": [],
       "verify": [
         {"command": "python -m pytest -q tests/test_calc.py",
@@ -149,6 +151,11 @@ not in it, their cost is.
 
 `tool_errors` counts the tool calls that failed, the ones that were denied
 included.
+
+`summary_ratios` holds one number per compaction: the size of the summary
+against the size of the history it replaces. A ratio that grows means the
+summary became verbose, or the history it summarizes became noisy. The mean and
+the worst of them are in the summary of the run.
 
 ## The fingerprint
 
