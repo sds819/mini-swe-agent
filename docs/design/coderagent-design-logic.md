@@ -81,7 +81,7 @@ YAML 配置、subprocess 沙箱原语），重写它的上半部分（主循环�
 **收益**：新增一个 UI（web 版就是这样加的）**不需要碰核心**；fork 就是复制事件文件
 （`src/coderagent/core/session.py:150`）；崩溃恢复就是重放。
 
-**边界**：`TEXT_DELTA` 和 `REASONING` **不进日志**（`src/coderagent/core/events.py:16-18`
+**边界**：`TEXT_DELTA` 和 `REASONING` **不进日志**（`src/coderagent/core/events.py:15-17`
 有明确注释）。它们是瞬时的渲染数据，重放它们没有意义，而且一次回答能产生几百条，
 会把日志撑爆。`Event.from_dict()` 对未知事件类型返回 `None` 而不是抛异常
 （`src/coderagent/core/events.py:50`）——旧版本读到新版本写的日志不该崩。
@@ -106,7 +106,7 @@ TUI 和 web **都是 `EventBus` 的订阅者**，不是循环的拥有者。web 
 流式增量走 `_notify`。这两个函数的区别，就是「2.1 那条决策」在代码里的落点。
 
 **EventBus 是宽容的**：一个订阅者抛异常，只会被记日志，不会影响发布者
-（`src/coderagent/core/events.py:74-80`）。渲染层的一个 bug 不应该让 agent 挂掉。
+（`src/coderagent/core/events.py:74-79`）。渲染层的一个 bug 不应该让 agent 挂掉。
 
 ### 2.3 所有副作用过同一道闸
 
@@ -294,7 +294,7 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 |---|---|---|
 | 技能（skills） | **项目**赢 | `src/coderagent/extensions/skills.py:78` |
 | 子 agent | **项目**赢 | `src/coderagent/core/subagent.py:90` |
-| 插件 | **项目**赢 | `src/coderagent/extensions/plugins.py:57` |
+| 插件 | **项目**赢 | `src/coderagent/extensions/plugins.py:134` |
 | 权限规则 | **用户**赢 | `src/coderagent/tools/rules.py:93` |
 
 原因不同：技能/子 agent/插件是**这个项目的工作方式**，项目当然覆盖通用的；
@@ -307,15 +307,19 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 ### 4.2 `within_bounds()` 不接受 `allow` 规则
 
 见 §3.3。这是**故意的**——注释里直说了
-（`src/coderagent/tools/permissions.py:223`）。代码上表现为：
+（`src/coderagent/tools/permissions.py:223`）。代码上表现为**边界检查在规则之后**
+（`src/coderagent/tools/permissions.py:147-151`）：
 
 ```python
-if matched and matched.decision == "allow":
-    return Decision("allow", matched, matched.reason)
-return Decision("deny", matched, f"'{path}' is outside the working directory {self.cwd}")
+if tool in PATH_TOOLS:
+    path = str(params.get("path", ""))
+    if path and not self.within_bounds(path):
+        """A rule cannot open the disk: the bounds hold in every mode."""
+        return Decision("deny", matched, self._outside_reason(path))
 ```
 
-匹配到 `allow` 规则时**不是直接返回 allow**，而是继续走边界检查。
+规则先把 `decision` 算出来，但**边界检查在它之后**——匹配到 `allow` 规则也绕不过去，
+越界的路径一律返回 `deny`。
 
 ### 4.3 同一个 TOOL_RESULT 写两次
 
@@ -376,7 +380,7 @@ web 的环形缓冲只保留非瞬时条目（`src/coderagent/web/sessions.py:99
 **决策**：环境是可插拔的（`build_environment()`，`src/coderagent/core/sandbox.py:26`，
 在 `src/coderagent/run.py:129` 被调用），
 复用 mini 的 `minisweagent.environments.get_environment`，支持 local / docker /
-singularity / swerex / bubblewrap / contree 七种。
+singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。
 
 **代价**：本地模式下没有隔离，安全性完全依赖权限层。所以权限层才必须是**唯一**
 的执行路径（§2.3）——不能有绕过它去跑命令的地方。
@@ -431,7 +435,8 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **为什么结构化**：自由文本摘要会丢掉「改了哪些文件」「还剩什么问题」。
 结构化字段让压缩后的会话**仍然可查询**。而且 `files_touched` 有一个专门的校验：
 如果摘要说没碰过文件，但历史里明明有写操作，就判定摘要失败，改用
-`conservative_summary()`（`src/coderagent/core/context.py:284`）。
+`conservative_summary()`（判定在 `src/coderagent/core/context.py:284-306` 的 `_summarize()`，
+兜底摘要本身在 `src/coderagent/core/summarize.py:257`）。
 
 **切点在轮边界**（`_cut_index()`，`src/coderagent/core/context.py:252`）：
 两个规则取大者——保留最近 N 轮，或保留上下文窗口的 X% 的 token。
@@ -495,7 +500,7 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
   │
   └─ while True:                                    core/loop.py:176
        │
-       ├─ maybe_compact()   上下文快满了就压          core/context.py:191
+       ├─ maybe_compact()   上下文快满了就压          core/loop.py:191
        ├─ _route()          这轮用哪个模型            core/loop.py:192
        ├─ _query()          调模型，超限就压缩重试    core/loop.py:193
        │
