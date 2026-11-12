@@ -3913,7 +3913,11 @@ directory of the agent.</p>
 <span class="nt">verify_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w">           </span><span class="c1"># optional, the seconds of each verify command</span>
 <span class="nt">expect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pass</span><span class="w">                  </span><span class="c1"># optional, `pass` (default) or `fail`</span>
 <span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bugfix</span><span class="p p-Indicator">]</span><span class="w">                </span><span class="c1"># optional</span>
+<span class="nt">require_tools</span><span class="p">:</span><span class="w">               </span><span class="c1"># optional, the tools the task needs, and the files they touch</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">multi_edit</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">calc.py</span><span class="p p-Indicator">]</span>
 <span class="nt">config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># optional, a yaml file or `a.b=c` overrides</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">permissions.yaml</span><span class="w">          </span><span class="c1"># a yaml file next to the task.yaml</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent.max_turns=20</span>
 <span class="nt">script</span><span class="p">:</span><span class="w">                       </span><span class="c1"># optional, the scripted model. Empty means: the real model.</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Let me look at the file first.</span>
@@ -3938,6 +3942,22 @@ pass by doing nothing.</p>
 suite honest, because a check that never fails would let every task pass. The
 report says whether a task did what it was supposed to do (<code>as_expected</code>), and
 the summary counts the ones that did not (<code>unexpected</code>).</p>
+<p><code>require_tools</code> names what the task needs from the tools: one of the requirements
+has to be met. The result of the task alone is not enough, because an agent
+that rewrites the file with the shell would pass the check while the tool
+stayed broken. A requirement names the tools that may do the work and the
+files they have to touch:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">require_tools</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">multi_edit</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">calc.py</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>The file matters: an edit of another file is not the work of the task. A task
+that says this cannot be solved with the shell, so a broken <code>edit</code> shows up as
+a failed task.</p>
+<p>A <code>config</code> entry may be a yaml file next to the <code>task.yaml</code>, so that a task
+brings its own settings. The tasks of <code>evals/basic</code> use it for their permission
+rules: the mode and the rules of the task win over the mode of the command, and
+they forbid the routes around the tool the task needs.</p>
 <p>The <code>script</code> is a scripted model: the answers of the agent are written down
 instead of asked for. It needs no API key, so a task with a script runs offline,
 and it makes the trajectory of the harness itself reproducible. A task without a
@@ -4032,6 +4052,10 @@ are compared, and a task with <code>expect: fail</code> is not a rate but a guar
   is a problem.</li>
 <li><code>--max-regressions</code> and <code>--max-drop</code> forgive a little. The real model is not
   deterministic, so a live suite needs a margin; a scripted suite does not.</li>
+<li>With <code>--against</code> the margin applies to the regressions and to the fall of the
+  rate. A task that regressed is forgiven by the margin, not reported twice.
+  The guard of a suite and a task the harness could not grade are never
+  forgiven.</li>
 </ul>
 <h2 id="the-check-of-the-pull-request">The check of the pull request</h2>
 <p><code>.github/workflows/eval.yaml</code> runs the suite of the pull request, runs it
@@ -4046,8 +4070,14 @@ coder<span class="w"> </span>eval-compare<span class="w"> </span>head.json<span 
 check needs no API key and says the same thing every time. It holds a task that
 must fail, so the check of the suite cannot be vacuous.</p>
 <p>The job <code>live</code> does the same with <code>evals/basic</code> and the real model. It is
-manual, it needs the secrets of the model, and it forgives one regression,
-because the model is not deterministic.</p>
+manual, it needs the secrets of the model, and it forgives nothing: the real
+model is not deterministic, so a failure of the job is a reason to run it
+again, not a verdict.</p>
+<p>The two jobs are not equally sensitive. The scripted one is exact: a harness
+that breaks a tool fails its task, and the job says so. The live one is not:
+a model that meets a broken tool often finds another way, so a broken harness
+can cost a single task out of eight. The scripted job is the gate; the live
+one is the signal.</p>
 <h2 id="the-example-suite">The example suite</h2>
 <p><code>evals/basic</code> holds eight tasks. They have no <code>script</code>, so they run against the
 real model and they need an API key:</p>
@@ -4097,6 +4127,10 @@ real model and they need an API key:</p>
 </table>
 <p>The last one is deliberate: an agent that changes what it should not is as much
 a bug as an agent that changes nothing.</p>
+<p>Five of the tasks protect the file they change: the rules of the task refuse
+every other way of writing it, and the task needs the <code>edit</code> tool to have
+worked on that very file. So a broken <code>edit</code> fails the task instead of being
+routed around.</p>
 <p>Every task but <code>no-op</code> fails its check before the agent starts, so a task that
 is solved by doing nothing is a broken task. <code>tests/coderagent/eval/test_suite.py</code>
 keeps an eye on that.</p>

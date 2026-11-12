@@ -3913,7 +3913,11 @@
 <span class="nt">verify_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w">           </span><span class="c1"># 可选，每条 verify 命令的秒数（默认 300）</span>
 <span class="nt">expect</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pass</span><span class="w">                  </span><span class="c1"># 可选，`pass`（默认）或 `fail`</span>
 <span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bugfix</span><span class="p p-Indicator">]</span><span class="w">                </span><span class="c1"># 可选</span>
+<span class="nt">require_tools</span><span class="p">:</span><span class="w">               </span><span class="c1"># 可选，这个任务需要的工具，以及它们必须改的文件</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">multi_edit</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">calc.py</span><span class="p p-Indicator">]</span>
 <span class="nt">config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># 可选，配置覆盖：YAML 文件路径或 `a.b=c`</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">permissions.yaml</span><span class="w">          </span><span class="c1"># task.yaml 旁边的 YAML 文件</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent.max_turns=20</span>
 <span class="nt">script</span><span class="p">:</span><span class="w">                       </span><span class="c1"># 可选，脚本化模型；为空 = 用真实模型</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">先看一下文件。</span>
@@ -3934,6 +3938,18 @@
 <p><code>expect: fail</code> 是给那些<strong>必须不通过</strong>的任务用的：它是 suite 的保险丝——
 一个从来不失败的判据，会让每个任务都通过。
 报告里每个任务带 <code>as_expected</code>（它有没有做到该做的），summary 里数了 <code>unexpected</code>（没做到的有几个）。</p>
+<p><code>require_tools</code> 写这个任务对工具的要求：这些要求里<strong>有一条</strong>要满足。
+光看任务的结果是不够的：agent 用 shell 把文件重写一遍，照样能让检查通过，
+而工具还是坏的。一条要求写清楚「哪些工具可以动手」和「它们必须动哪些文件」：</p>
+<div class="highlight"><pre><span></span><code><span class="nt">require_tools</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">edit</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">multi_edit</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">calc.py</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>文件这一项是要紧的：改了另一个文件，不算做了这个任务。
+写了这条要求的任务没法用 shell 绕过去，所以 <code>edit</code> 一坏，任务就会失败。</p>
+<p><code>config</code> 里可以写 <code>task.yaml</code> 旁边的 YAML 文件，这样一个任务能自带配置。
+<code>evals/basic</code> 的任务用它带自己的权限规则：任务的模式和规则盖过命令行的模式，
+并且把「绕开这个任务需要的工具」的路都堵上。</p>
 <p><code>script</code> 是脚本化模型：agent 的回答是写死的，不是问模型要来的。
 它不需要 API key，所以带 <code>script</code> 的任务可以离线跑，而且 harness 自己的轨迹是可复现的；
 不带 <code>script</code> 的任务走真实模型。
@@ -4014,6 +4030,8 @@ token 来自 provider，是可靠的。</p>
 <li>不给 <code>--against</code> 时，只检查这份报告本身：任务没做到该做的、或者 harness 没能评判它，都是问题。</li>
 <li><code>--max-regressions</code> 和 <code>--max-drop</code> 是「原谅一点」的额度。
   真实模型不是确定性的，所以 live suite 需要留点余量；脚本 suite 不需要。</li>
+<li>给了 <code>--against</code> 时，额度只管回归和通过率的下降：被额度原谅的回归不会<strong>再报一遍</strong>。
+  但保险丝被打破（<code>expect: fail</code> 的任务通过了）和 harness 评判不了的任务，任何额度都不原谅。</li>
 </ul>
 <h2 id="_5">拉取请求的检查</h2>
 <p><code>.github/workflows/eval.yaml</code> 会跑一遍这个 PR 的 suite，再用<strong>基线的 harness</strong> 跑一遍，然后对比：</p>
@@ -4027,7 +4045,12 @@ coder<span class="w"> </span>eval-compare<span class="w"> </span>head.json<span 
 而且每次说的都是同一件事。它里面还有一个<strong>必须不通过</strong>的任务，
 所以「判据从来不失败」这种坏情况藏不住。</p>
 <p><code>live</code> 这个 job 拿 <code>evals/basic</code> 和真实模型做同样的事。它只能手动触发，
-需要模型的密钥，而且会原谅一次回归——因为模型不是确定性的。</p>
+需要模型的密钥，而且<strong>什么都不原谅</strong>：模型不是确定性的，
+所以这个 job 失败是「再跑一遍」的理由，不是结论。</p>
+<p>两个 job 的灵敏度不一样。脚本那个是精确的：harness 弄坏一个工具，
+对应的任务就会失败，job 会说出来。live 那个不是：模型碰到坏掉的工具
+常常会绕道走，所以一个坏掉的 harness 可能只让八个任务里的一个失败。
+<strong>脚本那个是闸门，live 那个是信号。</strong></p>
 <h2 id="_6">样例任务集</h2>
 <p><code>evals/basic</code> 里有八个任务。它们都没有 <code>script</code>，所以跑的是真实模型，需要 API key：</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>evals/basic<span class="w"> </span>--label<span class="w"> </span>live-1<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>/tmp/eval.json
@@ -4075,6 +4098,9 @@ coder<span class="w"> </span>eval-compare<span class="w"> </span>head.json<span 
 </tbody>
 </table>
 <p>最后一个是刻意的：不该改的时候乱改，和该改的时候不改，是同一种 bug。</p>
+<p>八个任务里有五个把要改的文件「保护」起来：任务自己的规则挡住其它所有写法，
+而且任务要求 <code>edit</code> 工具<strong>在这个文件上</strong>成功用过。
+所以 <code>edit</code> 一坏，任务就失败，而不是被绕过去。</p>
 <p>除了 <code>no-op</code>，每个任务在 agent 开始之前都是<strong>没通过</strong>的——一个什么都不做就能过的任务是个坏任务。
 <code>tests/coderagent/eval/test_suite.py</code> 盯着这件事。</p>
 <p><code>evals/offline</code> 是另一个 suite：五个任务，全是脚本化的，全离线。
