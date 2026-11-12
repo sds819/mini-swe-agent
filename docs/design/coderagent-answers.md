@@ -411,6 +411,7 @@ config_home() = Path(os.environ["MSWEA_CODER_HOME"]) if 设置了 else Path.home
 | 字段 | 必填 | 含义 |
 |---|---|---|
 | `prompt` | | 给 agent 的用户请求 |
+| `prompts` | | 给 agent 的多个请求，一个接一个，同一会话。**只有一个 prompt 的任务永远不会压缩**——切点必须落在轮边界上 |
 | `verify` | **是** | 判定用的命令，**全部退出码 0 才算通过**；没有 verify 的任务永远不算通过 |
 | `setup` | | agent 开始前在 workdir 里跑的命令 |
 | `expect` | | `pass`（默认）或 `fail`——保险丝 |
@@ -423,7 +424,7 @@ config_home() = Path(os.environ["MSWEA_CODER_HOME"]) if 设置了 else Path.home
 
 `require_tools` 是本项目的关键设计：`{tools: [edit, multi_edit], paths: [calc.py]}` —— 任务不仅要有 verify 命令，还要**用对的工具在对的文件上**干成事。判定靠 `eval/runner.py` 的 `_successful_calls()`：只有**没有报错的** tool call 才算数，工具名要在白名单里、路径要在名单里（路径按 workdir 解析）。
 
-**两个 suite**：`evals/basic/` 8 个任务（全部要 API key）、`evals/offline/` 5 个任务（全部带 `script:`，**不要 API key**）。`evals/offline/broken-check` 是 `expect: fail` 的保险丝。
+**两个 suite**：`evals/basic/` 9 个任务（全部要 API key）、`evals/offline/` 5 个任务（全部带 `script:`，**不要 API key**）。`evals/offline/broken-check` 是 `expect: fail` 的保险丝。`evals/basic/long-conversation` 是唯一会触发压缩的任务：它有四个 prompt，并把自己的窗口调小，逼着 harness 压缩。
 
 ### e2 怎么保证「agent 的失败」和「harness 的失败」分得开？
 
@@ -448,7 +449,9 @@ config_home() = Path(os.environ["MSWEA_CODER_HOME"]) if 设置了 else Path.home
 
 JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`、`started_at`、`duration_seconds`、`summary`、`tasks[]`。
 
-`summary`：`tasks`、`passed`、`failed`、`errors`、`unexpected`、`pass_rate`、`total_cost`、`total_tokens_in`、`total_tokens_out`、`total_model_calls`、`total_tool_calls`。
+`summary`：`tasks`、`passed`、`failed`、`errors`、`unexpected`、`pass_rate`、`total_cost`、`total_tokens_in`、`total_tokens_out`、`total_model_calls`、`total_tool_calls`、`compactions`、`summary_ratio_mean`、`summary_ratio_max`。
+
+`summary_ratio` = 摘要多大 / 它替换掉的那段历史多大，一次压缩一个数，落在 `tasks[].summary_ratios` 里。**这个比值是摘要质量的仪表盘**：突然变大，要么是摘要变啰嗦了，要么是被摘的那段变啰嗦了。
 
 **fingerprint** = `sha256:` + 对一组**配置**做的哈希。输入包括：`model` 和 `model.routing`、`agent.system_prompt` / `max_turns` / `cost_limit` / `token_limit`、`tools.enabled` / `disabled`、`permissions.mode` / `rules` / `deny_paths`、整个 `context` 配置、`sandbox.type`、**每个任务的 config 覆盖**、**每个任务的 require_tools**。
 

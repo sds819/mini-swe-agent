@@ -18,7 +18,7 @@ directory of the agent.
 ```yaml
 # evals/basic/off-by-one/task.yaml
 id: off-by-one                # optional, the name of the directory by default
-prompt: |
+prompt: |                     # or `prompts:`, a list of them: one turn each
   The function `add_one` in calc.py is off by one. Fix it so that the test passes.
 setup:                        # optional, in the working directory, before the agent
   - pip install -e .
@@ -51,6 +51,12 @@ script:                       # optional, the scripted model. Empty means: the r
 
 Every file of the task directory that is not a yaml file is a fixture: it is
 copied into the working directory before the agent starts.
+
+`prompts:` gives the agent several turns, one after the other, in the same
+session. A task with a single prompt can never compact: the cut of the history
+has to land on a turn boundary, and a turn that never happened cannot be cut.
+A task that wants to see the compaction — and to measure the size of the
+summary — needs more than one prompt.
 
 The `verify` commands are the judgement of the task: the task passed when all of
 them exit with 0. A task without a `verify` never passes, so a suite cannot

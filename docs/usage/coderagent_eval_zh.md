@@ -16,7 +16,7 @@ coder eval evals/basic --format json --out /tmp/eval.json
 ```yaml
 # evals/basic/off-by-one/task.yaml
 id: off-by-one                # 可选，默认取目录名
-prompt: |
+prompt: |                     # 或者 `prompts:`，一个列表：每个 prompt 一轮
   calc.py 里的 add_one 差一。修好它，让测试通过。
 setup:                        # 可选，在 agent 开始前于工作目录执行
   - pip install -e .
@@ -49,6 +49,9 @@ script:                       # 可选，脚本化模型；为空 = 用真实模
 
 `verify` 就是这个任务的判据：全部命令 exit 0 才算通过。
 **没有 `verify` 的任务永远不算通过**，所以一个 suite 不可能靠「什么都不做」通过。
+
+`prompts:` 给 agent 多轮：同一个会话里一个接一个。**只有一个 prompt 的任务永远不会压缩**——
+切点必须落在轮边界上，没发生过的轮切不了。想看到压缩、想量摘要多大，任务就得有第二个 prompt。
 
 `expect: fail` 是给那些**必须不通过**的任务用的：它是 suite 的保险丝——
 一个从来不失败的判据，会让每个任务都通过。
