@@ -31,6 +31,10 @@ class Comparison:
     after_summary: dict[str, Any] = field(default_factory=dict)
     unexpected: list[str] = field(default_factory=list)
     """The tasks of the second run that did not do what they were supposed to do."""
+    broken_guards: list[str] = field(default_factory=list)
+    """The guards that let a task through: their check was supposed to fail."""
+    ungraded: list[str] = field(default_factory=list)
+    """The tasks the harness could not grade."""
 
     @property
     def config_changed(self) -> bool:
@@ -76,6 +80,12 @@ def compare(before: dict[str, Any], after: dict[str, Any]) -> Comparison:
         elif now and not was:
             comparison.improvements.append(task_id)
     comparison.unexpected = [task["id"] for task in new.values() if not task.get("as_expected", True)]
+    comparison.broken_guards = [
+        task_id
+        for task_id in new
+        if _expectation(old.get(task_id, {}), new[task_id]) == "fail" and new[task_id].get("passed")
+    ]
+    comparison.ungraded = [task["id"] for task in new.values() if task.get("error_kind")]
     return comparison
 
 
@@ -108,7 +118,11 @@ def check(report: dict[str, Any]) -> list[str]:
 
 
 def verdict(comparison: Comparison, max_regressions: int = 0, max_drop: float = 0.0) -> list[str]:
-    """The problems of the change: what the agent cannot do any more."""
+    """The problems of the change: what the agent cannot do any more.
+
+    The margin forgives a regression, so the tasks that regressed are not
+    reported twice: only what the margin does not forgive is a problem.
+    """
     problems = []
     if len(comparison.regressions) > max_regressions:
         problems.append(
@@ -119,6 +133,12 @@ def verdict(comparison: Comparison, max_regressions: int = 0, max_drop: float = 
         problems.append(
             f"the pass rate fell from {comparison.before_pass_rate:.3f} to {comparison.after_pass_rate:.3f} "
             f"(a drop of {comparison.drop:.3f}, at most {max_drop:.3f} allowed)"
+        )
+    if comparison.broken_guards:
+        problems.append(f"the guards of the suite let a task through: {', '.join(comparison.broken_guards)}")
+    if comparison.ungraded:
+        problems.append(
+            f"{len(comparison.ungraded)} of the tasks the harness could not grade: {', '.join(comparison.ungraded)}"
         )
     return problems
 
@@ -147,6 +167,11 @@ def render(comparison: Comparison) -> str:
             ("only in the second run", comparison.only_after),
         ):
             lines.append(f"{title}: {', '.join(ids) if ids else '-'}")
+        if comparison.before_summary.get("total_tool_calls") is not None:
+            lines.append(
+                f"tool calls: {comparison.before_summary.get('total_tool_calls', 0)} "
+                f"-> {comparison.after_summary.get('total_tool_calls', 0)}"
+            )
     else:
         lines.append("there is no run to compare with, only the report of the second run")
     lines.append(_summary_line(comparison.after_summary))

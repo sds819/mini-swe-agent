@@ -255,13 +255,13 @@ def eval_compare(
     from coderagent.eval.compare import check, compare, render, verdict
 
     new = json.loads(after.read_text(encoding="utf-8"))
-    problems = check(new)
     if against:
         old = json.loads(against.read_text(encoding="utf-8"))
         comparison = compare(old, new)
-        problems += verdict(comparison, max_regressions, max_drop)
+        problems = verdict(comparison, max_regressions, max_drop)
     else:
         comparison = compare({"tasks": []}, new)
+        problems = check(new)
     if output_format == "json":
         payload = {
             "before": comparison.before_label,
@@ -274,6 +274,8 @@ def eval_compare(
             "improvements": comparison.improvements,
             "graded": comparison.graded,
             "unexpected": comparison.unexpected,
+            "broken_guards": comparison.broken_guards,
+            "ungraded": comparison.ungraded,
             "problems": problems,
         }
         typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))

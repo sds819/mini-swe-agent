@@ -6,7 +6,12 @@ from coderagent.eval.compare import check, compare, render, verdict
 
 
 def _report(label: str, fingerprint: str, tasks: list[dict]) -> dict:
-    return {"label": label, "fingerprint": fingerprint, "tasks": tasks, "summary": {"tasks": len(tasks)}}
+    return {
+        "label": label,
+        "fingerprint": fingerprint,
+        "tasks": tasks,
+        "summary": {"tasks": len(tasks), "total_tool_calls": sum(task.get("tool_calls", 0) for task in tasks)},
+    }
 
 
 def _task(task_id: str, passed: bool, expect: str = "pass", as_expected: bool = True) -> dict:
@@ -79,6 +84,37 @@ def test_the_verdict_forgives_what_is_allowed():
     after = _report("head", "sha256:b", [_task("one", False), _task("two", True)])
     assert verdict(compare(before, after))
     assert not verdict(compare(before, after), max_regressions=1, max_drop=0.5)
+
+
+def test_a_forgiven_regression_is_not_a_problem_twice():
+    """The margin forgives a regression, so the verdict does not report it again."""
+    before = _report("base", "sha256:a", [_task("one", True), _task("two", True)])
+    after = _report("head", "sha256:a", [_task("one", False), _task("two", True)])
+    assert not verdict(compare(before, after), max_regressions=1, max_drop=0.5)
+
+
+def test_a_guard_that_lets_a_task_through_is_a_problem():
+    """The guard of a suite is supposed to fail, a task that passes it is a broken suite."""
+    before = _report("base", "sha256:a", [_task("guard", False, "fail")])
+    after = _report("head", "sha256:a", [_task("guard", True, "fail")])
+    comparison = compare(before, after)
+    assert comparison.broken_guards == ["guard"]
+    assert verdict(comparison)
+
+
+def test_a_task_the_harness_could_not_grade_is_a_problem_of_the_change():
+    before = _report("base", "sha256:a", [_task("one", True)])
+    after = _report("head", "sha256:a", [{"id": "one", "passed": False, "error_kind": "setup"}])
+    problems = verdict(compare(before, after))
+    assert problems
+    assert any("grade" in problem for problem in problems)
+
+
+def test_the_comparison_shows_the_effort_of_the_two_runs():
+    """The pass rate can hide a harness that makes the agent work much harder."""
+    before = _report("base", "sha256:a", [{"id": "one", "passed": True, "tool_calls": 4}])
+    after = _report("head", "sha256:a", [{"id": "one", "passed": True, "tool_calls": 44}])
+    assert "tool calls: 4 -> 44" in render(compare(before, after))
 
 
 def test_a_run_that_did_not_do_what_it_should_is_a_problem():

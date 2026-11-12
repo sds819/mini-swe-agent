@@ -174,6 +174,10 @@ coder eval-compare after.json \
   is a problem.
 - `--max-regressions` and `--max-drop` forgive a little. The real model is not
   deterministic, so a live suite needs a margin; a scripted suite does not.
+- With `--against` the margin applies to the regressions and to the fall of the
+  rate. A task that regressed is forgiven by the margin, not reported twice.
+  The guard of a suite and a task the harness could not grade are never
+  forgiven.
 
 ## The check of the pull request
 
@@ -193,8 +197,15 @@ check needs no API key and says the same thing every time. It holds a task that
 must fail, so the check of the suite cannot be vacuous.
 
 The job `live` does the same with `evals/basic` and the real model. It is
-manual, it needs the secrets of the model, and it forgives one regression,
-because the model is not deterministic.
+manual, it needs the secrets of the model, and it forgives nothing: the real
+model is not deterministic, so a failure of the job is a reason to run it
+again, not a verdict.
+
+The two jobs are not equally sensitive. The scripted one is exact: a harness
+that breaks a tool fails its task, and the job says so. The live one is not:
+a model that meets a broken tool often finds another way, so a broken harness
+can cost a single task out of eight. The scripted job is the gate; the live
+one is the signal.
 
 ## The example suite
 
