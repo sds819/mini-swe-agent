@@ -1,12 +1,13 @@
 # 专题：上下文管理与压缩
 
-> 这份专题展开 [coderagent-answers.md](coderagent-answers.md) 的 a1–a4：coder agent 怎么管上下文、
-> 怎么压缩，以及**怎么尽量不丢东西**。
+> 这份专题展开 [coderagent-answers.md](coderagent-answers.md) 的 a1–a4 与 b9–b10：coder agent 怎么管上下文、
+> 怎么压缩、**怎么尽量不丢东西**，以及**一次工具调用是怎么落进上下文、再回到模型手里的**。
 >
 > 相关代码：
 > `src/coderagent/core/{context,summarize,budget,tokens,history,instructions,memory}.py`、
+> `src/coderagent/tools/{executor,registry,permissions}.py`、
 > `src/coderagent/config/schema.py`（`ContextConfig`）、`src/coderagent/run.py`（装配）。
-> 单测：`tests/coderagent/core/`。
+> 单测：`tests/coderagent/core/`、`tests/coderagent/tools/`。
 
 ---
 
@@ -325,7 +326,70 @@ summary.recent_errors = errors[-3:]
 
 ---
 
-## 6. 压缩之外：还有什么在省 token
+## 6. 一次工具调用，怎么进上下文又回到模型手里
+
+工具调用是上下文里**增长最快**的东西：一轮里可能有十几次调用，每次的 observation 都进历史，
+都可能把预算撑爆。所以「调用怎么落地」不只是工具层的事，也是上下文的事。
+
+### 6.1 六步，其中四步在执行之前
+
+```
+模型返回 tool_calls
+   │
+   ├─ 1. plan()        规整参数：不是合法 JSON / 不是对象 → 记 error，不往下走
+   │
+   ├─ 2. TOOL_CALL 事件  ← 在执行之前记账：模型「打算做什么」
+   │
+   ├─ 3. _prepare()    查注册表 → PreToolUse hook → 权限判定 → 审批
+   │                   （被拒的 action 不执行）
+   │
+   ├─ 4. _run()        on_path（捡起目录指令）→ before_write（checkpoint）→ 执行
+   │
+   ├─ 5. TOOL_RESULT 事件（含 diff）
+   │
+   └─ 6. observation   {"role": "tool", "tool_call_id": ..., "content": ...}
+                        └─ 进历史，成为下一轮上下文的一部分
+```
+
+关键的两点：
+
+- **第 2 步在第 4 步之前**：「模型想干什么」永远早于「它干了什么」被记下来。事后复盘时能看出
+  一次失败的调用**本来**是想改哪个文件。
+- **第 3 步在第 4 步之前**：权限和 hook 判定的是**最终会执行的那份参数**（hook 改写后的），
+  被拒的工具**不会真的动过文件**。
+
+### 6.2 观察结果永远是模型能读的消息
+
+observation 有两种，内容不同但形状一样（都带 `tool_call_id`，模型才能对上号）：
+
+- **成功**：工具的输出，可能被裁剪过（`trim_text` / `trim_lines`，见 §5.6）；
+- **失败**：一段 `Error: ...` 文本——工具抛异常、参数不是合法 JSON、工具自己不存在的、权限被拒的，
+  全都走这一条路。
+
+失败**不中断整轮**。模型下一轮看到的是一条普通的 tool result，只是内容在说「哪里错了」。
+这就是为什么 `recent_errors`（§5.5）只要扫 `role == "tool"` 且内容以 `Error:` 开头就能拿到错误——
+**错误在上下文里是有形状的**，不靠模型转述。
+
+### 6.3 上下文里能看见「越界的东西」
+
+模型偶尔会调一个不存在的工具（`Error: unknown tool 'xxx'. Available tools: ...`），
+或者调一个被权限挡下的工具（`Error: permission denied for 'xxx'. ...`）。
+这些文本都在历史里，所以复盘时能直接看出模型「在乱试什么」。
+
+评测报告里的 `tool_errors` 数的就是它们（`core/telemetry.py`）。
+再往上一层，`require_tools` 要求某些任务**必须**用某个工具改某个文件——
+用 shell 绕过去不算完成；`no-op` 任务反过来测「不该改的时候别改」。
+
+### 6.4 两条要留意的边界
+
+1. **被裁掉的工具仍然能执行**。`registry.schemas()` 裁的是**发给模型的 schema**，注册表本身没动。
+   模型如果还记得某个被裁掉的工具的名字，照样调得动——裁剪省的是上下文，不是权限。
+2. **参数不做 schema 级校验**。schema 只是发给模型的说明；执行前不按它校验，类型不对由工具自己抛，
+   被兜成 `Error:` 文本。
+
+---
+
+## 7. 压缩之外：还有什么在省 token
 
 压缩是最后手段，前面还有几层：
 
@@ -340,7 +404,7 @@ summary.recent_errors = errors[-3:]
 
 ---
 
-## 7. 边界与已知瑕疵
+## 8. 边界与已知瑕疵
 
 说清楚比藏着好：
 
@@ -359,10 +423,12 @@ summary.recent_errors = errors[-3:]
    这一层同样是模型的二次转述。机械兜底（`merge_summaries`）不丢，但更啰嗦。
 9. **摘要质量的度量只有一个比值**。`summary_ratio` 能看出摘要变大了，
    但看不出它变**大得对不对**——一份啰嗦但完整的摘要和一个丢了一半的摘要，比值可能一样。
+10. **被裁掉的工具仍然能执行**。schema 裁剪省的是上下文，不是权限（见 §6.4）。
+11. **参数不做 schema 级校验**。schema 只是发给模型的说明，错了由工具自己抛（见 §6.4）。
 
 ---
 
-## 8. 一张图
+## 9. 一张图
 
 ```
                     ┌──────────────── 事件日志（JSONL，唯一事实来源）──────────────┐
@@ -386,13 +452,22 @@ summary.recent_errors = errors[-3:]
                                                 │
                                                 ▼
                         COMPACTION 事件（切了多少 / 多大 / 多贵 / 摘要全文 / 比值）
+
+  工具调用这一圈（在 history 内部发生，observation 也进 history）：
+
+  模型返回 tool_calls ─▶ plan() 规整 ─▶ TOOL_CALL 事件 ─▶ _prepare()
+  （查表 / hook / 权限 / 审批，都在执行之前）                        │
+                                                                   ▼
+                              _run() 执行 ─▶ TOOL_RESULT 事件 ─▶ observation
+                                                                   │
+                              失败也是一条 "Error: ..." 的 observation ──▶ 回模型
 ```
 
 ---
 
-## 9. 延伸阅读
+## 10. 延伸阅读
 
-- [coderagent-answers.md](coderagent-answers.md) 的 a1–a4：逐题作答（本专题的浓缩版）。
+- [coderagent-answers.md](coderagent-answers.md) 的 a1–a4 与 b9–b10：逐题作答（本专题的浓缩版）。
 - [coderagent-design-logic.md](coderagent-design-logic.md)：为什么这么设计（承重决策与不变量）。
 - [milestones/M2-context-session.md](milestones/M2-context-session.md)：M2 阶段的原始设计与验收。
 - [coderagent-eval.md](../usage/coderagent_eval.md)：评测里怎么隔离上下文（`MSWEA_CODER_HOME`）。
