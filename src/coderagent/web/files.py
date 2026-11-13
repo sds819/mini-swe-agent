@@ -1,8 +1,9 @@
 """Browsing the working directory from the browser.
 
 The paths the browser asks for have to stay inside the working directory. The
-rules of the user cannot widen that, so the check is done here and not through
-the permission policy, which lets an `allow` rule overrule the bounds.
+rules of the user cannot widen that, so the check is done here with
+`within_bounds` and not through `evaluate`, which judges whether a call is
+allowed rather than whether a path is in range.
 """
 
 import subprocess
