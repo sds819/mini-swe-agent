@@ -44,11 +44,14 @@
 
 **结论**：`ContextEngine.maybe_compact()`，每轮问模型之前调一次（`core/loop.py` 里在 `_query()` 前）。
 
-**三个触发条件**（任一成立就压）：
+**触发条件**（`maybe_compact()` 里任一成立就压）：
 
-1. `config.context.auto_compact` 为真，且估算 token 超过预算阈值；
-2. 距上次压缩超过 `compact_every_turns`（默认 40）轮；
-3. provider 报上下文溢出 → `force_compact()` 强制压一次再重试。
+1. `config.context.auto_compact` 为真，**且**估算 token 超过预算阈值；
+2. `auto_compact` 为真，**且**距上次压缩超过 `compact_every_turns`（默认 40）轮；
+3. provider 报上下文溢出 → 走另一条路 `force_compact()` 强制压一次再重试（它不受 `auto_compact` 开关约束）。
+
+**注意**：`auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`（`core/context.py:202`），
+所以条件 2 永远不会单独成立——想「只按轮数压」是做不到的，`auto_compact` 是总开关。
 
 **切点**在 `ContextEngine._cut_index()`：
 
@@ -173,7 +176,7 @@
   - **`bash`**：`pattern` 是**正则**，而且必须匹配**整段的开头**（`git push` 不会匹配 `echo "git push"`）。
   - **其他工具**：`pattern` 是工具名，或者 `*`。
 - **求值顺序**：非 bash 工具是「按顺序遍历所有规则，**最后一条匹配的赢**」；bash 是「**分段**判，每段最后一条匹配的赢，整条命令取**最严**的段」。这两处「最后一条赢」的作用域不同，是个容易看错的地方。
-- **deny 永远赢**：`_strictest()` 定义 `allow(0) < ask(1) < deny(2)`。
+- **deny 不一定赢**：`_strictest()`（`allow(0) < ask(1) < deny(2)`）**只用在 bash 的分段上**（`permissions.py:173,179,182`）。路径类工具是「最后一条匹配的规则赢」——所以一条**写在后面的** `allow` 能盖掉前面的 `deny`。唯一的例外是 `deny_paths`／越界检查：它们在规则之后生效，挡住工作目录之外的路径，任何模式（含 `bypass`）都拦。
 
 ### b7 `bash` 这种命令怎么管？
 
@@ -233,7 +236,7 @@
 | 层 | 挡住什么 |
 |---|---|
 | 权限模式 | `plan` / `readonly` 下写类工具**直接 deny**；`default` 下写类工具要 ask；`bypass` 下才全放行 |
-| 规则文件 | 项目 / 用户的 `rules.yaml` 可以对具体工具 + 路径给 allow / ask / deny，deny 永远赢 |
+| 规则文件 | 项目 / 用户的 `rules.yaml` 可以对具体工具 + 路径给 allow / ask / deny；bash 取最严的段，路径类工具**最后一条匹配的规则赢**（不是 deny 永远赢） |
 | 越界检查 | `within_bounds()` 在**任何模式**（含 `bypass`）下都挡住工作目录之外的路径 |
 
 **bash 的特殊处理**：命令按 `&&` / `||` / `;` / `|` / 换行切段（尊重引号），逐段判定，整条命令取**最严**的一段。所以 `echo hi && rm -rf /` 不会因为前半段安全就放行。
@@ -263,7 +266,7 @@
 3. `while True`：
    - 检查 `cancel`（见 c4）；
    - 检查 `max_turns` / `cost_limit` / `token_limit`（见 c3）；
-   - 路由选模型（见 c6）→ `maybe_compact()` → 问模型；
+   - 压缩（`maybe_compact()`，见 a3）→ 路由选模型（见 c6）→ 问模型；
    - 模型返回**工具调用** → `executor.plan()` + `execute()` → 工具结果回灌上下文 → 继续下一轮；
    - 模型返回**纯文本**（没有 tool call）→ 这一轮就结束（`end_turn`）。
 
@@ -323,7 +326,7 @@
   - **共享权限模式**，而且这个模式说明被写进子 agent 的 system prompt，让它知道自己和主 agent 一样受限。
   - **共享事件总线和会话 id**，所以子 agent 的行为在主会话里看得见。
 - **成本归属**：子 agent 报回自己的 `cost = gateway.total_cost - before`（**只算它自己那几次调用**）。如果它跑在**另一个** gateway（不同模型）上，这个差额会**加回主 gateway**，主会话的总账因此是对的。
-- **子 agent 的 tool call 不进事件日志**（只发到总线），所以从日志里看不出它改过哪些文件；它的**结果 JSON**里有 `files_touched`，但只统计 `write`/`edit`/`multi_edit`。
+- **子 agent 的 tool call 只发总线、不进会话日志**（`subagent.py:205-218`）；但它的 `ToolExecutor` 是**带着 store 建的**（`subagent.py:157`），所以 `edit` / `multi_edit` 的**结果事件（含 diff）会落进会话日志**，`write` 不会（`fs.py` 的 write 元数据里没有 diff）。想看它改过哪些文件，看结果 JSON 里的 `files_touched`（只统计 `write`/`edit`/`multi_edit`）最可靠。
 
 **为什么**：子 agent 的价值是**隔离上下文**——让它去看 50 个文件，主对话只拿到一份结论。它的工具白名单是第二道安全边界。
 
@@ -488,7 +491,7 @@ config_home() = Path(os.environ["MSWEA_CODER_HOME"]) if 设置了 else Path.home
 
 - 用 `build_loop` + `loop.run_turn`，**不走** `run.py` 的 `run_turn()`——后者结尾会 `settle()`，多一次 reflection 调用，会**吃掉脚本的下一条响应**，还会往被测目录里写记忆文件。
 - 脚本模式下清掉 `config.model.routing`（否则长上下文会把脚本换成真模型）和 `config.context.auto_compact`（压缩会消耗一条脚本响应）。
-- `build_loop` 会**改写传进去的 Config**，所以**每个任务重新 `load_config`**。
+- `build_loop` 会**改写传进去的 Config**（`run.py:134` 往 `config.hooks.events` 里塞东西），所以每个任务用**自己的** Config：`load_config` 只在命令行入口调一次（`ui/cli.py:193`），每个任务再由 `eval/runner.py:216` 的 `task_config()` 深拷贝一份、合并任务自己的覆盖。
 - setup / verify 用 `CodingEnvironment`（去掉了 mini-swe-agent 的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 哨兵）跑，不要用 `bash` 工具跑——它会裁剪输出、加 `[exit code N]` 装饰。
 
 ### e3 报告里有什么？fingerprint 是什么？
@@ -523,7 +526,7 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 **结论**：`core/telemetry.py`。
 
 - **`collect(events)`** 从事件日志算出 `Metrics`：`total_cost`、`total_tokens_in/out`、`model_calls`、`tool_calls`、`per_tool`、`per_purpose_cost`、`per_model_cost`、`duration_seconds`、`compactions`、`errors`。
-  - 子 agent 的成本从 `task` 工具结果 JSON 里捞回来，单独记在 purpose `subagent` 下；
+  - 子 agent 的成本从 `task` 工具结果 JSON 里捞回来，记在**它自己那个 purpose** 下（`task.py:49` 把 `spec.model_purpose` 写进结果，所以是 `cheap` / `main`，不是 `subagent`——`telemetry.py:209` 的那个 fallback 走不到）；
   - 压缩摘要的成本记在 purpose `summarize`；反思记在 `reflect`。
 - **导出**：`coder export --format json|otel`。JSON 是 trace 格式 `coder-agent-1.0`（`{session, events, metrics}`）；OTLP 是 OTLP/JSON，**一个 user turn 一个 span，每次工具调用一个子 span**。
 - **会话里的实时观察**：TUI 状态栏（模型、token 用量、成本、cwd、权限模式）、`/cost`、审批弹窗、Web 版的 SSE 流。
@@ -662,7 +665,7 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 3. **`_cut_index` 用的是 `config.context_window` 而不是 `guard.limit()`**：两者差一个 `reserved_output`，极端情况下会切得偏保守。
 4. **「最后一条规则赢」有两个作用域**：路径类工具是「所有规则里最后一条匹配的赢」，bash 是「每段最后一条匹配的赢，再取最严的段」。
 5. **`model.max_retries` 没接进 backend**：只有 `coder web` 读它；终端里想缩短重试只能用环境变量 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT`。
-6. **子 agent 的 tool call 不进事件日志**：只发总线，所以从日志看不出子 agent 动过哪些文件（它的结果 JSON 里有 `files_touched`）。
+6. **子 agent 的 tool call 事件不进会话日志**：只发总线，所以日志里看不到它「打算调什么」；不过它 `edit`/`multi_edit` 的**结果事件（含 diff）会落进日志**，`write` 不会。想知道它动过哪些文件，看结果 JSON 里的 `files_touched` 最准。
 7. **`core/memory.py` 是只读的，但「memory 特性」不是**——写入发生在 `extensions/reflect.py`，由 `settle_session()` 驱动。
 8. **被裁掉的工具仍然能执行**：`registry.schemas()` 裁的是**发给模型的 schema**，注册表本身没动。模型如果还记得某个被裁掉的工具的名字，照样调得动。
 9. **权限层判不了「合不合适」**：它判的是「这个工具在这个模式下、这条命令是否被允许」，不判「这个任务该不该用这个工具」。

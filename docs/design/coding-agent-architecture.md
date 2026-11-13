@@ -62,6 +62,9 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
+│  L6  扩展层  MCP · Hooks · Subagent · Plugin · Skill        │
+│      外部工具 · 事件回调 · 子 agent · 插件 · 技能           │
+├─────────────────────────────────────────────────────────────┤
 │  L5  交互层  CLI(typer) / TUI(textual) / Web(FastAPI+SSE)   │
 │      流式渲染 · diff 预览 · slash 命令 · 审批交互             │
 ├─────────────────────────────────────────────────────────────┤
@@ -80,7 +83,7 @@ bash 工具（唯一）  →  线性 messages 列表  →  单步/单会话  →
 │  L0  会话内核  Session / Run / EventBus / SessionStore      │
 │      状态机 · 事件流 · 持久化 · 恢复 · 检查点                │
 └─────────────────────────────────────────────────────────────┘
-        ↕  横切：Config(多层 YAML+TOML) · Hooks · Telemetry
+        ↕  横切：Config(多层 YAML) · Hooks · Telemetry
 ```
 
 **数据流（一次 turn）**
@@ -256,7 +259,7 @@ class ToolContext:
 `ToolRegistry` 负责：
 1. 聚合内置工具 + MCP 工具 → 生成 OpenAI/Anthropic 兼容的 `tools` 参数（沿用 `litellm`）。
 2. 工具描述按上下文预算裁剪（token 预算不足时优先丢弃低频工具）。
-3. 名称冲突处理（MCP 同名工具加 `server__` 前缀）。
+3. 名称冲突处理（同名注册会**告警并覆盖**；MCP 工具在注册前就带上了 `mcp__<server>__<tool>` 的前缀，天然不冲突）。
 
 #### 关键工具语义（对齐 Claude Code）
 
@@ -264,7 +267,7 @@ class ToolContext:
 - **`read`**：支持 `offset`/`limit`，默认带行号（`cat -n` 风格），大文件自动截断并提示。
 - **`grep`**：**纯 Python 实现**（不用 `rg`，也不退到 `grep -r`——`rg` 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。
 - **`glob`**：按 pattern 排序返回路径列表，超出上限截断。
-- **`bash`**：默认 timeout 120s（`tools.bash_timeout`）；长命令不阻塞，配 `bash_output` / `bash_kill` 取回结果与杀掉进程。
+- **`bash`**：默认 timeout 120s（`tools.bash_timeout`）；命令**默认是阻塞的**，跑完（或超时）才返回。要放到后台得让模型显式传 `run_in_background: true`，再用 `bash_output` / `bash_kill` 取回结果与杀掉进程。
 - **`todo_write`**：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。
 - **`web_fetch` / `web_search`**：**未实现**（`TRIM_ORDER` 里留了位置，将来加工具时直接可用）。
 
@@ -289,16 +292,19 @@ class Rule:
 
 
 class PermissionPolicy:
-    """规则求值顺序：deny > ask > allow > 默认策略。"""
+    """规则求值顺序：路径类工具「最后一条匹配的赢」，bash「每段取最严」。"""
     def __init__(self, mode: PermissionMode, rules: list[Rule]): ...
     def check(self, tool: str, params: dict) -> str:
         """返回 allow / ask / deny。"""
 ```
 
 规则来源分层（后者覆盖前者）：
-`内置默认规则` → `项目级 .coderagent/rules.yaml` → `用户级 ~/.coderagent/rules.yaml` → `会话内临时授权`（用户输入「总是允许」）。
+`配置文件里的 permissions.rules` → `项目级 .coderagent/rules.yaml` → `用户级 ~/.coderagent/rules.yaml`；
+最后 `permissions.deny_paths` 里的路径一律 deny（越界路径在任何模式下都挡）。
+**没有内置默认规则集**（`defaults.yaml` 里 `rules: []`）。
 
-「总是允许」需要持久化到用户级规则文件——这是 Claude Code 体验的关键。
+「总是允许」需要持久化到**用户级**规则文件——这是 Claude Code 体验的关键。
+它记的是**那一个文件 / 那一条命令**（不是「这个工具」），reason 写 `always allowed by the user`。
 
 ### 4.4 L3 上下文引擎
 
@@ -438,7 +444,7 @@ class ModelEvent:
 #### CLI（typer）
 
 ```
-coder [task]                       # 主入口，等价于 mini
+coder -t/--task <task>               # 主入口，等价于 mini（任务是选项，不是位置参数）
   -m/--model            模型
   -c/--config           配置（YAML + key=value 覆盖）
   --permission-mode      default|acceptEdits|plan|bypass|readonly
@@ -636,7 +642,7 @@ class MCPClient:
 > 实现与草图的差别：server 的配置类是 `config/schema.py` 里的 `MCPServerConfig`（跟着配置走），
 > 不是 `tools/mcp.py` 里的类；客户端在 `tools/mcp.py`，每个 server 一个线程 + 自己的 event loop。
 
-- 传输：stdio（`mcp` python SDK 的 `stdio_client`）、SSE、Streamable HTTP
+- 传输：**只实现了 stdio**（`mcp` python SDK 的 `stdio_client`）。配置里的 `url` 字段目前**没有对应的传输实现**——只有 `url` 没有 `command` 的服务器不会被启动，也不会出现在 `/mcp` 的连接列表里。
 - 工具命名：`mcp__<server>__<tool>`
 - 生命周期：随 Session 创建/销毁；断线自动重连一次
 - MCP server 提供的 resources/prompts 作为只读上下文注入（**未实现**，目前只接工具）
@@ -656,16 +662,22 @@ class MCPClient:
 
 Hook 本身是「命令 + JSON 输入 → JSON 输出」，用 `subprocess` 执行，零依赖：
 
-```jsonc
-// .coderagent/hooks.json
-{
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [{"type": "command", "command": "./scripts/check_secrets.sh"}]
-    }
-  ]
-}
+> 实现与草图的差别：hook **不是** `.coderagent/hooks.json` 里的 JSON 文件，而是**配置 YAML** 里的
+> `hooks.events`（项目 `.coderagent/config.yaml` 和用户 `~/.coderagent/config.yaml`，插件也能带）。
+> `matcher` 是**对工具名的正则**（`re.search`），工具名按模型写的大小写原样匹配——内置工具是小写，
+> 所以写 `"Bash"` 永远匹配不上 `bash`。
+
+```yaml
+# .coderagent/config.yaml
+hooks:
+  events:
+    PreToolUse:
+      - matcher: "bash"
+        hooks:
+          - type: command
+            command: ./scripts/check_secrets.sh
+            timeout: 10
+            strict: false
 ```
 
 #### Subagent（M4 已落地）
@@ -709,7 +721,7 @@ class ModelBackend(Protocol):
               **kwargs) -> dict: ...
 
     def query_stream(self, messages: list[dict], tools: list[dict] | None = None,
-                     **kwargs) -> Iterator[dict]: ...
+                     **kwargs) -> Iterator[ModelEvent]: ...
 
     def get_template_vars(self) -> dict[str, Any]: ...
 
@@ -917,7 +929,7 @@ model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的
 | 7 | Hooks 用「子进程 + JSON」的 Claude Code 兼容格式 | 自定义 Python 插件 | 零依赖、跨语言、易于用户编写 |
 | 8 | MCP 工具统一命名 `mcp__server__tool` | 服务端原名 | 避免与内置工具冲突，与 Claude Code 生态兼容 |
 | 9 | 独立顶层包 `src/coderagent/`，而非 `minisweagent/coder/` | 嵌套 | 保持上游仓库干净，日后可独立拆仓；同时需改 pyproject 的 packages.find |
-| 10 | 子 Agent 后置到 M3 | 首版实现 | 复杂度高、收益依赖模型能力；先把主循环与上下文治理做扎实 |
+| 10 | 子 Agent 后置到 M4 | 首版实现 | 复杂度高、收益依赖模型能力；先把主循环与上下文治理做扎实 |
 | 11 | Web 版**不改核心**，只做另一个事件订阅者 | 为 web 重写一套循环 | 会话/工具/权限/事件日志全复用；浏览器里开的会话能用 `coder --resume` 在终端接着聊 |
 | 12 | 服务端 → 浏览器用 **SSE** | WebSocket | 单向推送、自带重连、心跳现成；没有双向实时需求，少一个协议少一份状态 |
 | 13 | 写接口要 `X-Coder-Client: 1` 头 | token 认证 / 同源检查 | 跨站浏览器发不出这个头（要先过预检，而服务端不给许可）；`curl` 不受影响，零配置 |
