@@ -59,6 +59,13 @@ class AgentConfig(BaseModel):
 
     It is the budget of a model that has no price, where the money never moves.
     """
+    subagent_max_turns: int = 0
+    """The ceiling of the turns of every sub agent. 0 means no ceiling.
+
+    A sub agent that asks for more turns than this is held down to it.
+    """
+    subagent_max_parallel: int = 2
+    """How many sub agents may run at the same time. 0 means no limit."""
 
 
 class ToolConfig(BaseModel):

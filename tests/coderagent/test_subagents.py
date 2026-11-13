@@ -85,3 +85,19 @@ def test_the_index_of_the_sub_agents_goes_into_the_system_prompt(tmp_path):
     loop = _loop(tmp_path)
     assert "code-explorer" in loop.context.system_prompt
     assert "verifier" in loop.context.system_prompt
+
+
+def test_the_configuration_bounds_the_sub_agents(tmp_path):
+    """The ceiling of the turns and the number of slots reach the runner."""
+    config = Config()
+    config.agent.subagent_max_turns = 5
+    config.agent.subagent_max_parallel = 1
+    runner = _loop(tmp_path, config).executor.registry.get("task").runner
+    assert runner.max_turns == 5
+    assert runner.max_parallel == 1
+
+
+def test_the_sub_agents_run_in_parallel_by_default(tmp_path):
+    """Two at a time, so a model that fires four tasks does not flood the provider."""
+    runner = _loop(tmp_path).executor.registry.get("task").runner
+    assert runner.max_parallel == 2

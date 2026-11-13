@@ -17,6 +17,7 @@ the context of the main agent stays clean.
 """
 
 import json
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -123,6 +124,8 @@ class SubAgentRunner:
         store=None,
         on_path=None,
         schema_budget: int | None = None,
+        max_turns: int = 0,
+        max_parallel: int = 0,
     ) -> None:
         self.gateway = gateway
         self.registry = registry
@@ -143,9 +146,21 @@ class SubAgentRunner:
         """Called with the path of every path based tool."""
         self.schema_budget = schema_budget
         """The tokens the schemas of the tools may take. None means no limit."""
+        self.max_turns = max_turns
+        """The ceiling of the turns of every sub agent. 0 means no ceiling."""
+        self.max_parallel = max_parallel
+        """How many sub agents may run at the same time. 0 means no limit."""
+        self._slots = threading.Semaphore(max_parallel) if max_parallel > 0 else None
 
     def run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         """Run the sub agent and return the structured result."""
+        if self._slots is None:
+            return self._run(spec, description, prompt)
+        with self._slots:
+            """Only a few sub agents at a time, so the provider is not flooded."""
+            return self._run(spec, description, prompt)
+
+    def _run(self, spec: SubagentSpec, description: str, prompt: str) -> dict:
         registry = self._restricted(spec)
         executor = ToolExecutor(
             registry,
@@ -173,7 +188,8 @@ class SubAgentRunner:
         touched: list[str] = []
         summary = ""
         status = "completed"
-        while turns < spec.max_turns:
+        limit = self._turns(spec)
+        while not limit or turns < limit:
             try:
                 response = gateway.query(messages, tools=schemas)
             except Exception as e:
@@ -191,6 +207,15 @@ class SubAgentRunner:
         else:
             status = "max_turns"
         return self._result(status, summary, _findings(summary), touched, gateway, before, turns)
+
+    def _turns(self, spec: SubagentSpec) -> int:
+        """How many model calls the sub agent may make. 0 means no limit.
+
+        The ceiling of the configuration wins over the one of the sub agent.
+        """
+        if not self.max_turns:
+            return spec.max_turns
+        return min(spec.max_turns, self.max_turns) if spec.max_turns else self.max_turns
 
     def _restricted(self, spec: SubagentSpec) -> ToolRegistry:
         """The registry with only the tools of the white list."""

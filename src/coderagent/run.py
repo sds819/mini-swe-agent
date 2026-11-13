@@ -189,6 +189,8 @@ def build_loop(
         store=store,
         on_path=context.note_path,
         schema_budget=budget,
+        max_turns=config.agent.subagent_max_turns,
+        max_parallel=config.agent.subagent_max_parallel,
     )
     if "task" in config.tools.enabled and "task" not in config.tools.disabled:
         registry.register(TaskTool(runner, specs))

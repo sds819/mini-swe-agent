@@ -1,6 +1,9 @@
 """The `task` tool: a job that runs in its own context."""
 
 import json
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from coderagent.config.schema import HookCommand, HookConfig, HookMatcher
@@ -159,6 +162,65 @@ def test_the_sub_agent_stops_at_the_turn_limit(tmp_path):
     result = _runner(model, tmp_path).run(_spec(max_turns=2), "Find", "Look")
     assert result["status"] == "max_turns"
     assert result["turns"] == 2
+
+
+def test_the_ceiling_of_the_configuration_holds_the_sub_agent_down(tmp_path):
+    """The configuration may say: no sub agent runs longer than this."""
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]} for _ in range(5)]
+    )
+    result = _runner(model, tmp_path, max_turns=2).run(_spec(max_turns=10), "Find", "Look")
+    assert result["status"] == "max_turns"
+    assert result["turns"] == 2
+
+
+def test_a_sub_agent_may_use_fewer_turns_than_the_ceiling(tmp_path):
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]} for _ in range(5)]
+    )
+    result = _runner(model, tmp_path, max_turns=10).run(_spec(max_turns=2), "Find", "Look")
+    assert result["status"] == "max_turns"
+    assert result["turns"] == 2
+
+
+def test_without_a_ceiling_the_sub_agent_keeps_its_own_limit(tmp_path):
+    model = ScriptedModel(
+        [{"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]} for _ in range(5)]
+    )
+    result = _runner(model, tmp_path).run(_spec(max_turns=2), "Find", "Look")
+    assert result["turns"] == 2
+
+
+def _peak_parallelism(tmp_path, **kwargs) -> int:
+    """How many sub agents ran at the same time at the most."""
+    running = 0
+    peak = 0
+    lock = threading.Lock()
+
+    def slow(messages):
+        nonlocal running, peak
+        with lock:
+            running += 1
+            peak = max(peak, running)
+        time.sleep(0.05)
+        with lock:
+            running -= 1
+        return {"role": "assistant", "content": "Done."}
+
+    runner = _runner(ScriptedModel(side_effect=slow), tmp_path, **kwargs)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda _: runner.run(_spec(), "Find", "Look"), range(4)))
+    assert [result["status"] for result in results] == ["completed"] * 4
+    return peak
+
+
+def test_only_a_few_sub_agents_run_at_the_same_time(tmp_path):
+    """The provider is not flooded with sub agents that all run at once."""
+    assert _peak_parallelism(tmp_path, max_parallel=2) == 2
+
+
+def test_without_a_limit_the_sub_agents_run_at_the_same_time(tmp_path):
+    assert _peak_parallelism(tmp_path) == 4
 
 
 def test_the_cost_of_the_sub_agent_is_added_to_the_main_one(tmp_path):
