@@ -8,7 +8,7 @@
 > 读 [coderagent-answers.md](coderagent-answers.md)（逐题作答）、
 > [coderagent-context.md](coderagent-context.md)（上下文专题）和
 > [coderagent-design-logic.md](coderagent-design-logic.md)（设计逻辑）；要看**怎么一步步做出来的**，
-> 读 [milestones/](milestones/) 下的五份里程碑文档。
+> 读 [milestones/](milestones/M0-skeleton.md) 下的七份里程碑文档。
 
 ---
 
@@ -571,8 +571,9 @@ FastAPI 的事件循环里**绝不**跑 agent 代码——碰文件系统/模型
 
 **文件浏览**：目录树 / 读文件 / 工作区 diff 复用现有工具（`list_entries`、`ReadTool`、
 `make_diff`），路径安全是三层：`resolve()` → `within_bounds()` → 工具自己的检查。
-**不能用 `policy.evaluate("read", ...)` 当边界检查**——`allow` 规则能越过边界，那会把整块磁盘
-暴露给浏览器。
+**不能用 `policy.evaluate("read", ...)` 当边界检查**——`evaluate` 判的是「这条调用允不允许」，
+不是「这个路径在不在范围内」。而且规则**本来就不能**放宽边界：`within_bounds` 的注释写着
+「The rules of the user cannot widen this」。两套语义混用，会把路径越界当成规则放行。
 
 **安全模型**：默认只听 `127.0.0.1`；**没有认证**（能访问端口的人就能驱动 agent 在工作目录里
 跑 shell，与 `coder` 命令行的信任模型相同）；写接口要求 `X-Coder-Client: 1` 头，跨站浏览器
@@ -935,7 +936,7 @@ model.model_kwargs.api_key  >  别名文件 litellm_params.api_key  >  厂商的
 | 13 | 写接口要 `X-Coder-Client: 1` 头 | token 认证 / 同源检查 | 跨站浏览器发不出这个头（要先过预检，而服务端不给许可）；`curl` 不受影响，零配置 |
 | 14 | 流式增量**不进**环形缓冲 | 全进缓冲 | 逐 token 的增量一轮能有几百条，会把历史挤出缓冲；整段答案随后以一条 `assistant_message` 进缓冲 |
 | 15 | 配置**只写用户级文件** | 也允许写项目级 | 项目级 `.coderagent/config.yaml` 会进 git，密钥不能进仓库 |
-| 16 | 路径边界用 `within_bounds()` | `policy.evaluate("read", …)` | `allow` 规则能越过边界检查，那等于把整块磁盘暴露给浏览器 |
+| 16 | 路径边界用 `within_bounds()` | `policy.evaluate("read", …)` | `evaluate` 判的是「调用允不允许」，不是「路径在不在范围内」；混用两套语义会把路径越界当成规则放行 |
 | 17 | 权限分两层：设置页（新会话）+ 聊天页（立刻） | 只有设置页 | 运行中的会话要能立刻换模式，否则无人值守跑法很别扭 |
 | 18 | 启动时的 `--permission-mode` 钉的是**会话开始时的模式**，不是锁 | 锁死模式 | 聊天页换模式是「当着会话的面做的决定」，不是文件里的设置 |
 | 19 | Web 版**没有认证**，文档里明说 | 加个 token | 单用户本机工具，信任模型同 `coder` 命令行；加 token 反而挡了脚本化调用 |

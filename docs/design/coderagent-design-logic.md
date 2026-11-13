@@ -469,7 +469,7 @@ goal / findings / decisions / files_touched / open_questions / next_steps / erro
 **决策**：slash 命令的核心**零 textual 依赖**——处理器只通过 `context.say(...)` 说话
 （`src/coderagent/ui/commands/builtin.py`）。所以 TUI、CLI、web 都能直接复用。
 每个界面往 `CommandContext` 里注入自己的钩子，比如 `quit`
-（`src/coderagent/ui/commands/__init__.py`）：TUI 传 `action_quit`，headless 传
+（`src/coderagent/ui/commands/__init__.py`）：TUI 传 `quit=self.action_quit`，headless 传
 空操作，web **不传** → 浏览器里 `/exit` 会说「服务还在跑，去启动它的终端按 ctrl+c」。
 
 **审批**：TUI 里 `y/n/a` 是带编号的方框，能用方向键选（`src/coderagent/ui/widgets/approval_prompt.py`）。

@@ -525,8 +525,8 @@ JSON 顶层：`format`、`label`、`suite`、`model`、`fingerprint`、`config`�
 
 **结论**：`core/telemetry.py`。
 
-- **`collect(events)`** 从事件日志算出 `Metrics`：`total_cost`、`total_tokens_in/out`、`model_calls`、`tool_calls`、`per_tool`、`per_purpose_cost`、`per_model_cost`、`duration_seconds`、`compactions`、`errors`。
-  - 子 agent 的成本从 `task` 工具结果 JSON 里捞回来，记在**它自己那个 purpose** 下（`task.py:49` 把 `spec.model_purpose` 写进结果，所以是 `cheap` / `main`，不是 `subagent`——`telemetry.py:209` 的那个 fallback 走不到）；
+- **`collect(events)`** 从事件日志算出 `Metrics`：`total_cost`、`total_tokens_in/out`、`model_calls`、`tool_calls`、`per_tool`、`per_purpose_cost`、`per_model_cost`、`duration_seconds`、`compactions`、`summary_ratios`、`errors`。
+  - 子 agent 的成本从 `task` 工具结果 JSON 里捞回来，记在**它自己那个 purpose** 下（`tools/builtin/task.py:49` 把 `spec.model_purpose` 写进结果，所以是 `cheap` / `main`，不是 `subagent`——`telemetry.py:209` 的那个 fallback 走不到）；
   - 压缩摘要的成本记在 purpose `summarize`；反思记在 `reflect`。
 - **导出**：`coder export --format json|otel`。JSON 是 trace 格式 `coder-agent-1.0`（`{session, events, metrics}`）；OTLP 是 OTLP/JSON，**一个 user turn 一个 span，每次工具调用一个子 span**。
 - **会话里的实时观察**：TUI 状态栏（模型、token 用量、成本、cwd、权限模式）、`/cost`、审批弹窗、Web 版的 SSE 流。
