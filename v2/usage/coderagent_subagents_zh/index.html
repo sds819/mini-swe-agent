@@ -1145,6 +1145,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        限制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agent_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3858,6 +3869,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        限制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agent_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3965,10 +3987,13 @@
 </tr>
 </tbody>
 </table>
-<p><code>/agents</code> 会列出它们，还有每个的工具：</p>
-<div class="highlight"><pre><span></span><code>code-explorer   cheap   read, grep, glob, ls
-                Find code: locate a symbol, follow a call chain, explain how a part works.
+<p><code>/agents</code> 会列出它们，还有每个的工具和<strong>真正生效的轮数</strong>：</p>
+<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 turns)
+                 Find code: locate a symbol, follow a call chain, explain how a part works.
+verifier         main   read, grep, glob, bash  (20 turns)
+                 Check a result on its own: run the tests, reproduce the bug.
 </code></pre></div>
+<p>括号里的是<strong>算数</strong>的轮数：配置里的天花板会把它压下来（见<a href="#limits">限制</a>）。</p>
 <h2 id="_2">自己写一个</h2>
 <p>子 agent 是一个 markdown 文件。front matter 说明它是什么，正文是它的系统提示词：</p>
 <div class="highlight"><pre><span></span><code>---
@@ -4011,13 +4036,49 @@ You write the documentation of a module. Read the code, then write the docs.
 </tr>
 <tr>
 <td><code>max_turns</code></td>
-<td>它最多能调几次模型</td>
+<td>它最多能调几次模型。0 表示不限</td>
 <td>20</td>
 </tr>
 </tbody>
 </table>
 <p>工具是<strong>白名单</strong>：白名单上没有的，子 agent 够不着。没有 front matter 的文件会被
 忽略。</p>
+<h2 id="limits">限制</h2>
+<p>子 agent 有自己的轮数预算，会话还有一个压在所有子 agent 的头上的天花板。</p>
+<table>
+<thead>
+<tr>
+<th>在哪</th>
+<th>改什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>front matter 里的 <code>max_turns</code></td>
+<td><strong>这个</strong>子 agent 最多能调几次模型</td>
+</tr>
+<tr>
+<td><code>agent.subagent_max_turns</code></td>
+<td>所有子 agent 的天花板。0 表示不设天花板</td>
+</tr>
+<tr>
+<td><code>agent.subagent_max_parallel</code></td>
+<td>同时最多跑几个子 agent。默认 2，0 表示不限</td>
+</tr>
+</tbody>
+</table>
+<p>天花板压过 front matter：<code>agent.subagent_max_turns</code> 是 20 时，一个要 30 轮的子
+agent 只跑 20 轮。反过来，子 agent 总是可以要更少的。</p>
+<p>并行的那个限制是给厂商看的，不是给钱看的：模型一次回答里发四个 <code>task</code>，就会
+同时跑四个子 agent，厂商可能回一个限流。剩下的等空位——不会被拒。</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
+<span class="nt">agent</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">subagent_max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">subagent_max_parallel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div>
+<p>子 agent 的轮数<strong>不算</strong>主 agent 的轮数：它们不占 <code>agent.max_turns</code>。但钱是共享
+的——子 agent 的花费算在这个会话的账单里，所以 <code>cost_limit</code> 和 <code>token_limit</code> 照样
+管得住它。</p>
 <h2 id="agent_1">子 agent 在哪里找</h2>
 <table>
 <thead>

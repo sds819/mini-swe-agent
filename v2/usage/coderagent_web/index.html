@@ -4281,8 +4281,8 @@ coder<span class="w"> </span>web
   something. The turns before the current one are folded into a block at the
   top — click it to look at them.
 - <strong>Right</strong>: the status bar of the session (model, context size, cost, mode),
-  the files the session changed with their diff, and the file you are looking
-  at.</p>
+  the sub agents with the turns they may really make, the files the session
+  changed with their diff, and the file you are looking at.</p>
 <p>Everything the agent does arrives over a server-sent event stream, so the
 output appears while it happens. Reconnecting to the page picks up where it
 left off.</p>
@@ -4672,6 +4672,11 @@ do not ask for the header — they start nothing.</p>
 <td>GET</td>
 <td><code>/api/commands</code></td>
 <td>The slash commands</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/agents</code></td>
+<td>The sub agents, with the turns they may really make</td>
 </tr>
 <tr>
 <td>GET</td>

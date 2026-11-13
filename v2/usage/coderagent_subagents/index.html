@@ -1347,6 +1347,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-a-sub-agent-is-looked-for" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3856,6 +3867,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-a-sub-agent-is-looked-for" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3965,10 +3987,14 @@ has to be in the <code>prompt</code> of the call.</p>
 </tr>
 </tbody>
 </table>
-<p><code>/agents</code> lists them, with the tools of each one:</p>
-<div class="highlight"><pre><span></span><code>code-explorer   cheap   read, grep, glob, ls
-                Find code: locate a symbol, follow a call chain, explain how a part works.
+<p><code>/agents</code> lists them, with the tools of each one and the turns it may really make:</p>
+<div class="highlight"><pre><span></span><code>code-explorer    cheap  read, grep, glob, ls  (15 turns)
+                 Find code: locate a symbol, follow a call chain, explain how a part works.
+verifier         main   read, grep, glob, bash  (20 turns)
+                 Check a result on its own: run the tests, reproduce the bug.
 </code></pre></div>
+<p>The turns in brackets are the ones that count: the ceiling of the configuration
+holds them down (see <a href="#the-limits">The limits</a>).</p>
 <h2 id="writing-your-own">Writing your own</h2>
 <p>A sub agent is a markdown file. The front matter says what it is, the body is
 its system prompt:</p>
@@ -4012,13 +4038,53 @@ You write the documentation of a module. Read the code, then write the docs.
 </tr>
 <tr>
 <td><code>max_turns</code></td>
-<td>How many model calls it may make</td>
+<td>How many model calls it may make. 0 means no limit</td>
 <td>20</td>
 </tr>
 </tbody>
 </table>
 <p>The tools are a white list: the sub agent cannot reach anything that is not on
 it. A file without a front matter is ignored.</p>
+<h2 id="the-limits">The limits</h2>
+<p>A sub agent has its own turn budget, and the session has a ceiling over all of
+them.</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What it changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_turns</code> in the front matter</td>
+<td>How many model calls <strong>this</strong> sub agent may make</td>
+</tr>
+<tr>
+<td><code>agent.subagent_max_turns</code></td>
+<td>The ceiling over every sub agent. 0 means no ceiling</td>
+</tr>
+<tr>
+<td><code>agent.subagent_max_parallel</code></td>
+<td>How many sub agents may run at the same time. 2 by default, 0 means no limit</td>
+</tr>
+</tbody>
+</table>
+<p>The ceiling wins over the front matter: a sub agent that asks for 30 turns runs
+20 of them when <code>agent.subagent_max_turns</code> is 20. A sub agent may always ask for
+fewer.</p>
+<p>The parallel limit is about the provider, not about the money: a model that fires
+four <code>task</code> calls in one answer would otherwise run four sub agents at the same
+time, and the provider may answer with a rate limit. The others wait for a free
+slot — they are not refused.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.coderagent/config.yaml</span>
+<span class="nt">agent</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">subagent_max_turns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">subagent_max_parallel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div>
+<p>The turns of a sub agent are not the turns of the main agent: they do not count
+towards <code>agent.max_turns</code>. The money is shared, though — the cost of a sub agent
+is part of the bill of the session, so <code>cost_limit</code> and <code>token_limit</code> hold it.</p>
 <h2 id="where-a-sub-agent-is-looked-for">Where a sub agent is looked for</h2>
 <table>
 <thead>

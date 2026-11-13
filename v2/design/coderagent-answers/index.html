@@ -5268,9 +5268,10 @@
 <li><strong>和主 agent 的关系</strong>：</li>
 <li><strong>不共享上下文</strong>。子 agent 自己起一份 <code>[system, user]</code> 消息（<code>subagent.py</code> 的 <code>messages = [system, user]</code>），看不见主对话。</li>
 <li><strong>不共享工具</strong>。它有一份<strong>白名单</strong>工具表（<code>_restricted(spec)</code> 另建一个 <code>ToolRegistry</code>）。</li>
-<li><strong>不共享轮数</strong>。自己的 <code>max_turns</code>（默认 20）。</li>
+<li><strong>不共享轮数</strong>。自己的 <code>max_turns</code>（默认 20），但有个<strong>全局天花板</strong>：<code>agent.subagent_max_turns</code>（默认 0 = 不设天花板）压过 front matter 里的值。</li>
 <li><strong>共享权限模式</strong>，而且这个模式说明被写进子 agent 的 system prompt，让它知道自己和主 agent 一样受限。</li>
 <li><strong>共享事件总线和会话 id</strong>，所以子 agent 的行为在主会话里看得见。</li>
+<li><strong>并发</strong>：<code>agent.subagent_max_parallel</code>（默认 2）限制<strong>同时</strong>跑几个子 agent——<code>task</code> 不在 <code>SEQUENTIAL_TOOLS</code> 里，一次回答里发 N 个 <code>task</code> 就会并行跑 N 个。超出的等空位，不被拒。</li>
 <li><strong>成本归属</strong>：子 agent 报回自己的 <code>cost = gateway.total_cost - before</code>（<strong>只算它自己那几次调用</strong>）。如果它跑在<strong>另一个</strong> gateway（不同模型）上，这个差额会<strong>加回主 gateway</strong>，主会话的总账因此是对的。</li>
 <li><strong>子 agent 的 tool call 只发总线、不进会话日志</strong>（<code>subagent.py:205-218</code>）；但它的 <code>ToolExecutor</code> 是<strong>带着 store 建的</strong>（<code>subagent.py:157</code>），所以 <code>edit</code> / <code>multi_edit</code> 的<strong>结果事件（含 diff）会落进会话日志</strong>，<code>write</code> 不会（<code>fs.py</code> 的 write 元数据里没有 diff）。想看它改过哪些文件，看结果 JSON 里的 <code>files_touched</code>（只统计 <code>write</code>/<code>edit</code>/<code>multi_edit</code>）最可靠。</li>
 </ul>
