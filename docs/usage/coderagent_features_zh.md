@@ -310,7 +310,7 @@ rules:
 `git push` 能对上 `git push origin main`，但对不上 `echo "git push"`。
 
 ¹ 只是看的命令——`ls`、`cat`、`grep`、`git status` 之类——直接放行，不问；
-其余的问。详见下面的[命令行](#命令行)。
+其余的问。详见下面的[命令行](#cli)。
 
 ```bash
 coder -t "跑一下测试" --permission-mode acceptEdits
@@ -358,7 +358,7 @@ rules:
 `permissions.deny_paths` 加的是一条「全部拒绝」的规则，它在规则文件之后
 生效，所以同样路径上的 `allow` 打不过它。
 
-### 命令行
+### 命令行 {#cli}
 
 `bash` 是唯一什么都能干的工具，所以它有三条边界。
 
