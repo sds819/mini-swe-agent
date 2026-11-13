@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from coderagent.core.context import ContextEngine
+from coderagent.core.subagent import effective_turns
 from coderagent.models.backends import LiteLLMBackend
 from coderagent.tools.permissions import PermissionMode
 from coderagent.ui.commands import COMMANDS, Command, CommandContext, register
@@ -229,12 +230,17 @@ def _agents(context: CommandContext, argument: str) -> None:
     if not specs:
         context.say("No sub agents.")
         return
-    context.say(
-        "\n".join(
-            f"{spec.name:<16} {spec.model_purpose:<6} {', '.join(spec.tools)}\n{'':<16} {spec.description}"
-            for spec in specs.values()
+    ceiling = context.config.agent.subagent_max_turns
+    lines = []
+    for spec in specs.values():
+        turns = effective_turns(spec, ceiling)
+        limit = f"{turns} turns" if turns else "no limit"
+        lines.append(
+            f"{spec.name:<16} {spec.model_purpose:<6} {', '.join(spec.tools)}  ({limit})\n{'':<16} {spec.description}"
         )
-    )
+    if ceiling:
+        lines.append(f"The configuration holds every sub agent to {ceiling} turns.")
+    context.say("\n".join(lines))
 
 
 def _skills(context: CommandContext, argument: str) -> None:

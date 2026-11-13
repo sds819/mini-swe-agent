@@ -27,12 +27,17 @@ has to be in the `prompt` of the call.
 | `verifier` | Check a result on its own: run the tests, reproduce the bug | `read` `grep` `glob` `bash` | main | 20 |
 | `refactorer` | Change the same pattern everywhere | `read` `edit` `grep` `glob` | main | 30 |
 
-`/agents` lists them, with the tools of each one:
+`/agents` lists them, with the tools of each one and the turns it may really make:
 
 ```
-code-explorer   cheap   read, grep, glob, ls
-                Find code: locate a symbol, follow a call chain, explain how a part works.
+code-explorer    cheap  read, grep, glob, ls  (15 turns)
+                 Find code: locate a symbol, follow a call chain, explain how a part works.
+verifier         main   read, grep, glob, bash  (20 turns)
+                 Check a result on its own: run the tests, reproduce the bug.
 ```
+
+The turns in brackets are the ones that count: the ceiling of the configuration
+holds them down (see [The limits](#the-limits)).
 
 ## Writing your own
 

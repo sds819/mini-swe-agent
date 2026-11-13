@@ -55,6 +55,16 @@ class SubagentSpec:
         return f"{self.name}: {self.description}" if self.description else self.name
 
 
+def effective_turns(spec: SubagentSpec, ceiling: int = 0) -> int:
+    """How many model calls the sub agent may make. 0 means no limit.
+
+    The ceiling of the configuration wins over the one of the sub agent.
+    """
+    if not ceiling:
+        return spec.max_turns
+    return min(spec.max_turns, ceiling) if spec.max_turns else ceiling
+
+
 def parse_subagent(path: Path) -> SubagentSpec | None:
     """Read one sub agent file. Returns None when the file cannot be used."""
     text = path.read_text(encoding="utf-8")
@@ -188,7 +198,7 @@ class SubAgentRunner:
         touched: list[str] = []
         summary = ""
         status = "completed"
-        limit = self._turns(spec)
+        limit = effective_turns(spec, self.max_turns)
         while not limit or turns < limit:
             try:
                 response = gateway.query(messages, tools=schemas)
@@ -207,15 +217,6 @@ class SubAgentRunner:
         else:
             status = "max_turns"
         return self._result(status, summary, _findings(summary), touched, gateway, before, turns)
-
-    def _turns(self, spec: SubagentSpec) -> int:
-        """How many model calls the sub agent may make. 0 means no limit.
-
-        The ceiling of the configuration wins over the one of the sub agent.
-        """
-        if not self.max_turns:
-            return spec.max_turns
-        return min(spec.max_turns, self.max_turns) if spec.max_turns else self.max_turns
 
     def _restricted(self, spec: SubagentSpec) -> ToolRegistry:
         """The registry with only the tools of the white list."""

@@ -9,7 +9,7 @@ from coderagent.core.checkpoint import CheckpointStore
 from coderagent.core.events import EventBus
 from coderagent.core.loop import AgentLoop
 from coderagent.core.session import SessionStore
-from coderagent.core.subagent import load_subagents
+from coderagent.core.subagent import SubagentSpec, load_subagents
 from coderagent.models.gateway import ModelGateway
 from coderagent.models.router import ModelRouter
 from coderagent.testing.factory import build_executor
@@ -255,6 +255,29 @@ def test_the_sub_agents_are_shown(tmp_path):
     assert "code-explorer" in answer
     assert "verifier" in answer
     assert "read, grep" in answer
+
+
+def test_the_agents_show_the_turns_that_count(tmp_path):
+    """The turns of the sub agent, held down by the ceiling of the configuration."""
+    context, output = _context(tmp_path)
+    answer = _run(context, output, "/agents")
+    assert "(15 turns)" in answer
+    assert "holds every sub agent" not in answer
+
+
+def test_the_ceiling_of_the_configuration_shows_up(tmp_path):
+    context, output = _context(tmp_path)
+    context.config.agent.subagent_max_turns = 20
+    answer = _run(context, output, "/agents")
+    assert "(20 turns)" in answer
+    assert "holds every sub agent to 20 turns" in answer
+
+
+def test_a_sub_agent_without_a_limit_shows_no_limit(tmp_path):
+    context, output = _context(tmp_path)
+    context.loop.subagents = {"free": SubagentSpec(name="free", description="Runs as long as it wants.", max_turns=0)}
+    answer = _run(context, output, "/agents")
+    assert "(no limit)" in answer
 
 
 def test_the_skills_are_shown(tmp_path):

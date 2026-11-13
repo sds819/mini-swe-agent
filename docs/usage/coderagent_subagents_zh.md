@@ -25,12 +25,16 @@
 | `verifier` | 自己验一遍结果：跑测试，复现 bug | `read` `grep` `glob` `bash` | main | 20 |
 | `refactorer` | 把同一个模式改到所有该改的地方 | `read` `edit` `grep` `glob` | main | 30 |
 
-`/agents` 会列出它们，还有每个的工具：
+`/agents` 会列出它们，还有每个的工具和**真正生效的轮数**：
 
 ```
-code-explorer   cheap   read, grep, glob, ls
-                Find code: locate a symbol, follow a call chain, explain how a part works.
+code-explorer    cheap  read, grep, glob, ls  (15 turns)
+                 Find code: locate a symbol, follow a call chain, explain how a part works.
+verifier         main   read, grep, glob, bash  (20 turns)
+                 Check a result on its own: run the tests, reproduce the bug.
 ```
+
+括号里的是**算数**的轮数：配置里的天花板会把它压下来（见[限制](#limits)）。
 
 ## 自己写一个
 
@@ -58,7 +62,7 @@ You write the documentation of a module. Read the code, then write the docs.
 工具是**白名单**：白名单上没有的，子 agent 够不着。没有 front matter 的文件会被
 忽略。
 
-## 限制
+## 限制 {#limits}
 
 子 agent 有自己的轮数预算，会话还有一个压在所有子 agent 的头上的天花板。
 
