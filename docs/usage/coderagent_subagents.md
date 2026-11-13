@@ -56,10 +56,41 @@ You write the documentation of a module. Read the code, then write the docs.
 | `description` | What it is for. The main agent reads this one | |
 | `tools` | The tools it may call. A list, or a comma separated string | `read` `grep` `glob` `bash` |
 | `model_purpose` | Which model answers for it | `cheap` |
-| `max_turns` | How many model calls it may make | 20 |
+| `max_turns` | How many model calls it may make. 0 means no limit | 20 |
 
 The tools are a white list: the sub agent cannot reach anything that is not on
 it. A file without a front matter is ignored.
+
+## The limits
+
+A sub agent has its own turn budget, and the session has a ceiling over all of
+them.
+
+| Where | What it changes |
+|---|---|
+| `max_turns` in the front matter | How many model calls **this** sub agent may make |
+| `agent.subagent_max_turns` | The ceiling over every sub agent. 0 means no ceiling |
+| `agent.subagent_max_parallel` | How many sub agents may run at the same time. 2 by default, 0 means no limit |
+
+The ceiling wins over the front matter: a sub agent that asks for 30 turns runs
+20 of them when `agent.subagent_max_turns` is 20. A sub agent may always ask for
+fewer.
+
+The parallel limit is about the provider, not about the money: a model that fires
+four `task` calls in one answer would otherwise run four sub agents at the same
+time, and the provider may answer with a rate limit. The others wait for a free
+slot — they are not refused.
+
+```yaml
+# ~/.coderagent/config.yaml
+agent:
+  subagent_max_turns: 20
+  subagent_max_parallel: 2
+```
+
+The turns of a sub agent are not the turns of the main agent: they do not count
+towards `agent.max_turns`. The money is shared, though — the cost of a sub agent
+is part of the bill of the session, so `cost_limit` and `token_limit` hold it.
 
 ## Where a sub agent is looked for
 

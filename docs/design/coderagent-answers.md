@@ -322,9 +322,10 @@
 - **和主 agent 的关系**：
   - **不共享上下文**。子 agent 自己起一份 `[system, user]` 消息（`subagent.py` 的 `messages = [system, user]`），看不见主对话。
   - **不共享工具**。它有一份**白名单**工具表（`_restricted(spec)` 另建一个 `ToolRegistry`）。
-  - **不共享轮数**。自己的 `max_turns`（默认 20）。
+  - **不共享轮数**。自己的 `max_turns`（默认 20），但有个**全局天花板**：`agent.subagent_max_turns`（默认 0 = 不设天花板）压过 front matter 里的值。
   - **共享权限模式**，而且这个模式说明被写进子 agent 的 system prompt，让它知道自己和主 agent 一样受限。
   - **共享事件总线和会话 id**，所以子 agent 的行为在主会话里看得见。
+- **并发**：`agent.subagent_max_parallel`（默认 2）限制**同时**跑几个子 agent——`task` 不在 `SEQUENTIAL_TOOLS` 里，一次回答里发 N 个 `task` 就会并行跑 N 个。超出的等空位，不被拒。
 - **成本归属**：子 agent 报回自己的 `cost = gateway.total_cost - before`（**只算它自己那几次调用**）。如果它跑在**另一个** gateway（不同模型）上，这个差额会**加回主 gateway**，主会话的总账因此是对的。
 - **子 agent 的 tool call 只发总线、不进会话日志**（`subagent.py:205-218`）；但它的 `ToolExecutor` 是**带着 store 建的**（`subagent.py:157`），所以 `edit` / `multi_edit` 的**结果事件（含 diff）会落进会话日志**，`write` 不会（`fs.py` 的 write 元数据里没有 diff）。想看它改过哪些文件，看结果 JSON 里的 `files_touched`（只统计 `write`/`edit`/`multi_edit`）最可靠。
 

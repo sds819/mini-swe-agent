@@ -984,7 +984,7 @@ The sections and what they hold:
 | Section | The keys |
 |---|---|
 | `model` | `model_name`, `model_kwargs`, `max_retries`, `litellm_config`, `routing`, `routing_rules`, `set_cache_control` |
-| `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit` |
+| `agent` | `system_prompt`, `max_turns`, `cost_limit`, `token_limit`, `subagent_max_turns`, `subagent_max_parallel` |
 | `tools` | `enabled`, `disabled`, `bash_timeout`, `max_output_tokens`, `schema_budget_tokens` |
 | `permissions` | `mode`, `rules`, `deny_paths`, `include_dirs` |
 | `context` | `context_window`, `reserved_output`, `compact_threshold`, `keep_recent_turns`, `keep_recent_token_ratio`, `compact_every_turns`, `auto_compact`, `summarize_model`, `summary_chunk_tokens` |

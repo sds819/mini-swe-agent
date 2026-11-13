@@ -53,10 +53,37 @@ You write the documentation of a module. Read the code, then write the docs.
 | `description` | 它干什么用。主 agent 读的是这一条 | |
 | `tools` | 它能调的工具。一个列表，或者逗号隔开的字符串 | `read` `grep` `glob` `bash` |
 | `model_purpose` | 用哪个模型替它回答 | `cheap` |
-| `max_turns` | 它最多能调几次模型 | 20 |
+| `max_turns` | 它最多能调几次模型。0 表示不限 | 20 |
 
 工具是**白名单**：白名单上没有的，子 agent 够不着。没有 front matter 的文件会被
 忽略。
+
+## 限制
+
+子 agent 有自己的轮数预算，会话还有一个压在所有子 agent 的头上的天花板。
+
+| 在哪 | 改什么 |
+|---|---|
+| front matter 里的 `max_turns` | **这个**子 agent 最多能调几次模型 |
+| `agent.subagent_max_turns` | 所有子 agent 的天花板。0 表示不设天花板 |
+| `agent.subagent_max_parallel` | 同时最多跑几个子 agent。默认 2，0 表示不限 |
+
+天花板压过 front matter：`agent.subagent_max_turns` 是 20 时，一个要 30 轮的子
+agent 只跑 20 轮。反过来，子 agent 总是可以要更少的。
+
+并行的那个限制是给厂商看的，不是给钱看的：模型一次回答里发四个 `task`，就会
+同时跑四个子 agent，厂商可能回一个限流。剩下的等空位——不会被拒。
+
+```yaml
+# ~/.coderagent/config.yaml
+agent:
+  subagent_max_turns: 20
+  subagent_max_parallel: 2
+```
+
+子 agent 的轮数**不算**主 agent 的轮数：它们不占 `agent.max_turns`。但钱是共享
+的——子 agent 的花费算在这个会话的账单里，所以 `cost_limit` 和 `token_limit` 照样
+管得住它。
 
 ## 子 agent 在哪里找
 
