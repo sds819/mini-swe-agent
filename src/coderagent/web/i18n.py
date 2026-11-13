@@ -117,6 +117,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "field_state": "state",
         "field_sandbox": "sandbox",
         "field_busy": "busy",
+        "turns": "{count} turns",
+        "no_limit": "no limit",
+        "turn_ceiling": "the configuration holds every sub agent to {count} turns",
     },
     "zh": {
         "history": "之前的几轮",
@@ -170,6 +173,9 @@ STRINGS: dict[str, dict[str, str]] = {
         "field_state": "状态",
         "field_sandbox": "沙箱",
         "field_busy": "正忙",
+        "turns": "{count} 轮",
+        "no_limit": "不限",
+        "turn_ceiling": "配置把所有子 agent 压到 {count} 轮",
     },
 }
 """The strings the browser shows. The templates have their own text."""

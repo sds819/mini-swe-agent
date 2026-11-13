@@ -14,6 +14,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from coderagent.core.checkpoint import CheckpointStore
+from coderagent.core.subagent import effective_turns, load_subagents
 from coderagent.core.telemetry import collect
 from coderagent.tools.permissions import ApprovalDecision, PermissionMode
 from coderagent.ui.commands import COMMANDS, load_builtins
@@ -270,6 +271,30 @@ def commands() -> dict[str, Any]:
             {"name": command.name, "description": command.description, "aliases": command.aliases}
             for command in COMMANDS
         ]
+    }
+
+
+@router.get("/agents")
+def agents(request: Request) -> dict[str, Any]:
+    """The sub agents, with the turns they may really make.
+
+    The turns of a sub agent are its own, but the ceiling of the configuration
+    holds them down. The number here is the one that counts.
+    """
+    ceiling = _config(request).agent.subagent_max_turns
+    specs = load_subagents(request.app.state.cwd)
+    return {
+        "ceiling": ceiling,
+        "agents": [
+            {
+                "name": spec.name,
+                "description": spec.description,
+                "tools": spec.tools,
+                "purpose": spec.model_purpose,
+                "turns": effective_turns(spec, ceiling),
+            }
+            for spec in specs.values()
+        ],
     }
 
 

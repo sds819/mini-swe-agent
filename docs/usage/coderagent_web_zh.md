@@ -61,8 +61,8 @@ coder web --cwd ~/projects/my-app --port 8080 -m deepseek/deepseek-flash
 
 页面本身不滚动，每一栏各滚各的。对话区会跟着新的输出滚到底，除非你往上翻去看别的东西。
 当前这一轮之前的历史折叠在顶部一个块里，点开就能看。
-- **右栏**：状态（模型、上下文用量、这一轮花了多少、权限模式、会话状态）、这一轮改过的
-  文件和它们的 diff、正在看的那个文件的内容。
+- **右栏**：状态（模型、上下文用量、这一轮花了多少、权限模式、会话状态）、子 agent（和它们
+  真正生效的轮数）、这一轮改过的文件和它们的 diff、正在看的那个文件的内容。
 
 模型回答是**边生成边显示**的。断线重连会接着上次的位置继续，不会从头再来。
 
@@ -227,6 +227,7 @@ curl -N "http://127.0.0.1:8765/api/sessions/20261108-382ff4/stream?since=0"
 | POST | `/api/sessions/{id}/mode` | 换掉这个会话的权限模式 |
 | POST | `/api/approvals/{id}` | 允许、拒绝、或者永久允许一个工具 |
 | GET | `/api/commands` | 有哪些 slash 命令 |
+| GET | `/api/agents` | 有哪些子 agent，它们真正生效的轮数是多少 |
 | GET | `/api/config` | 模型配置，和每个字段来自哪一层 |
 | GET | `/api/config/model/key` | 模型的 key，明文 |
 | GET | `/lang/{language}` | 换个语言，记在 cookie 里 |

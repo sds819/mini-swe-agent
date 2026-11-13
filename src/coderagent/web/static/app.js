@@ -417,6 +417,30 @@ async function loadCommands() {
   }
 }
 
+/* The sub agents of the project, with the turns they may really make. */
+async function loadAgents() {
+  const box = document.getElementById("agents");
+  if (!box) return;
+  try {
+    const data = await api("/api/agents");
+    box.innerHTML = "";
+    for (const agent of data.agents) {
+      const item = el("div", "agent");
+      const head = el("div", "agent-head");
+      head.appendChild(el("strong", "", agent.name));
+      head.appendChild(el("span", "", agent.purpose));
+      item.appendChild(head);
+      item.appendChild(el("div", "agent-turns", agent.turns ? t("turns", { count: agent.turns }) : t("no_limit")));
+      item.appendChild(el("div", "agent-tools", agent.tools.join(", ")));
+      if (agent.description) item.appendChild(el("div", "agent-description", agent.description));
+      box.appendChild(item);
+    }
+    if (data.ceiling) box.appendChild(el("p", "note", t("turn_ceiling", { count: data.ceiling })));
+  } catch (error) {
+    /* there are no sub agents to show */
+  }
+}
+
 // -- the language -----------------------------------------------------------
 
 const LANGUAGE_KEY = "coder_lang";
@@ -463,6 +487,7 @@ async function relocalize(values = {}) {
   if (document.getElementById("messages")) {
     wire();
     await loadCommands().catch(() => {});
+    await loadAgents().catch(() => {});
     if (state.sessionId) await openSession(state.sessionId);
     return;
   }
@@ -815,6 +840,7 @@ async function startSettings() {
 async function start() {
   wire();
   await loadCommands().catch(() => {});
+  await loadAgents().catch(() => {});
   await loadSessions().catch(() => {});
   const data = await api("/api/sessions", { method: "POST" });
   await openSession(data.id);

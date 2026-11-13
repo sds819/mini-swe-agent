@@ -50,8 +50,8 @@ Three columns:
   something. The turns before the current one are folded into a block at the
   top — click it to look at them.
 - **Right**: the status bar of the session (model, context size, cost, mode),
-  the files the session changed with their diff, and the file you are looking
-  at.
+  the sub agents with the turns they may really make, the files the session
+  changed with their diff, and the file you are looking at.
 
 Everything the agent does arrives over a server-sent event stream, so the
 output appears while it happens. Reconnecting to the page picks up where it
@@ -282,6 +282,7 @@ do not ask for the header — they start nothing.
 | POST | `/api/sessions/{id}/mode` | Change the permission mode of the session |
 | POST | `/api/approvals/{id}` | Allow, deny or always allow a tool |
 | GET | `/api/commands` | The slash commands |
+| GET | `/api/agents` | The sub agents, with the turns they may really make |
 | GET | `/api/config` | The model configuration, with the layer of every field |
 | GET | `/api/config/model/key` | The key of the model, in clear text |
 | GET | `/lang/{language}` | The language of the pages, remembered in a cookie |
