@@ -5057,17 +5057,19 @@ coder<span class="w"> </span>web<span class="w"> </span>--cwd<span class="w"> </
 <span class="c1"># A session of this directory, the newest first.</span>
 coder<span class="w"> </span>--list
 </code></pre></div>
-<p>The JSON of one turn has the fields <code>session_id</code>, <code>messages</code>, <code>cost</code>, <code>usage</code>,
-<code>stop_reason</code> and <code>error</code>:</p>
+<p>The JSON of one turn has the fields <code>session_id</code>, <code>messages</code>, <code>cost</code>,
+<code>session_cost</code>, <code>stop_reason</code> and <code>error</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261109-3f0a91"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"messages"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"assistant"</span><span class="p">,</span><span class="w"> </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"I added the docstring."</span><span class="p">}],</span>
 <span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0012</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"usage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"input_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">4210</span><span class="p">,</span><span class="w"> </span><span class="nt">"output_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">96</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"session_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0143</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"stop_reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"end_turn"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="p">}</span>
 </code></pre></div>
+<p><code>cost</code> is what the turn cost, <code>session_cost</code> what the whole session has cost
+so far.</p>
 <p><code>stop_reason</code> is one of <code>end_turn</code>, <code>max_turns</code>, <code>cost_exceeded</code>, <code>token_limit</code>, <code>verify_failed</code>,
 <code>error</code> and <code>interrupted</code>.</p>
 <h3 id="when-something-goes-wrong">When something goes wrong</h3>
@@ -5134,8 +5136,8 @@ coder<span class="w"> </span>--list
   end; the part behind <code>/v1</code> is cut off, because litellm adds it itself.</li>
 <li><strong>Aliases</strong> — a litellm config file with a model list. The model name can
   then be an alias of that list, and the key of the endpoint stays in the file.</li>
-<li><strong>Cache control</strong> — <code>set_cache_control: ephemeral</code> for the providers that
-  support it.</li>
+<li><strong>Cache control</strong> — <code>set_cache_control: default_end</code> for the providers that
+  support it. Any other value is refused.</li>
 <li><strong>Retries</strong> — <code>max_retries</code>, three by default.</li>
 <li><strong>Routing by purpose</strong> — a different model for <code>main</code>, <code>cheap</code>, <code>summarize</code>,
   <code>reflect</code> and <code>strong</code>.</li>
@@ -5158,7 +5160,7 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 <div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
 <span class="nt">model</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
-<span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ephemeral</span>
+<span class="w">  </span><span class="nt">set_cache_control</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_end</span>
 <span class="w">  </span><span class="nt">routing</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-chat</span>
 <span class="w">    </span><span class="nt">cheap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deepseek/deepseek-flash</span>
@@ -5198,8 +5200,8 @@ coder<span class="w"> </span>-t<span class="w"> </span><span class="s2">"..."</s
 </tr>
 <tr>
 <td><code>ValueError: Invalid mode: {mode}</code></td>
-<td><code>set_cache_control</code> is neither <code>default_end</code> nor <code>ephemeral</code>.</td>
-<td>Use one of the two, or remove the line.</td>
+<td><code>set_cache_control</code> is neither <code>default_end</code> nor empty.</td>
+<td>Use <code>default_end</code>, or remove the line.</td>
 </tr>
 <tr>
 <td><code>the file does not exist</code></td>
@@ -5328,7 +5330,7 @@ terminal it does not.</p>
 <span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"glob"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"pattern"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src/**/*.py"</span><span class="p">}}</span>
 <span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ls"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"src"</span><span class="p">,</span><span class="w"> </span><span class="nt">"depth"</span><span class="p">:</span><span class="w"> </span><span class="mi">-1</span><span class="p">}}</span>
 <span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest -q"</span><span class="p">,</span><span class="w"> </span><span class="nt">"timeout"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">}}</span>
-<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest -q"</span><span class="p">,</span><span class="w"> </span><span class="nt">"background"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest -q"</span><span class="p">,</span><span class="w"> </span><span class="nt">"run_in_background"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}}</span>
 <span class="p">{</span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bash_output"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"task_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"b7f3"</span><span class="p">}}</span>
 </code></pre></div>
 <p><code>multi_edit</code> takes a list and is all or nothing:</p>
@@ -5368,7 +5370,7 @@ sees the message and can correct itself. The messages are:</p>
 </tr>
 <tr>
 <td><code>edit</code></td>
-<td><code>Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Use more context to make it unique.</code></td>
+<td><code>Error: old_string is not unique in {path}: it appears {count} times (lines {...}). Include more surrounding context to make it unique, or set replace_all=true.</code></td>
 </tr>
 <tr>
 <td><code>multi_edit</code></td>
@@ -5466,7 +5468,7 @@ holds a secret is stored in a checkpoint without it, and it is not restored by
 <li><strong>Rules</strong> — <code>~/.coderagent/rules.yaml</code> and <code>.coderagent/rules.yaml</code> decide
   per tool and per pattern. The user level file wins.</li>
 <li><strong><code>Always allow</code></strong> — the button of an approval writes a rule, so the same
-  tool goes through from then on.</li>
+  call — the same file, or the same command — goes through from then on.</li>
 <li><strong>Denied paths</strong> — <code>permissions.deny_paths</code>, paths the agent may not touch.</li>
 <li><strong>Extra directories</strong> — <code>permissions.include_dirs</code>, directories outside the
   working directory the agent may still touch.</li>
@@ -5566,7 +5568,7 @@ decides<span class="w"> </span>whether<span class="w"> </span>it<span class="w">
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
 <span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest</span>
 <span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
-<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always allowed</span>
+<span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always allowed by the user</span>
 </code></pre></div>
 <h3 id="when-something-goes-wrong_3">When something goes wrong</h3>
 <table>
@@ -5677,8 +5679,9 @@ coder<span class="w"> </span>--fork<span class="w"> </span><span class="m">20261
 ~/.coderagent/checkpoints/20261109-3f0a91.json       # the snapshots of the writes
 </code></pre></div>
 <p>The event log is one JSON object per line, and the types are <code>user_message</code>,
-<code>assistant_message</code>, <code>tool_call</code>, <code>tool_result</code>, <code>compaction</code>, <code>error</code> and
-<code>turn_end</code>.</p>
+<code>assistant_message</code>, <code>tool_call</code>, <code>tool_result</code>, <code>approval_request</code>,
+<code>approval_response</code>, <code>state_change</code>, <code>compaction</code>, <code>reflection</code>, <code>verify</code>,
+<code>reverted_to</code>, <code>error</code> and <code>turn_end</code>.</p>
 <p><code>/rewind</code> restores the <strong>files</strong> only — what a command did to the outside
 world stays done — and truncates the history of the session to the moment of
 the snapshot.</p>
@@ -5893,7 +5896,7 @@ it found:</p>
   context or with rewritten arguments.</li>
 <li><strong>Your own commands</strong> — <code>.coderagent/commands/*.md</code>: a slash command with a
   description, an argument hint, the tools it may use and its own model.</li>
-<li><strong>MCP servers</strong> — a server over stdio or over http. Its tools join the
+<li><strong>MCP servers</strong> — a server over stdio. Its tools join the
   tools of the agent, they ask for permission like every other tool, and the
   connection is made again when it breaks.</li>
 </ul>
@@ -6013,8 +6016,8 @@ Commit everything with the message: $ARGUMENTS
 <td>Check the <code>command</code> of the server; <code>/mcp</code> says <code>not connected</code> or <code>failed: &lt;error&gt;</code>.</td>
 </tr>
 <tr>
-<td><code>Error: the MCP tool 'mcp__echo__echo' failed: RuntimeError: ...</code></td>
-<td>The server answered with an error.</td>
+<td><code>Error: the MCP tool 'echo' failed: RuntimeError: ...</code></td>
+<td>The server answered with an error. The name in the message is the one of the server.</td>
 <td>The message of the server is in the answer.</td>
 </tr>
 </tbody>
@@ -6039,8 +6042,10 @@ the agent does not walk up the directories to find them.</p>
 <p>The seven types are <code>local</code>, <code>docker</code>, <code>singularity</code>, <code>bubblewrap</code>, <code>contree</code>,
 <code>swerex_docker</code> and <code>swerex_modal</code>. The options that the environment does not
 know are ignored, so one file can carry the settings of several of them.</p>
-<p><code>/sandbox</code> answers with the environment that is in use:</p>
-<div class="highlight"><pre><span></span><code>local
+<p><code>/sandbox</code> answers with the type, the options that are in effect and the
+environment that is in use:</p>
+<div class="highlight"><pre><span></span><code>type: local
+environment: local
 </code></pre></div>
 <h3 id="when-something-goes-wrong_8">When something goes wrong</h3>
 <table>
@@ -6155,8 +6160,8 @@ $ python -m pytest -q
 <p><code>←</code>/<code>→</code> move the cursor, <code>↑</code>/<code>↓</code> do the same, the digits jump to a line, the
 space toggles a multiple choice, <code>enter</code> confirms, and <code>y</code>, <code>n</code> and <code>a</code> answer
 directly. <code>ctrl+c</code> interrupts the turn, <code>ctrl+q</code> settles the session and quits.</p>
-<p>The todo panel marks the state of a task with <code>◉</code> (in progress), <code>◐</code> (pending)
-and <code>○</code> (completed).</p>
+<p>The todo panel marks the state of a task with <code>◉</code> (completed), <code>◐</code> (in progress)
+and <code>○</code> (pending).</p>
 <h3 id="when-something-goes-wrong_10">When something goes wrong</h3>
 <table>
 <thead>
@@ -6468,7 +6473,7 @@ project file, the user file, <code>$MSWEA_MODEL_NAME</code>, and at the end
 </tr>
 <tr>
 <td><code>context</code></td>
-<td><code>context_window</code>, <code>reserved_output</code>, <code>compact_threshold</code>, <code>keep_recent_turns</code>, <code>keep_recent_token_ratio</code>, <code>compact_every_turns</code>, <code>auto_compact</code>, <code>summarize_model</code></td>
+<td><code>context_window</code>, <code>reserved_output</code>, <code>compact_threshold</code>, <code>keep_recent_turns</code>, <code>keep_recent_token_ratio</code>, <code>compact_every_turns</code>, <code>auto_compact</code>, <code>summarize_model</code>, <code>summary_chunk_tokens</code></td>
 </tr>
 <tr>
 <td><code>memory</code></td>
@@ -6616,7 +6621,7 @@ comes from <code>GET /api/commands</code>.</p>
   requesty, the text based models and the roulette model besides.</li>
 </ul>
 <h3 id="example_14">Example</h3>
-<div class="highlight"><pre><span></span><code>mini<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--environment<span class="w"> </span>docker<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code>mini<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--environment-class<span class="w"> </span>docker<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--task<span class="w"> </span><span class="s2">"the failing test is in test_api.py"</span>
 
 mini-extra<span class="w"> </span>swebench<span class="w"> </span>--model<span class="w"> </span>litellm/deepseek/deepseek-flash<span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>

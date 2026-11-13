@@ -4935,7 +4935,7 @@
 </tr>
 <tr>
 <td>事件可订阅</td>
-<td><code>core/events.py:61</code> 的 <code>EventBus</code>，同步发布/订阅，TUI 已是它的一个订阅者</td>
+<td><code>core/events.py:65</code> 的 <code>EventBus</code>，同步发布/订阅，TUI 已是它的一个订阅者</td>
 </tr>
 <tr>
 <td>回合可放到别的线程</td>
@@ -4955,12 +4955,13 @@
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
 ├── config_api.py    # 读写 ~/.coderagent/config.yaml、分层预览、脱敏、连通性测试
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
+├── i18n.py          # 页面语言：STRINGS、LANGUAGES、地区判断与 cookie
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
-├── templates/       # base.html / chat.html / settings.html（Jinja2）
+├── templates/       # en/ 与 zh/ 两套模板（每套 base/chat/settings/macros.html）
 └── static/          # app.css / app.js（原生 JS，无构建步骤）
 </code></pre></div>
 <p><code>web/__init__.py</code> 只放 docstring：<code>from coderagent.web.server import serve</code> 在
-<code>ui/cli.py</code> 的 <code>web</code> 子命令里<strong>惰性导入</strong>（照抄 <code>coder export</code> 的写法，<code>ui/cli.py:141</code>）。
+<code>ui/cli.py</code> 的 <code>web</code> 子命令里<strong>惰性导入</strong>（照抄 <code>coder export</code> 的写法，<code>ui/cli.py:160</code>）。
 这样 fastapi 永远不是硬依赖——没装 <code>web</code> extra 的人 import <code>coderagent</code> 不受影响。</p>
 <hr>
 <h2 id="3">3. 会话运行时</h2>
@@ -4982,9 +4983,9 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 <li><strong>每会话一个 worker 线程</strong>，<code>queue.Queue</code> 收活；turn 期间持 <code>busy</code> 标志。</li>
 <li><strong>FastAPI 事件循环里绝不跑 agent 代码</strong>：碰文件系统/模型/loop 的端点都写成普通 <code>def</code>
   （Starlette 丢线程池），或直接交给会话 worker。</li>
-<li><code>build_loop</code>（<code>run.py:90</code>）<strong>每会话建一次并缓存</strong>：它会起 MCP server 线程（<code>run.py:111</code>）
-  且会往全局命令表追加（<code>run.py:117</code>），不能每请求建。</li>
-<li>事件订阅要<strong>逐个 EventType 注册</strong>（<code>EventBus</code> 没有通配订阅，<code>core/events.py:67</code>）：
+<li><code>build_loop</code>（<code>run.py:105</code>）<strong>每会话建一次并缓存</strong>：它会起 MCP server 线程（<code>run.py:125</code>）
+  且会往全局命令表追加（<code>run.py:132</code>），不能每请求建。</li>
+<li>事件订阅要<strong>逐个 EventType 注册</strong>（<code>EventBus</code> 没有通配订阅，<code>core/events.py:71</code>）：
   <code>for t in EventType: bus.subscribe(t, handler)</code>。</li>
 <li><code>loop.cancel = runtime.cancel.is_set</code>，每轮前赋值（照 <code>ui/tui.py:273</code>）。</li>
 </ul>
@@ -4998,10 +4999,10 @@ loop.run_turn()                   SSE 生成器 await queue.get()
   但<strong>不进缓冲</strong>。晚到的浏览器看不到它们，但能看到随后那条完整的 <code>assistant_message</code>。</li>
 </ul>
 <h3 id="33-turn">3.3 一个会话一次只有一个 turn</h3>
-<p><code>SessionStore.append</code> 本身没有锁（<code>core/session.py:75</code>），所以并发写会串。
+<p><code>SessionStore.append</code> 本身没有锁（<code>core/session.py:81</code>），所以并发写会串。
 <code>SessionRuntime.submit()</code> 在 <code>busy</code> 已置位时抛 <code>SessionBusy</code> → <code>/messages</code> 返回 <strong>409</strong>。</p>
 <h3 id="34-id">3.4 会话换 id 的问题</h3>
-<p><code>/clear</code>、<code>/resume</code> 会换 session id（<code>ui/commands/builtin.py:89</code>、<code>:99</code> 调 <code>loop.switch_to</code>）。
+<p><code>/clear</code>、<code>/resume</code> 会换 session id（<code>ui/commands/builtin.py:98</code>、<code>:111</code> 调 <code>loop.switch_to</code>）。
 浏览器还在往旧 id 推流，所以 <code>SessionRegistry</code> 必须 <strong>re-key</strong>：</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rekey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">old_id</span><span class="p">,</span> <span class="n">new_id</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_runtimes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -5034,7 +5035,7 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 <tr>
 <td><code>TEXT_DELTA</code></td>
 <td><code>text_delta</code></td>
-<td><strong>不入日志</strong>，只在事件总线上（<code>core/events.py:16</code>）；也<strong>不进环形缓冲</strong>（瞬时，见 §17.1）</td>
+<td><strong>不入日志</strong>，只在事件总线上（<code>core/events.py:15</code>）；也<strong>不进环形缓冲</strong>（瞬时，见 §17.1）</td>
 </tr>
 <tr>
 <td><code>REASONING</code></td>
@@ -5072,6 +5073,11 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 <td>分隔线</td>
 </tr>
 <tr>
+<td><code>VERIFY</code></td>
+<td><code>verify</code></td>
+<td>验证命令的结果</td>
+</tr>
+<tr>
 <td><code>ERROR</code></td>
 <td><code>error</code></td>
 <td>红条</td>
@@ -5089,12 +5095,12 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 </thead>
 <tbody>
 <tr>
-<td>执行器（<code>tools/executor.py:167</code>）</td>
+<td>执行器（<code>tools/executor.py:181</code>）</td>
 <td><code>{"tool": ..., "tool_call_id": ..., "content": ..., "diff": ...}</code></td>
 <td>知道是哪个工具、还带 diff</td>
 </tr>
 <tr>
-<td>上下文（<code>core/context.py:110</code>）</td>
+<td>上下文（<code>core/context.py:136</code>）</td>
 <td><code>{"messages": [ ... ]}</code></td>
 <td>记录模型<strong>实际看到</strong>的观察值</td>
 </tr>
@@ -5111,7 +5117,7 @@ loop.run_turn()                   SSE 生成器 await queue.get()
     <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
 </code></pre></div>
 <p>副作用：事件日志里 <code>TOOL_RESULT</code> 出现两次（执行器一次、上下文一次）。
-<code>core/context.py:76</code> 的 <code>restore()</code> 不受影响（它读 <code>payload["messages"]</code>，执行器变体没这个键）。
+<code>core/context.py:87</code> 的 <code>restore()</code> 不受影响（它读 <code>payload["messages"]</code>，执行器变体没这个键）。
 <code>tests/coderagent/test_loop.py</code> 的事件序列断言要跟着改。</p>
 <hr>
 <h2 id="5-sse-rest">5. 传输：SSE + REST</h2>
@@ -5158,12 +5164,12 @@ executor._prepare()
   <code>approval_response{timed_out:true}</code> 让前端解释原因。</li>
 <li>未知/过期 id → <strong>404</strong>。</li>
 <li><strong>Always allow</strong> 会往用户规则文件 <code>~/.coderagent/rules.yaml</code> 写一条规则
-  （<code>tools/executor.py:126</code> → <code>tools/rules.py:103</code> <code>add_rule</code>）。UI 必须明确提示这一点。</li>
-<li>Deny → 模型收到「用户拒绝」（<code>tools/executor.py:122</code>），模型会改口而不是硬改。</li>
+  （<code>tools/executor.py:143</code> → <code>tools/rules.py:118</code> <code>add_rule</code>）。UI 必须明确提示这一点。</li>
+<li>Deny → 模型收到「用户拒绝」（<code>tools/executor.py:126</code>），模型会改口而不是硬改。</li>
 </ul>
 <hr>
 <h2 id="7-slash">7. Slash 命令</h2>
-<p>原样复用 <code>ui/commands/__init__.py:80</code> 的 <code>run(context, line)</code>——25 个内置命令和自定义命令
+<p>原样复用 <code>ui/commands/__init__.py:82</code> 的 <code>run(context, line)</code>——25 个内置命令和自定义命令
 都只通过 <code>context.say(...)</code> 说话，零 textual 依赖。</p>
 <ul>
 <li><code>CommandContext.output</code> 接到 <code>runtime.emit({"kind": "command_output", "text": ...})</code>。</li>
@@ -5171,7 +5177,7 @@ executor._prepare()
 <li>命令换 session id 时，registry 重新 key（见 §3.4）。</li>
 </ul>
 <h3 id="71-register">7.1 <code>register()</code> 必须去重</h3>
-<p><code>ui/commands/__init__.py:54</code> 的 <code>register()</code> 原本无条件 append。web 是<strong>每会话一个 loop</strong>，
+<p><code>ui/commands/__init__.py:56</code> 的 <code>register()</code> 原本无条件 append。web 是<strong>每会话一个 loop</strong>，
 每建一次 loop 就注册一遍项目自定义命令 → 全局命令表无限膨胀、<code>/help</code> 出现重复。
 改成按名字去重（同名替换）。</p>
 <hr>
@@ -5209,7 +5215,12 @@ executor._prepare()
 <tr>
 <td><code>set_cache_control</code></td>
 <td><code>model.set_cache_control</code></td>
-<td><code>ephemeral</code> / 空</td>
+<td><code>default_end</code> / 空（mini 只认这两个）</td>
+</tr>
+<tr>
+<td><code>litellm_config</code></td>
+<td><code>model.litellm_config</code></td>
+<td>别名文件；里面的别名可以当模型名用</td>
 </tr>
 <tr>
 <td><code>routing</code></td>
@@ -5230,7 +5241,9 @@ executor._prepare()
 </table>
 <h3 id="82">8.2 分层预览</h3>
 <p><code>GET /api/config</code> 返回 <code>sources: {"model_name": "user", "api_base": "project", ...}</code>，
-按优先级 defaults &lt; project &lt; user &lt; env 逐层找第一个定义该 key 的层。</p>
+按优先级 defaults &lt; project &lt; user 逐层看，<strong>最后一个定义了该 key 的层</strong>说了算；
+环境变量只在<strong>没有任何层定义</strong>时兜底（目前只有 <code>model_name</code> 与 <code>api_key</code> 走这条路，
+层名报 <code>env</code>）。</p>
 <h3 id="83">8.3 写入</h3>
 <p>只写 <code>config_home()/"config.yaml"</code>（<code>paths.py:7</code>），<strong>项目级 <code>.coderagent/config.yaml</code> 永不写</strong>
 （它会进 git）。读现有 YAML → 只改 <code>model:</code> 下用户提交的子键 → <code>yaml.safe_dump(sort_keys=False)</code>
@@ -5279,10 +5292,10 @@ include_dirs / source / server_mode。<code>source</code> 按 <code>config_layer
 所以下一个工具调用就能看到；<code>ContextEngine</code> 拿的是同一个策略对象，<code>&lt;permission_mode&gt;</code>
 提示会自动跟着变，不用重建上下文。loop 还没建时只记下模式，<code>build_loop()</code> 用它。</p>
 <p><strong><code>--permission-mode</code> 盖过文件</strong>：<code>build_policy()</code> 是 <code>permission_mode or config.permissions.mode</code>
-（<code>run.py:68</code>）。服务器带模式启动时，配置文件里的 <code>permissions.mode</code> 是死的——页面要<strong>如实说</strong>，
+（<code>run.py:60</code>）。服务器带模式启动时，配置文件里的 <code>permissions.mode</code> 是死的——页面要<strong>如实说</strong>，
 不能让用户以为改了生效了（<code>server_mode</code> 非空时 <code>source["mode"]</code> 报 <code>server</code>）。</p>
-<p><strong>一个坑</strong>：<code>status()</code> 在 loop 还没建时返回的是 <code>config.permissions.mode</code>，不是会话自己的模式。
-不改这一行，新建会话切换后状态栏显示旧值。</p>
+<p><strong>一个坑</strong>：<code>status()</code> 在 loop 还没建时返回的是会话自己记下的模式（<code>mode()</code> 读
+<code>self._permission_mode</code>，再回落 <code>config.permissions.mode</code>），不是启动时的配置值。</p>
 <p><strong>不做的</strong>：浏览器里编辑 <code>rules.yaml</code>；把权限写进项目级 <code>.coderagent/config.yaml</code>（会进 git）。</p>
 <hr>
 <h2 id="9-diff">9. 文件浏览与 diff</h2>
@@ -5316,20 +5329,22 @@ include_dirs / source / server_mode。<code>source</code> 按 <code>config_layer
 </tr>
 <tr>
 <td>工作区 diff</td>
-<td><code>git diff -- &lt;path&gt;</code>（同 <code>ui/commands/builtin.py:139</code>）</td>
+<td><code>git diff -- &lt;path&gt;</code>（<code>web/files.py:79</code>）；<code>/diff</code> 命令用的是 <code>git diff --stat</code>（<code>ui/commands/builtin.py:142</code>）</td>
 </tr>
 </tbody>
 </table>
 <h3 id="91">9.1 路径安全三层</h3>
 <div class="highlight"><pre><span></span><code>Path.resolve()  →  边界检查（必须在 cwd 或 permissions.include_dirs 里）  →  工具自身的 resolve_path
 </code></pre></div>
-<p>越界 → <strong>403</strong>，文案沿用 <code>tools/permissions.py:117</code> 的写法。</p>
+<p>越界 → <strong>403</strong>，文案沿用 <code>tools/permissions.py:235</code> 的写法。</p>
 <blockquote>
-<p><strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>——<code>tools/permissions.py:114-116</code>
-允许 <code>allow</code> 规则覆盖边界检查，那会让规则文件把整块磁盘暴露给浏览器。
-<strong>必须直接用边界检查</strong>。</p>
+<p><strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>——<code>evaluate</code> 走的是规则，
+而规则<strong>不能</strong>放宽边界（<code>tools/permissions.py:223-233</code> 的 <code>within_bounds</code> 写着
+「The rules of the user cannot widen this」）。但 <code>evaluate</code> 的语义是「这条调用
+允不允许」，不是「这个路径在不在范围内」，用它当边界检查会把
+「规则放行」和「路径越界」两件事混在一起。<strong>必须直接用边界检查</strong>。</p>
 </blockquote>
-<p>所以 <code>tools/permissions.py</code> 的 <code>_within_bounds</code> 提成公开的 <code>within_bounds(path) -&gt; bool</code>，
+<p>所以 <code>tools/permissions.py</code> 的边界检查是公开的 <code>within_bounds(path) -&gt; bool</code>，
 web 直接复用，不重写路径安全逻辑。</p>
 <hr>
 <h2 id="10">10. 前端</h2>
@@ -5420,7 +5435,7 @@ web 直接复用，不重写路径安全逻辑。</p>
 </tr>
 <tr>
 <td>日志污染</td>
-<td><code>web/server.py</code> 里设 <code>litellm.suppress_debug_info = True</code>（同 <code>ui/cli.py:16</code>），否则 litellm 的 banner 会打乱 SSE</td>
+<td><code>web/server.py</code> 里设 <code>litellm.suppress_debug_info = True</code>（同 <code>ui/cli.py:20</code>），否则 litellm 的 banner 会打乱 SSE</td>
 </tr>
 </tbody>
 </table>
@@ -5516,7 +5531,7 @@ web 直接复用，不重写路径安全逻辑。</p>
 </ul>
 <h3 id="t58">T5.8 文档</h3>
 <ul>
-<li>[x] <code>docs/usage/coderagent_web.md</code></li>
+<li>[x] <code>docs/usage/coderagent_web.md</code>（与中文版 <code>coderagent_web_zh.md</code>）</li>
 <li>[x] <code>docs/usage/coderagent.md</code> 与 <code>coderagent_quickstart.md</code> 加链接</li>
 <li>[x] <code>mkdocs.yml</code> nav 加条目</li>
 </ul>

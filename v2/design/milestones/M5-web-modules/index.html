@@ -3940,10 +3940,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#94-test_connectionname-kwargs" class="md-nav__link">
+  <a href="#94-test_connectioneffective" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9.4 test_connection(name, kwargs)
+        9.4 test_connection(effective)
       
     </span>
   </a>
@@ -4440,10 +4440,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#94-test_connectionname-kwargs" class="md-nav__link">
+  <a href="#94-test_connectioneffective" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9.4 test_connection(name, kwargs)
+        9.4 test_connection(effective)
       
     </span>
   </a>
@@ -4679,6 +4679,13 @@
 <td><code>web.app</code>、litellm</td>
 </tr>
 <tr>
+<td>页面语言</td>
+<td><code>web/i18n.py</code></td>
+<td>页面文案与语言选择</td>
+<td><code>STRINGS</code>、<code>LANGUAGES</code>、<code>locale_of</code></td>
+<td><code>paths</code></td>
+</tr>
+<tr>
 <td>配置 API</td>
 <td><code>web/config_api.py</code></td>
 <td>配置分层、脱敏、写回、连通性测试</td>
@@ -4694,7 +4701,7 @@
 </tr>
 <tr>
 <td>前端</td>
-<td><code>web/static/app.js</code> + <code>templates/*.html</code></td>
+<td><code>web/static/app.js</code> + <code>templates/{en,zh}/*.html</code></td>
 <td>三个页面的渲染与交互</td>
 <td><code>render(item)</code> 等</td>
 <td>纯 REST/SSE</td>
@@ -4730,7 +4737,7 @@
 <tr>
 <td><code>USER_MESSAGE</code></td>
 <td><code>user_message</code></td>
-<td><code>content</code></td>
+<td><code>content</code>、<code>original</code>（hook 改写前的用户原话）</td>
 </tr>
 <tr>
 <td><code>ASSISTANT_MESSAGE</code></td>
@@ -4776,6 +4783,11 @@
 <td><code>COMPACTION</code></td>
 <td><code>compaction</code></td>
 <td><code>tokens</code>、<code>cost</code></td>
+</tr>
+<tr>
+<td><code>VERIFY</code></td>
+<td><code>verify</code></td>
+<td><code>commands</code>、<code>failed</code></td>
 </tr>
 <tr>
 <td><code>REFLECTION</code></td>
@@ -5001,6 +5013,14 @@
 <tr>
 <td><code>loop() -&gt; AgentLoop</code></td>
 <td>懒建并缓存；建好后 <code>loop.cancel = self.cancel.is_set</code></td>
+</tr>
+<tr>
+<td><code>mode() -&gt; str</code></td>
+<td>会话的权限模式：loop 已建用它的策略，否则用自己记下的，再回落配置</td>
+</tr>
+<tr>
+<td><code>set_mode(mode)</code></td>
+<td>原地改策略与 <code>session.permission_mode</code>，并发一条 <code>mode_changed</code> 条目</td>
 </tr>
 <tr>
 <td><code>status() -&gt; dict</code></td>
@@ -5280,12 +5300,22 @@
 <tr>
 <td>GET</td>
 <td><code>/api/config</code></td>
-<td><code>{"model": model_view, "sources": {...}, "layers": [...], "user_config_path": str}</code></td>
+<td><code>{"model": model_view, "permissions": permissions_view, "sources": {...}, "layers": [...], "user_config_path": str}</code></td>
 </tr>
 <tr>
 <td>PUT</td>
 <td><code>/api/config/model</code></td>
 <td><code>{"ok", "path", "model"}</code></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/config/model/key</code></td>
+<td><code>{"api_key": ...}</code> —— 设置页要回填密码框</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/config/permissions</code></td>
+<td><code>{"ok", "path", "permissions"}</code>；非法模式 → <strong>400</strong></td>
 </tr>
 <tr>
 <td>POST</td>
@@ -5420,7 +5450,7 @@
 <td>名字里含这些词的一律当密钥</td>
 </tr>
 <tr>
-<td><code>DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules")</code></td>
+<td><code>DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")</code></td>
 <td>直接在 <code>model:</code> 下的字段</td>
 </tr>
 <tr>
@@ -5484,9 +5514,9 @@
 <td>见 §9.3</td>
 </tr>
 <tr>
-<td><code>effective_model(cwd, overrides) -&gt; (name, kwargs)</code></td>
-<td></td>
-<td>当前配置 + 表单里的覆盖</td>
+<td><code>effective_model(cwd, overrides) -&gt; dict</code></td>
+<td><code>{model_name, requested, alias, litellm_config, model_kwargs}</code></td>
+<td>当前配置 + 表单里的覆盖；别名在这里解析</td>
 </tr>
 <tr>
 <td><code>provider_of(model_name) -&gt; str</code></td>
@@ -5504,14 +5534,14 @@
 <td>agent 真正会用的 key：<strong>配置 &gt; 别名文件 &gt; 环境变量</strong></td>
 </tr>
 <tr>
-<td><code>test_connection(name, kwargs) -&gt; dict</code></td>
+<td><code>test_connection(effective: dict) -&gt; dict</code></td>
 <td></td>
-<td>一次 <code>max_tokens=1</code> 的调用</td>
+<td>一次 <code>max_tokens=1</code> 的调用；<code>effective</code> 是 <code>effective_model()</code> 的结果</td>
 </tr>
 </tbody>
 </table>
 <p><strong><code>model_view</code> 的字段</strong></p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"api_base"</span><span class="p">,</span> <span class="s2">"api_key_set"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="s2">"api_key_hint"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"litellm_config"</span><span class="p">,</span> <span class="s2">"api_base"</span><span class="p">,</span> <span class="s2">"api_key_set"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="s2">"api_key_hint"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
  <span class="s2">"max_retries"</span><span class="p">,</span> <span class="s2">"set_cache_control"</span><span class="p">,</span> <span class="s2">"routing"</span><span class="p">,</span> <span class="s2">"routing_rules"</span><span class="p">,</span>
  <span class="s2">"model_kwargs"</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="n">不含密钥</span><span class="o">...</span><span class="p">}}</span>
 </code></pre></div>
@@ -5557,7 +5587,7 @@
 <p><strong>只写用户级文件</strong>，项目级 <code>.coderagent/config.yaml</code> 永远不动（它会进 git）。
 未知顶层段（<code>agent:</code>/<code>tools:</code>/<code>mcp:</code>…）与未知的 <code>model:</code> 子键原样保留。
 <strong>已知代价：注释会丢</strong>（<code>yaml.safe_dump</code>，不引 ruamel）。</p>
-<h3 id="94-test_connectionname-kwargs">9.4 <code>test_connection(name, kwargs)</code></h3>
+<h3 id="94-test_connectioneffective">9.4 <code>test_connection(effective)</code></h3>
 <ul>
 <li>临时把 <code>MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT</code> 设成 <code>1</code>（<strong>错的 key 要立刻失败，不是重试十次</strong>），
   结束后恢复原值。</li>
@@ -5580,7 +5610,7 @@
 <tr>
 <td><code>policy_for(config, cwd) -&gt; PermissionPolicy</code></td>
 <td></td>
-<td>权限策略<strong>但不含规则</strong> —— 规则能让 <code>allow</code> 越过边界检查</td>
+<td>权限策略<strong>但不含规则</strong> —— 规则<strong>不能</strong>放宽边界检查</td>
 </tr>
 <tr>
 <td><code>resolve(cwd, path, policy) -&gt; Path</code></td>
@@ -5608,8 +5638,10 @@
 <div class="highlight"><pre><span></span><code>Path.resolve()  →  policy.within_bounds(path)  →  工具自己的 resolve_path
 </code></pre></div>
 <blockquote>
-<p><strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>：<code>tools/permissions.py</code> 允许 <code>allow</code> 规则覆盖边界，
-那等于把整块磁盘暴露给浏览器。必须用 <code>within_bounds</code>。</p>
+<p><strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>：<code>evaluate</code> 判的是「这条调用允不允许」，
+不是「这个路径在不在范围内」。规则<strong>不能</strong>放宽边界
+（<code>tools/permissions.py</code> 的 <code>within_bounds</code>：「The rules of the user cannot widen this」），
+但混用两套语义仍然不对。必须用 <code>within_bounds</code>。</p>
 </blockquote>
 <hr>
 <h2 id="11-webstaticappjs">11. 前端 <code>web/static/app.js</code></h2>
@@ -5814,6 +5846,7 @@
 </blockquote>
 <hr>
 <h2 id="12-webtemplates">12. 模板 <code>web/templates/</code></h2>
+<p>模板<strong>按语言各一套</strong>：<code>templates/en/</code> 与 <code>templates/zh/</code>，每套四个文件。</p>
 <table>
 <thead>
 <tr>
@@ -5838,9 +5871,15 @@
 <td>模型表单</td>
 <td><code>#model-name</code>、<code>#api-base</code>、<code>#api-key</code>、<code>#max-retries</code>、<code>#set-cache-control</code>、<code>#routing</code>、<code>#routing-rules</code>、<code>#model-kwargs</code>、<code>#layers</code>、<code>#config-path</code>、<code>#config-message</code>、<code>#test-connection</code>、<code>source-&lt;field&gt;</code></td>
 </tr>
+<tr>
+<td><code>macros.html</code></td>
+<td>两套页面共用的宏</td>
+<td>—</td>
+</tr>
 </tbody>
 </table>
-<p>模板只渲染外壳，<strong>逻辑全在 <code>app.js</code></strong>。</p>
+<p>模板只渲染外壳，<strong>逻辑全在 <code>app.js</code></strong>。语言的选择在 <code>web/i18n.py</code>：先看 cookie，
+再看访客地区（代理头或 geoip），页面上的语言框会写 cookie（<code>/lang/{language}</code>）。</p>
 <hr>
 <h2 id="13">13. 不变量清单</h2>
 <p>写代码与写测试时都对着这张表检查：</p>

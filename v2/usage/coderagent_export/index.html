@@ -3875,7 +3875,7 @@
 The <code>export</code> command turns it into a trace, with the metrics of the session.</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>trace.json
 coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--session<span class="w"> </span><span class="m">20261106</span>-a1b2c3<span class="w"> </span>--format<span class="w"> </span>otel<span class="w"> </span>--out<span class="w"> </span>trace.otlp
-coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--cwd<span class="w"> </span>.<span class="w">                       </span><span class="c1"># the last session of this directory</span>
+coder<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--cwd<span class="w"> </span>.<span class="w">                       </span><span class="c1"># the newest session of this directory</span>
 </code></pre></div>
 <p>Without <code>--out</code> the trace goes to the standard output.</p>
 <h2 id="the-json-format">The json format</h2>
@@ -3883,8 +3883,25 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 mini-swe-agent:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"trajectory_format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"coder-agent-1.0"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"session"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261106-a1b2c3"</span><span class="p">,</span><span class="w"> </span><span class="nt">"cwd"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/me/project"</span><span class="p">,</span><span class="w"> </span><span class="nt">"turn_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span><span class="p">},</span>
-<span class="w">  </span><span class="nt">"events"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user_message"</span><span class="p">,</span><span class="w"> </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="mf">1762310400.0</span><span class="p">,</span><span class="w"> </span><span class="nt">"payload"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fix the test"</span><span class="p">}}],</span>
+<span class="w">  </span><span class="nt">"session"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261106-a1b2c3"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"cwd"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/me/project"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="mf">1762310400.0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"updated_at"</span><span class="p">:</span><span class="w"> </span><span class="mf">1762310900.0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"done"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"model_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"deepseek/deepseek-flash"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"permission_mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"default"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"turn_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"events"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"20261106-a1b2c3"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user_message"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="mf">1762310400.0</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"payload"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fix the test"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
 <span class="w">  </span><span class="nt">"metrics"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"total_tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">120433</span><span class="p">,</span>
@@ -3896,10 +3913,13 @@ mini-swe-agent:</p>
 <span class="w">    </span><span class="nt">"per_model_cost"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"deepseek/deepseek-flash"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.38</span><span class="p">},</span>
 <span class="w">    </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">412.3</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"summary_ratios"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.06</span><span class="p">,</span><span class="w"> </span><span class="mf">0.07</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">],</span>
 <span class="w">    </span><span class="nt">"errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
+<p><code>summary_ratios</code> holds one number per compaction: how much of the compacted
+history the summary kept. It is the gauge of the quality of the summary.</p>
 <h2 id="the-otel-format">The otel format</h2>
 <p>The same session as OTLP/JSON: one span per turn, one span per tool call. The
 file goes into Jaeger, Tempo or any other place that reads OTLP.</p>
@@ -3928,6 +3948,7 @@ by purpose, by model and by tool:</p>
 <div class="highlight"><pre><span></span><code>model: deepseek/deepseek-flash
 calls: 9
 tokens in the context: 120433
+tokens spent: 128854
 cost so far: $0.4200
 cost: $0.4200
 tokens: 120433 in, 8421 out

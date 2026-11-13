@@ -4031,12 +4031,15 @@ has to land on a turn boundary, and a turn that never happened cannot be cut.
 A task that wants to see the compaction — and to measure the size of the
 summary — needs more than one prompt.</p>
 <p>The <code>verify</code> commands are the judgement of the task: the task passed when all of
-them exit with 0. A task without a <code>verify</code> never passes, so a suite cannot
-pass by doing nothing.</p>
+them exit with 0. A task without a <code>verify</code> is refused when the suite is
+loaded, so a suite cannot pass by doing nothing.</p>
 <p><code>expect: fail</code> is for the tasks that must <em>not</em> pass: a guard that keeps the
 suite honest, because a check that never fails would let every task pass. The
 report says whether a task did what it was supposed to do (<code>as_expected</code>), and
-the summary counts the ones that did not (<code>unexpected</code>).</p>
+the summary counts the ones that did not (<code>unexpected</code>). A guard that failed as
+it should is still a failed task in the pass rate of the report: the pass rate
+counts what the verify commands said, the comparison is the one that leaves the
+guards out.</p>
 <p><code>require_tools</code> names what the task needs from the tools: one of the requirements
 has to be met. The result of the task alone is not enough, because an agent
 that rewrites the file with the shell would pass the check while the tool
@@ -4122,7 +4125,9 @@ the worst of them are in the summary of the run.</p>
 <p>The fingerprint is the hash of the configuration the agent ran with: the model,
 the system prompt, the tools, the permission mode, the context and the sandbox.
 Two runs with the same fingerprint are comparable, two runs with a different one
-are not: the harness changed, so the numbers moved for that reason.</p>
+are not: the configuration changed, so the numbers moved for that reason. It is
+a hash of the configuration and not of the code, so a change of the harness that
+touches nothing in the configuration leaves the fingerprint alone.</p>
 <p>The input of the fingerprint is in the report as well, so a diff of two reports
 says <em>what</em> changed:</p>
 <div class="highlight"><pre><span></span><code>diff<span class="w"> </span>&lt;<span class="o">(</span>jq<span class="w"> </span>-S<span class="w"> </span>.tasks<span class="w"> </span>before.json<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>jq<span class="w"> </span>-S<span class="w"> </span>.tasks<span class="w"> </span>after.json<span class="o">)</span>
@@ -4133,9 +4138,11 @@ model. The sessions, the checkpoints, the rules and the memory of the user go to
 a temporary directory, so a run of the eval does not touch the data of the user
 nor the repository.</p>
 <p>The file tools cannot leave the working directory, not even in the <code>bypass</code>
-mode. The <code>bash</code> tool can: <strong>a local eval runs the commands the model writes on
-your machine.</strong> Run it in a container, or with a sandbox type of your choice
-(<code>sandbox.type</code> in the configuration).</p>
+mode, and neither can the <code>bash</code> tool: a command that names a path outside of it
+is refused in every mode. What a local eval does run on your machine is the
+command itself: <strong>a local eval runs the commands the model writes.</strong> Run it in
+a container, or with a sandbox type of your choice (<code>sandbox.type</code> in the
+configuration).</p>
 <h2 id="the-comparison">The comparison</h2>
 <p>Two reports of the same suite say whether a change of the harness made the agent
 worse:</p>
@@ -4145,7 +4152,8 @@ worse:</p>
 that used to pass does not pass any more. Only the tasks that both runs have
 are compared, and a task with <code>expect: fail</code> is not a rate but a guard.</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>eval-compare<span class="w"> </span>after.json<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="o">[</span>--against<span class="w"> </span>before.json<span class="o">]</span><span class="w"> </span><span class="o">[</span>--max-regressions<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--max-drop<span class="w"> </span>R<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="o">]</span>
+<span class="w">  </span><span class="o">[</span>--against<span class="w"> </span>before.json<span class="o">]</span><span class="w"> </span><span class="o">[</span>--max-regressions<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--max-drop<span class="w"> </span>R<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="o">[</span>--same-config<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="o">]</span><span class="w"> </span><span class="o">[</span>--out<span class="w"> </span>FILE<span class="o">]</span>
 </code></pre></div>
 <ul>
 <li>Without <code>--against</code> the report is only checked against what its tasks were
@@ -4157,6 +4165,9 @@ are compared, and a task with <code>expect: fail</code> is not a rate but a guar
   rate. A task that regressed is forgiven by the margin, not reported twice.
   The guard of a suite and a task the harness could not grade are never
   forgiven.</li>
+<li><code>--same-config</code> says nothing when the two runs did not run the same
+  configuration: the numbers of two different configurations say nothing about
+  the change, so the comparison says nothing and the exit code is zero.</li>
 </ul>
 <h2 id="the-check-of-the-pull-request">The check of the pull request</h2>
 <p><code>.github/workflows/eval.yaml</code> runs the suite of the pull request, runs it
@@ -4169,18 +4180,21 @@ coder<span class="w"> </span>eval-compare<span class="w"> </span>head.json<span 
 </code></pre></div>
 <p>The suite of the CI is <code>evals/offline</code>: every task of it is scripted, so the
 check needs no API key and says the same thing every time. It holds a task that
-must fail, so the check of the suite cannot be vacuous.</p>
+must fail, so the check of the suite cannot be vacuous. Both runs of the
+comparison use that same suite; the pull request decides whether the check
+runs at all, by the files it touches.</p>
 <p>The job <code>live</code> does the same with <code>evals/basic</code> and the real model. It is
 manual, it needs the secrets of the model, and it forgives nothing: the real
 model is not deterministic, so a failure of the job is a reason to run it
-again, not a verdict.</p>
+again, not a verdict. It compares with <code>--same-config</code>, so a run that changed
+the configuration says nothing instead of blaming the change.</p>
 <p>The two jobs are not equally sensitive. The scripted one is exact: a harness
 that breaks a tool fails its task, and the job says so. The live one is not:
 a model that meets a broken tool often finds another way, so a broken harness
-can cost a single task out of eight. The scripted job is the gate; the live
+can cost a single task out of nine. The scripted job is the gate; the live
 one is the signal.</p>
 <h2 id="the-example-suite">The example suite</h2>
-<p><code>evals/basic</code> holds eight tasks. They have no <code>script</code>, so they run against the
+<p><code>evals/basic</code> holds nine tasks. They have no <code>script</code>, so they run against the
 real model and they need an API key:</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span><span class="nb">eval</span><span class="w"> </span>evals/basic<span class="w"> </span>--label<span class="w"> </span>live-1<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--out<span class="w"> </span>/tmp/eval.json
 </code></pre></div>
@@ -4219,6 +4233,10 @@ real model and they need an API key:</p>
 <tr>
 <td><code>grep-count</code></td>
 <td>a question about the files of the repository, answered in a file</td>
+</tr>
+<tr>
+<td><code>long-conversation</code></td>
+<td>several turns in one session, so that the context has to be compacted</td>
 </tr>
 <tr>
 <td><code>no-op</code></td>

@@ -3968,6 +3968,11 @@
 </thead>
 <tbody>
 <tr>
+<td><code>type</code></td>
+<td>hook 的种类。只实现了 <code>command</code></td>
+<td><code>command</code></td>
+</tr>
+<tr>
 <td><code>matcher</code></td>
 <td>工具名的正则。空表示所有工具</td>
 <td></td>
@@ -3989,8 +3994,11 @@
 </tr>
 </tbody>
 </table>
-<p>项目的 hook 写在 <code>.coderagent/config.yaml</code>，用户的 hook 写在 <code>~/.coderagent/config.yaml</code>。插件也可以带 hook。</p>
-<p><code>matcher</code> 是拿工具名去匹配的，所以它只对 <code>PreToolUse</code> 和 <code>PostToolUse</code> 有意义。其它事件留空就行。</p>
+<p>项目的 hook 写在 <code>.coderagent/config.yaml</code>，用户的 hook 写在 <code>~/.coderagent/config.yaml</code>。插件也可以带 hook。
+两个文件像其它配置一样合并：事件是合并的，但同一个事件下 hook 的那份列表会被用户那份整个换掉。</p>
+<p><code>matcher</code> 是拿工具名去匹配的，所以它只对 <code>PreToolUse</code> 和 <code>PostToolUse</code> 有意义。其它事件留空就行。
+它是<strong>搜出来的正则，不是从头对上的</strong>：工具名 <code>multi_edit</code> 会被 <code>edit|write</code> 匹配上；大小写敏感，
+所以 <code>Bash</code> 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。</p>
 <h2 id="_2">六个时刻</h2>
 <table>
 <thead>
@@ -4014,7 +4022,7 @@
 <tr>
 <td><code>PreToolUse</code></td>
 <td>工具跑之前</td>
-<td>允许、拒绝，或者改写参数</td>
+<td>拒绝，或者改写参数</td>
 </tr>
 <tr>
 <td><code>PostToolUse</code></td>
@@ -4028,11 +4036,12 @@
 </tr>
 <tr>
 <td><code>SessionEnd</code></td>
-<td>会话结束</td>
+<td>这一轮结束</td>
 <td>什么也不做，是个通知</td>
 </tr>
 </tbody>
 </table>
+<p><code>SessionEnd</code> 是每一轮结束时都跑，不是只在整个会话结束时。</p>
 <p>每个事件读到的内容不一样：</p>
 <table>
 <thead>
@@ -4080,11 +4089,13 @@
 </code></pre></div>
 <p>可以写的键：</p>
 <ul>
-<li><code>decision</code>：<code>allow</code>、<code>deny</code> 或 <code>block</code>。</li>
+<li><code>decision</code>：<code>allow</code>、<code>deny</code> 或 <code>block</code>。<strong>只有 <code>deny</code> 和 <code>block</code> 会被看</strong>——
+  <code>allow</code> 什么也不做：它既不会批准这次调用，也不会跳过权限检查。</li>
 <li><code>reason</code>：为什么。它会作为工具的错误回到模型那里。</li>
 <li><code>additionalContext</code>：给模型看的一句话。</li>
-<li><code>updatedInput</code>：这一刻的新输入。<code>PreToolUse</code> 和 <code>PostToolUse</code> 里它是一个映射，
-  替换掉工具的参数；<code>UserPromptSubmit</code> 里它是一个字符串，替换掉用户的提问。</li>
+<li><code>updatedInput</code>：这一刻的新输入。<code>PreToolUse</code> 里它是一个映射，替换掉工具的参数；
+  <code>UserPromptSubmit</code> 里它是一个字符串，替换掉用户的提问。<code>PostToolUse</code> 里工具已经跑完了，
+  给映射也换不了什么。</li>
 </ul>
 <p>标准输出是空的，意思就是这个 hook 没有意见。几个 hook 的答案会合并起来：<code>deny</code>
 压过其他一切，上下文拼在一起，<code>updatedInput</code> 取最后一个。</p>
@@ -4106,8 +4117,12 @@
 <td>工具用新的参数跑</td>
 </tr>
 <tr>
+<td><code>PreToolUse</code> 允许</td>
+<td>什么也不发生。权限检查照旧</td>
+</tr>
+<tr>
 <td><code>PostToolUse</code> 拒绝</td>
-<td>工具的结果变成一个错误</td>
+<td>回给模型的那条消息变成一个错误，日志里工具的结果照旧</td>
 </tr>
 <tr>
 <td><code>PostToolUse</code> 补上下文</td>
@@ -4127,7 +4142,7 @@
 </tr>
 <tr>
 <td><code>Stop</code> 拒绝</td>
-<td>agent 接着干，理由作为一条新消息给它</td>
+<td>agent 接着干，理由作为一条新消息给它（每轮最多三次）</td>
 </tr>
 </tbody>
 </table>

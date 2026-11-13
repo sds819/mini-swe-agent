@@ -4002,6 +4002,10 @@ the main loop should get stronger when the job gets big.</p>
 <td>A cheaper model takes over</td>
 </tr>
 <tr>
+<td>The token budget is 80% used</td>
+<td>A cheaper model takes over</td>
+</tr>
+<tr>
 <td>The context is over 50k tokens</td>
 <td>A stronger model takes over</td>
 </tr>
@@ -4011,6 +4015,9 @@ the main loop should get stronger when the job gets big.</p>
 </tr>
 </tbody>
 </table>
+<p>The budget is <code>agent.cost_limit</code> and the token budget is <code>agent.token_limit</code>. A
+model without a price spends no money, so the token budget is the budget that
+counts for it.</p>
 <p>A stronger model only takes over when <code>routing.strong</code> is set. A cheaper one
 only takes over when <code>routing.cheap</code> is set.</p>
 <h2 id="your-own-rules">Your own rules</h2>
@@ -4058,6 +4065,14 @@ of the session:</p>
 <td><code>budget</code></td>
 <td>The cost limit of the session</td>
 </tr>
+<tr>
+<td><code>tokens_used</code></td>
+<td>The tokens the session has used</td>
+</tr>
+<tr>
+<td><code>token_budget</code></td>
+<td>The token limit of the session</td>
+</tr>
 </tbody>
 </table>
 <p>The rules are <strong>parsed, not evaluated</strong>. A condition that is not of that form
@@ -4070,10 +4085,10 @@ the main loop. The first rule that holds wins.</p>
 message comes into the conversation of the interface:</p>
 <div class="highlight"><pre><span></span><code>Switched from deepseek/deepseek-flash to anthropic/claude-opus-4-1: the context has grown
 </code></pre></div>
-<p>The reason is one of these: the budget is nearly used up, the context has
-grown, the session has many turns, or the rule that held. In the trace the
-change is a <code>state_change</code> event, with the model, the previous one and the
-reason.</p>
+<p>The reason is one of these: the budget is nearly used up, the token budget is
+nearly used up, the context has grown, the session has many turns, or the rule
+that held. In the trace the change is a <code>state_change</code> event, with the model,
+the previous one and the reason.</p>
 <h2 id="changing-the-model-by-hand">Changing the model by hand</h2>
 <div class="highlight"><pre><span></span><code>/model<span class="w">                </span><span class="c1"># the model of the session and the routing</span>
 /model<span class="w"> </span>deepseek/deepseek-chat

@@ -4246,8 +4246,8 @@ coder<span class="w"> </span>web
 <span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><code>stop_reason</code> 有五种：<code>end_turn</code>、<code>max_turns</code>、<code>cost_exceeded</code>、<code>interrupted</code>、<code>error</code>。</p>
-<p><strong>没有终端就没人能批准操作</strong>，所以默认模式下需要批准的调用一律被拒（拒绝的原因会告诉模型，模型会换个做法）。
+<p><code>stop_reason</code> 有七种：<code>end_turn</code>、<code>max_turns</code>、<code>cost_exceeded</code>、<code>token_limit</code>、<code>verify_failed</code>、<code>interrupted</code>、<code>error</code>。</p>
+<p><strong>没有终端就没人能批准操作</strong>，所以默认模式下需要批准的调用一律被拒（模型只会看到「用户拒绝了」，看不到拒绝的理由，模型会换个做法）。
 脚本里如果确实需要它动手，加 <code>--permission-mode bypass</code>：</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"..."</span><span class="w"> </span>--permission-mode<span class="w"> </span>bypass
 </code></pre></div>
@@ -4277,20 +4277,24 @@ coder<span class="w"> </span>web
 <td><code>readonly</code></td>
 <td>同 plan，但 agent 被告知只描述改动、不动手</td>
 </tr>
+<tr>
+<td><code>bypass</code></td>
+<td>全放行。只在容器或一次性 checkout 里用</td>
+</tr>
 </tbody>
 </table>
-<p><code>plan</code> 和 <code>readonly</code> 把写文件的工具收走了，所以模型会被告知这件事：一段
+<p><code>plan</code> 和 <code>readonly</code> 让权限层拒掉写文件的工具，所以模型会被告知这件事：一段
 <code>&lt;permission_mode mode="..."&gt;</code> 的说明会进到对话里，说清楚它现在能做什么、
-应该改成回答什么。模式一变，这段说明也跟着变。
-| <code>bypass</code> | 全放行。只在容器或一次性 checkout 里用 |</p>
-<p>界面里被问到的时候：<code>y</code> 允许这一次，<code>n</code> 拒绝，<code>a</code> 本次会话都允许。
+应该改成回答什么。模式一变，这段说明也跟着变。</p>
+<p>界面里被问到的时候：<code>y</code> 允许这一次，<code>n</code> 拒绝，<code>a</code> 永远允许——它会把一条规则写进
+<code>~/.coderagent/rules.yaml</code>，以后这个文件（或这条命令）都放行，所有会话都算。
 选项是一行一个、带编号的方框，选中的那个是红星 <code>[*]</code>，没选的是灰杠 <code>[-]</code>：</p>
 <div class="highlight"><pre><span></span><code>1 [*] y allow
 2 [-] n deny
 3 [-] a always allow
 </code></pre></div>
 <p>方向键（<code>←</code>/<code>→</code> 或 <code>↑</code>/<code>↓</code>）移动选中项，数字键直接跳到那一项，回车确认。
-拒绝的理由会回到模型，模型会改主意而不是硬来。</p>
+拒绝会回到模型，模型会改主意而不是硬来。</p>
 <p>想固定某些规则，写在 <code>.coderagent/rules.yaml</code>（项目）和 <code>~/.coderagent/rules.yaml</code>（用户）：</p>
 <div class="highlight"><pre><span></span><code><span class="nt">rules</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">tool</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash</span>
@@ -4300,7 +4304,8 @@ coder<span class="w"> </span>web
 <span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"tests/**"</span>
 <span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
 </code></pre></div>
-<p><code>decision</code> 是 <code>allow</code> / <code>ask</code> / <code>deny</code>，最后一条匹配上的规则赢。</p>
+<p><code>decision</code> 是 <code>allow</code> / <code>ask</code> / <code>deny</code>：路径类工具最后一条匹配上的规则赢，
+命令则是分段判断、最严的那段说了算。</p>
 <h2 id="commands">常用命令</h2>
 <p>会话里以 <code>/</code> 开头的是命令，其余都是给 agent 的话。常用的几个：</p>
 <table>
@@ -4333,7 +4338,7 @@ coder<span class="w"> </span>web
 </tr>
 <tr>
 <td><code>/init</code></td>
-<td>给项目生成一份 <code>AGENTS.md</code></td>
+<td>给项目写一份模板 <code>AGENTS.md</code>（不问模型）</td>
 </tr>
 <tr>
 <td><code>/todos</code></td>
@@ -4439,12 +4444,13 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 <h2 id="faq">常见问题</h2>
 <p><strong>「找不到 API key」</strong>
 key 必须在环境变量里，或者在 <code>mini-extra config edit</code> 打印的那个 <code>.env</code> 里。
-<code>coder</code> 启动时会静默地读这个 <code>.env</code>，读不到就报认证错误。
+<code>coder</code> 启动时会读这个 <code>.env</code>（启动横幅会打印它的路径，想安静就设
+<code>MSWEA_SILENT_STARTUP=1</code>），读不到就报认证错误。
 查一下当前进程里到底有没有：</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import coderagent.ui.cli, os; print(os.getenv('ANTHROPIC_API_KEY'))"</span>
 </code></pre></div>
 <p><strong>「改了文件但我没同意」</strong>
-默认模式下写文件要批准，界面里按 <code>y</code> 允许这一次、<code>a</code> 本次会话都允许。或者用 <code>/mode acceptEdits</code>。脚本里用 <code>--permission-mode bypass</code>。</p>
+默认模式下写文件要批准，界面里按 <code>y</code> 允许这一次、<code>a</code> 永远允许（会写一条规则进 <code>~/.coderagent/rules.yaml</code>）。或者用 <code>/mode acceptEdits</code>。脚本里用 <code>--permission-mode bypass</code>。</p>
 <p><strong>「agent 一直问我要批准」</strong>
 在 <code>.coderagent/rules.yaml</code> 里放一条规则，把这个工具定成 <code>allow</code>。</p>
 <p><strong>「上下文满了 / 越聊越慢」</strong>

@@ -4023,9 +4023,9 @@ project memory and on the pending file, not on the file of the user.</p>
 <ul>
 <li>A fact that is already there is not written twice. The comparison ignores
   the case and the punctuation.</li>
-<li>The project memory does not grow past 200 lines. When it would, nothing is
-  written and the agent says so in the log: the file has to be tidied up
-  first.</li>
+<li>The project memory does not grow past 200 lines. The pending file has the same
+  limit. When it would, nothing is written and the agent says so in the log:
+  the file has to be tidied up first.</li>
 <li>The preferences of the user are never written without the confirmation.</li>
 <li>The project facts are written without a confirmation: they are about the
   project, and the user can change them like any other file.</li>
@@ -4035,17 +4035,23 @@ project memory and on the pending file, not on the file of the user.</p>
 it is not in the <code>cost</code> of a turn, but it is in the bill of the session: it
 lands in the event log, and <code>session_cost</code>, <code>/cost</code> and <code>coder export</code> count
 it.</p>
-<p>A turn that failed or that ran out of budget is not settled: there is
-nothing to remember, and no money to do it.</p>
+<p>A turn that failed or that ran out of the money budget is not settled: there is
+nothing to remember, and no money to do it. A turn that stopped at the token
+limit is settled like any other.</p>
 <h2 id="turning-it-off">Turning it off</h2>
 <div class="highlight"><pre><span></span><code><span class="nt">memory</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
-<p>The model is not even asked. The paths of the files are yours to change:</p>
+<p>The model is not even asked, and the memory of the project and of the user is
+not put into the context of the model any more. The path of the project file
+is yours to change, the path of the user file only in its file name — it is
+always written into the directory of the user:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">memory</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">project_path</span><span class="p">:</span><span class="w"> </span><span class="s">".coderagent/memory"</span>
 <span class="w">  </span><span class="nt">user_path</span><span class="p">:</span><span class="w"> </span><span class="s">"~/.coderagent/CLAUDE.md"</span>
 </code></pre></div>
+<p>The file with the preferences that wait for a confirmation is always
+<code>&lt;cwd&gt;/.coderagent/pending-memory.md</code>.</p>
 
 
 

@@ -4916,9 +4916,14 @@
 <span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">],</span>
 <span class="w">  </span><span class="nt">"files_touched"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">],</span>
 <span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.03</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"turns"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">  </span><span class="nt">"turns"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cheap"</span>
 <span class="p">}</span>
 </code></pre></div>
+<blockquote>
+<p><code>purpose</code> 是子 agent 用的那个模型档位（<code>cheap</code> / <code>main</code>），成本记在它名下——
+不是记在一个叫 <code>subagent</code> 的 purpose 下。</p>
+</blockquote>
 <h3 id="24-agent">2.4 子 Agent 定义文件</h3>
 <p><code>.coderagent/agents/&lt;name&gt;.md</code>：</p>
 <div class="highlight"><pre><span></span><code>---
@@ -4937,7 +4942,7 @@ model_purpose: cheap
 
 不要修改任何文件。
 </code></pre></div>
-<p><strong>加载</strong>：项目级 <code>.coderagent/agents/</code> + 用户级 <code>~/.coderagent/agents/</code>（用户级可覆盖同名）。</p>
+<p><strong>加载</strong>：项目级 <code>.coderagent/agents/</code> + 用户级 <code>~/.coderagent/agents/</code>（<strong>同名时项目覆盖用户</strong>）。</p>
 <p><strong>内置子 agent</strong></p>
 <table>
 <thead>
@@ -5122,6 +5127,10 @@ pip 安装的 entry point group "coderagent.plugins"
 <td>Modal 上的远程执行</td>
 </tr>
 <tr>
+<td><code>bubblewrap</code></td>
+<td>无 root 的受限容器</td>
+</tr>
+<tr>
 <td><code>contree</code></td>
 <td>无 root 的受限容器</td>
 </tr>
@@ -5146,10 +5155,15 @@ pip 安装的 entry point group "coderagent.plugins"
 <span class="w">    </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"total_tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">120433</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"total_tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">8421</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"model_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"tool_calls"</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">"per_tool"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"read"</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span><span class="w"> </span><span class="nt">"bash"</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="nt">"edit"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">},</span>
 <span class="w">    </span><span class="nt">"per_purpose_cost"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"main"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.38</span><span class="p">,</span><span class="w"> </span><span class="nt">"summarize"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.04</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"per_model_cost"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"nengpa/minimax-m2.7"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.42</span><span class="p">},</span>
 <span class="w">    </span><span class="nt">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">412.3</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">    </span><span class="nt">"compactions"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"summary_ratios"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0656</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"errors"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5231,7 +5245,7 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 <td>路由规则求值、预算降档、上下文升级</td>
 </tr>
 <tr>
-<td><code>extensions/test_memory.py</code></td>
+<td><code>extensions/test_reflect.py</code></td>
 <td>沉淀写入、去重、用户记忆需确认</td>
 </tr>
 <tr>
@@ -5243,7 +5257,7 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 <td>发现、信任确认、注册</td>
 </tr>
 <tr>
-<td><code>test_export.py</code></td>
+<td><code>core/test_telemetry.py</code></td>
 <td>trace 格式、指标正确性</td>
 </tr>
 </tbody>
@@ -5354,7 +5368,7 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 </ul>
 <h3 id="137">13.7 可观测性</h3>
 <ul>
-<li><code>coder</code> 变成了一个命令组：主命令还是 <code>coder --task ...</code>，<code>coder export ...</code> 是它的
+<li><code>coder</code> 变成了一个命令组：主命令还是 <code>coder -t/--task ...</code>，<code>coder export ...</code> 是它的
   子命令。<code>coder</code> 不带参数时仍然是终端界面。</li>
 <li>trace 从事件日志算出来，而不是另外记一份。日志是唯一的事实来源。</li>
 <li>成本归因的维度是 purpose（<code>main</code>、子 agent 的档位）、model 和 tool。子 agent 的成本

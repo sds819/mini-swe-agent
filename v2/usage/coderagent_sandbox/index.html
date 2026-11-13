@@ -3969,12 +3969,17 @@ environment: swerex_docker
 <h2 id="the-sandbox-has-no-policy-of-its-own">The sandbox has no policy of its own</h2>
 <p>The sandbox is the environment of mini-swe-agent, so it has no network policy
 and no list of writable directories. A network policy is a property of the
-environment, and it is written there:</p>
+environment, and it is written there — with the options that the environment
+knows. The <code>docker</code> sandbox takes the arguments of the <code>docker</code> command:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swerex_docker</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker</span>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.11</span>
 <span class="w">  </span><span class="nt">run_args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"--rm"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"--network"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"none"</span><span class="p p-Indicator">]</span>
 </code></pre></div>
+<p>Every sandbox has its own options: the <code>swerex_docker</code> one, for instance, takes
+<code>deployment_extra_kwargs</code> for the deployment of SWE-ReX. The options that the
+environment does not know are ignored, so a <code>run_args</code> under <code>swerex_docker</code>
+is dropped without a word.</p>
 <p>The paths the agent may touch are a property of the agent, not of the sandbox.
 They are bounded by the permission layer: <code>permissions.deny_paths</code> for the paths
 that are off limits and <code>permissions.include_dirs</code> for the ones outside the

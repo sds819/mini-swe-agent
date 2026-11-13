@@ -4909,7 +4909,7 @@ M0–M5 落地之后，几处实现与草图不同（下文逐条标出）。要
 读 <a href="../coderagent-answers/">coderagent-answers.md</a>（逐题作答）、
 <a href="../coderagent-context/">coderagent-context.md</a>（上下文专题）和
 <a href="../coderagent-design-logic/">coderagent-design-logic.md</a>（设计逻辑）；要看<strong>怎么一步步做出来的</strong>，
-读 <a href="milestones/">milestones/</a> 下的五份里程碑文档。</p>
+读 <a href="../milestones/M0-skeleton/">milestones/</a> 下的七份里程碑文档。</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 定位与差异</h2>
@@ -5066,6 +5066,9 @@ M0–M5 落地之后，几处实现与草图不同（下文逐条标出）。要
 <hr>
 <h2 id="3">3. 总体分层架构</h2>
 <div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────┐
+│  L6  扩展层  MCP · Hooks · Subagent · Plugin · Skill        │
+│      外部工具 · 事件回调 · 子 agent · 插件 · 技能           │
+├─────────────────────────────────────────────────────────────┤
 │  L5  交互层  CLI(typer) / TUI(textual) / Web(FastAPI+SSE)   │
 │      流式渲染 · diff 预览 · slash 命令 · 审批交互             │
 ├─────────────────────────────────────────────────────────────┤
@@ -5084,7 +5087,7 @@ M0–M5 落地之后，几处实现与草图不同（下文逐条标出）。要
 │  L0  会话内核  Session / Run / EventBus / SessionStore      │
 │      状态机 · 事件流 · 持久化 · 恢复 · 检查点                │
 └─────────────────────────────────────────────────────────────┘
-        ↕  横切：Config(多层 YAML+TOML) · Hooks · Telemetry
+        ↕  横切：Config(多层 YAML) · Hooks · Telemetry
 </code></pre></div>
 <p><strong>数据流（一次 turn）</strong></p>
 <div class="highlight"><pre><span></span><code>User input
@@ -5237,14 +5240,14 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <p><code>ToolRegistry</code> 负责：
 1. 聚合内置工具 + MCP 工具 → 生成 OpenAI/Anthropic 兼容的 <code>tools</code> 参数（沿用 <code>litellm</code>）。
 2. 工具描述按上下文预算裁剪（token 预算不足时优先丢弃低频工具）。
-3. 名称冲突处理（MCP 同名工具加 <code>server__</code> 前缀）。</p>
+3. 名称冲突处理（同名注册会<strong>告警并覆盖</strong>；MCP 工具在注册前就带上了 <code>mcp__&lt;server&gt;__&lt;tool&gt;</code> 的前缀，天然不冲突）。</p>
 <h4 id="claude-code">关键工具语义（对齐 Claude Code）</h4>
 <ul>
 <li><strong><code>edit</code></strong>：字符串精确匹配替换。<strong>必须</strong>要求 <code>old_string</code> 在文件中唯一，否则报错返回。这避免了 <code>sed</code> 式的模糊替换风险。</li>
 <li><strong><code>read</code></strong>：支持 <code>offset</code>/<code>limit</code>，默认带行号（<code>cat -n</code> 风格），大文件自动截断并提示。</li>
 <li><strong><code>grep</code></strong>：<strong>纯 Python 实现</strong>（不用 <code>rg</code>，也不退到 <code>grep -r</code>——<code>rg</code> 在非交互 shell 里常常不在 PATH）。结果带文件路径+行号+内容，且限制默认命中数（避免刷屏）。</li>
 <li><strong><code>glob</code></strong>：按 pattern 排序返回路径列表，超出上限截断。</li>
-<li><strong><code>bash</code></strong>：默认 timeout 120s（<code>tools.bash_timeout</code>）；长命令不阻塞，配 <code>bash_output</code> / <code>bash_kill</code> 取回结果与杀掉进程。</li>
+<li><strong><code>bash</code></strong>：默认 timeout 120s（<code>tools.bash_timeout</code>）；命令<strong>默认是阻塞的</strong>，跑完（或超时）才返回。要放到后台得让模型显式传 <code>run_in_background: true</code>，再用 <code>bash_output</code> / <code>bash_kill</code> 取回结果与杀掉进程。</li>
 <li><strong><code>todo_write</code></strong>：显式任务清单，让模型显式规划（Claude Code 的 ToDo 工具）。</li>
 <li><strong><code>web_fetch</code> / <code>web_search</code></strong>：<strong>未实现</strong>（<code>TRIM_ORDER</code> 里留了位置，将来加工具时直接可用）。</li>
 </ul>
@@ -5267,14 +5270,17 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PermissionPolicy</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""规则求值顺序：deny &gt; ask &gt; allow &gt; 默认策略。"""</span>
+<span class="w">    </span><span class="sd">"""规则求值顺序：路径类工具「最后一条匹配的赢」，bash「每段取最严」。"""</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">PermissionMode</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Rule</span><span class="p">]):</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""返回 allow / ask / deny。"""</span>
 </code></pre></div>
 <p>规则来源分层（后者覆盖前者）：
-<code>内置默认规则</code> → <code>项目级 .coderagent/rules.yaml</code> → <code>用户级 ~/.coderagent/rules.yaml</code> → <code>会话内临时授权</code>（用户输入「总是允许」）。</p>
-<p>「总是允许」需要持久化到用户级规则文件——这是 Claude Code 体验的关键。</p>
+<code>配置文件里的 permissions.rules</code> → <code>项目级 .coderagent/rules.yaml</code> → <code>用户级 ~/.coderagent/rules.yaml</code>；
+最后 <code>permissions.deny_paths</code> 里的路径一律 deny（越界路径在任何模式下都挡）。
+<strong>没有内置默认规则集</strong>（<code>defaults.yaml</code> 里 <code>rules: []</code>）。</p>
+<p>「总是允许」需要持久化到<strong>用户级</strong>规则文件——这是 Claude Code 体验的关键。
+它记的是<strong>那一个文件 / 那一条命令</strong>（不是「这个工具」），reason 写 <code>always allowed by the user</code>。</p>
 <h3 id="44-l3">4.4 L3 上下文引擎</h3>
 <p>这是 mini-SWE-agent 与 Codex/Claude Code 差距最大的一块。mini 假设线性历史永不长；coding agent 必须处理：</p>
 <ol>
@@ -5441,7 +5447,7 @@ Web 版尤其如此——它把每个会话的 turn 放在自己的 worker 线�
 <p><strong>上下文超限的特殊处理</strong>：捕获 <code>ContextWindowExceededError</code> → 强制压缩 → 重发一次。这是真实使用中最高频的失败模式。</p>
 <h3 id="46-l5">4.6 L5 交互层</h3>
 <h4 id="clityper">CLI（typer）</h4>
-<div class="highlight"><pre><span></span><code>coder [task]                       # 主入口，等价于 mini
+<div class="highlight"><pre><span></span><code>coder -t/--task &lt;task&gt;               # 主入口，等价于 mini（任务是选项，不是位置参数）
   -m/--model            模型
   -c/--config           配置（YAML + key=value 覆盖）
   --permission-mode      default|acceptEdits|plan|bypass|readonly
@@ -5616,8 +5622,9 @@ FastAPI 的事件循环里<strong>绝不</strong>跑 agent 代码——碰文件
 <code>--permission-mode</code> 钉死的是会话<strong>开始时</strong>的模式，不是锁。</p>
 <p><strong>文件浏览</strong>：目录树 / 读文件 / 工作区 diff 复用现有工具（<code>list_entries</code>、<code>ReadTool</code>、
 <code>make_diff</code>），路径安全是三层：<code>resolve()</code> → <code>within_bounds()</code> → 工具自己的检查。
-<strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>——<code>allow</code> 规则能越过边界，那会把整块磁盘
-暴露给浏览器。</p>
+<strong>不能用 <code>policy.evaluate("read", ...)</code> 当边界检查</strong>——<code>evaluate</code> 判的是「这条调用允不允许」，
+不是「这个路径在不在范围内」。而且规则<strong>本来就不能</strong>放宽边界：<code>within_bounds</code> 的注释写着
+「The rules of the user cannot widen this」。两套语义混用，会把路径越界当成规则放行。</p>
 <p><strong>安全模型</strong>：默认只听 <code>127.0.0.1</code>；<strong>没有认证</strong>（能访问端口的人就能驱动 agent 在工作目录里
 跑 shell，与 <code>coder</code> 命令行的信任模型相同）；写接口要求 <code>X-Coder-Client: 1</code> 头，跨站浏览器
 发不了（<code>curl</code> 不受影响）；密钥永不明文出服务器。</p>
@@ -5749,7 +5756,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 不是 <code>tools/mcp.py</code> 里的类；客户端在 <code>tools/mcp.py</code>，每个 server 一个线程 + 自己的 event loop。</p>
 </blockquote>
 <ul>
-<li>传输：stdio（<code>mcp</code> python SDK 的 <code>stdio_client</code>）、SSE、Streamable HTTP</li>
+<li>传输：<strong>只实现了 stdio</strong>（<code>mcp</code> python SDK 的 <code>stdio_client</code>）。配置里的 <code>url</code> 字段目前<strong>没有对应的传输实现</strong>——只有 <code>url</code> 没有 <code>command</code> 的服务器不会被启动，也不会出现在 <code>/mcp</code> 的连接列表里。</li>
 <li>工具命名：<code>mcp__&lt;server&gt;__&lt;tool&gt;</code></li>
 <li>生命周期：随 Session 创建/销毁；断线自动重连一次</li>
 <li>MCP server 提供的 resources/prompts 作为只读上下文注入（<strong>未实现</strong>，目前只接工具）</li>
@@ -5798,15 +5805,22 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 </tbody>
 </table>
 <p>Hook 本身是「命令 + JSON 输入 → JSON 输出」，用 <code>subprocess</code> 执行，零依赖：</p>
-<div class="highlight"><pre><span></span><code>// .coderagent/hooks.json
-{
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [{"type": "command", "command": "./scripts/check_secrets.sh"}]
-    }
-  ]
-}
+<blockquote>
+<p>实现与草图的差别：hook <strong>不是</strong> <code>.coderagent/hooks.json</code> 里的 JSON 文件，而是<strong>配置 YAML</strong> 里的
+<code>hooks.events</code>（项目 <code>.coderagent/config.yaml</code> 和用户 <code>~/.coderagent/config.yaml</code>，插件也能带）。
+<code>matcher</code> 是<strong>对工具名的正则</strong>（<code>re.search</code>），工具名按模型写的大小写原样匹配——内置工具是小写，
+所以写 <code>"Bash"</code> 永远匹配不上 <code>bash</code>。</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/config.yaml</span>
+<span class="nt">hooks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">events</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">PreToolUse</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">matcher</span><span class="p">:</span><span class="w"> </span><span class="s">"bash"</span>
+<span class="w">        </span><span class="nt">hooks</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">command</span>
+<span class="w">            </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./scripts/check_secrets.sh</span>
+<span class="w">            </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">            </span><span class="nt">strict</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h4 id="subagentm4">Subagent（M4 已落地）</h4>
 <p><code>task</code> 工具：主 agent 把一个独立子任务委派给子 agent（独立上下文、独立工具集、可指定模型档位），返回结构化结果。</p>
@@ -5838,7 +5852,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
               <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">query_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span> <span class="o">...</span>
+                     <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ModelEvent</span><span class="p">]:</span> <span class="o">...</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_template_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span> <span class="o">...</span>
 
@@ -6099,7 +6113,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 </tr>
 <tr>
 <td>10</td>
-<td>子 Agent 后置到 M3</td>
+<td>子 Agent 后置到 M4</td>
 <td>首版实现</td>
 <td>复杂度高、收益依赖模型能力；先把主循环与上下文治理做扎实</td>
 </tr>
@@ -6137,7 +6151,7 @@ fastapi / uvicorn / jinja2；<code>ui/cli.py</code> 的 <code>web</code> 子命�
 <td>16</td>
 <td>路径边界用 <code>within_bounds()</code></td>
 <td><code>policy.evaluate("read", …)</code></td>
-<td><code>allow</code> 规则能越过边界检查，那等于把整块磁盘暴露给浏览器</td>
+<td><code>evaluate</code> 判的是「调用允不允许」，不是「路径在不在范围内」；混用两套语义会把路径越界当成规则放行</td>
 </tr>
 <tr>
 <td>17</td>

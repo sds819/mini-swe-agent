@@ -3991,6 +3991,9 @@ Everything else: $ARGUMENTS
 <li><code>allowed-tools</code> 限定这个命令能用的工具。命令干完，session 的工具就回来了。</li>
 <li><code>model</code> 给这个命令换一个模型。</li>
 </ul>
+<p>只读工具的<strong>名字</strong>。括号里那一段会被丢掉，所以 <code>bash(git diff:*)</code> 放行的是
+<code>bash</code> 这个工具的<strong>全部</strong>命令——没有办法把一个工具限定到某个写法上。写 <code>bash</code> 就得
+记着：这个命令能跑任何东西。</p>
 <p>上面那个命令这么用：</p>
 <div class="highlight"><pre><span></span><code>/commit<span class="w"> </span>src/coderagent/core/loop.py
 </code></pre></div>

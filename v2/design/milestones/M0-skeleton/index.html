@@ -4373,13 +4373,18 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">EventType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
     <span class="n">USER_MESSAGE</span> <span class="o">=</span> <span class="s2">"user_message"</span>
     <span class="n">ASSISTANT_MESSAGE</span> <span class="o">=</span> <span class="s2">"assistant_message"</span>
+    <span class="n">TEXT_DELTA</span> <span class="o">=</span> <span class="s2">"text_delta"</span>        <span class="c1"># 不写进事件日志，只在总线上</span>
     <span class="n">REASONING</span> <span class="o">=</span> <span class="s2">"reasoning"</span>
     <span class="n">TOOL_CALL</span> <span class="o">=</span> <span class="s2">"tool_call"</span>
     <span class="n">TOOL_RESULT</span> <span class="o">=</span> <span class="s2">"tool_result"</span>
     <span class="n">APPROVAL_REQUEST</span> <span class="o">=</span> <span class="s2">"approval_request"</span>
     <span class="n">APPROVAL_RESPONSE</span> <span class="o">=</span> <span class="s2">"approval_response"</span>
     <span class="n">STATE_CHANGE</span> <span class="o">=</span> <span class="s2">"state_change"</span>
+    <span class="n">TURN_END</span> <span class="o">=</span> <span class="s2">"turn_end"</span>
+    <span class="n">VERIFY</span> <span class="o">=</span> <span class="s2">"verify"</span>
     <span class="n">COMPACTION</span> <span class="o">=</span> <span class="s2">"compaction"</span>
+    <span class="n">REFLECTION</span> <span class="o">=</span> <span class="s2">"reflection"</span>
+    <span class="n">REVERTED</span> <span class="o">=</span> <span class="s2">"reverted_to"</span>
     <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">"error"</span>
 
 
@@ -4435,6 +4440,7 @@
     <span class="n">permission_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"default"</span>
     <span class="n">turn_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">total_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">total_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>      <span class="c1"># 没有价格的模型，靠 token 记账</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 
@@ -4479,8 +4485,10 @@
     <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">turn_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">cost</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">stop_reason</span><span class="p">:</span> <span class="nb">str</span>      <span class="c1"># "end_turn" | "max_turns" | "error" | "interrupted"</span>
+    <span class="n">stop_reason</span><span class="p">:</span> <span class="nb">str</span>      <span class="c1"># "end_turn" | "max_turns" | "cost_exceeded" | "token_limit" | "error"</span>
     <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>  <span class="c1"># 本轮新增的消息</span>
+    <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">session_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>   <span class="c1"># 整个会话的花费（含前面的轮次与结尾那次沉淀）</span>
 </code></pre></div>
 <p><strong>本轮时序</strong></p>
 <div class="highlight"><pre><span></span><code>run_turn(user_input)
@@ -4498,7 +4506,8 @@
 </code></pre></div>
 <blockquote>
 <p><strong>M0 的 <code>executor</code> 暂用 <code>minisweagent</code> 的 bash 单工具实现</strong>，M1 替换为真正的 ToolRegistry。
-为此 M0 需要一个薄适配器 <code>core/bash_adapter.py</code>，把 <code>LitellmModel</code> 的 bash tool_call 转成 <code>LocalEnvironment.execute</code>。</p>
+为此 M0 需要一个薄适配器 <code>core/bash_adapter.py</code>，把 <code>LitellmModel</code> 的 bash tool_call 转成 <code>LocalEnvironment.execute</code>。
+（这个适配器只是临时的：M1 落地后它就被删掉了，今天仓库里已经没有这个文件。）</p>
 </blockquote>
 <h3 id="24">2.4 配置</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/config/schema.py</span>
@@ -4507,7 +4516,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"anthropic/claude-sonnet-4-5"</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
     <span class="n">routing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>      <span class="c1"># purpose -&gt; model_name，M4 启用</span>
@@ -4516,12 +4525,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">AgentConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">max_turns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
     <span class="n">cost_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>            <span class="c1"># 0 = 不限</span>
-    <span class="n">auto_compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">compact_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ToolConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">enabled</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"bash"</span><span class="p">]</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">13</span> <span class="n">个内置工具名</span><span class="p">]</span>
     <span class="n">bash_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span>
     <span class="n">max_output_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
 
@@ -4532,9 +4539,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SandboxConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"local"</span>                <span class="c1"># local|docker|bubblewrap</span>
-    <span class="n">network</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"restricted"</span>
-    <span class="n">writable_roots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"."</span><span class="p">]</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"local"</span>                <span class="c1"># local|docker|singularity|swerex_*|bubblewrap|contree</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -4544,6 +4549,14 @@
     <span class="n">permissions</span><span class="p">:</span> <span class="n">PermissionConfig</span> <span class="o">=</span> <span class="n">PermissionConfig</span><span class="p">()</span>
     <span class="n">sandbox</span><span class="p">:</span> <span class="n">SandboxConfig</span> <span class="o">=</span> <span class="n">SandboxConfig</span><span class="p">()</span>
 </code></pre></div>
+<blockquote>
+<p>这段是 M0 的<strong>草图</strong>，实现上后来又改了三处：
+压缩相关的选项（<code>auto_compact</code>、<code>compact_threshold</code> 等）搬到了 <code>ContextConfig</code>（M2）；
+<code>ToolConfig.enabled</code> 的默认值是<strong>全部 13 个内置工具</strong>而不是 <code>["bash"]</code>，而且它是一份
+<strong>白名单</strong>——配了就替换默认列表，<code>tools.disabled</code> 才是只拿走点名的；
+<code>SandboxConfig</code> 里<strong>没有</strong> <code>network</code> / <code>writable_roots</code> 这类统一开关（见 M4 §13.6），
+其余选项原样传给底层环境，环境不认识的被忽略。</p>
+</blockquote>
 <p><strong>四层合并顺序</strong>（后者覆盖前者）</p>
 <div class="highlight"><pre><span></span><code>config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.coderagent/config.yaml  →  CLI -c key=value
 </code></pre></div>
@@ -4617,7 +4630,7 @@
 <h3 id="t09-cli-headless">T0.9 CLI 与 headless 输出</h3>
 <ul>
 <li>[x] <code>ui/cli.py</code> typer app，参数见 M3 表格，M0 只实现 <code>-m/--model -c/--config -t/--task --print --output-format</code></li>
-<li>[x] <code>ui/render.py</code>：<code>text</code>（逐行人类可读）、<code>json</code>（单行 JSON，字段 <code>session_id/messages/cost/stop_reason</code>）</li>
+<li>[x] <code>ui/render.py</code>：<code>text</code>（逐行人类可读）、<code>json</code>（单行 JSON，字段 <code>session_id/messages/cost/session_cost/stop_reason/error</code>）</li>
 <li>[x] <code>run.py</code> 装配：config → model → env → session → loop → renderer</li>
 </ul>
 <p><strong>验收</strong>：<code>coder --print --output-format json -t "hi" -m &lt;fake&gt;</code> 输出合法 JSON，含 <code>session_id</code> 与 <code>messages</code>。</p>
@@ -4682,7 +4695,7 @@
 </tr>
 <tr>
 <td>事件类型后续增补导致旧轨迹无法重放</td>
-<td><code>rebuild</code> 对未知 <code>type</code> 跳过而非报错；<code>from_dict</code> 对未知类型回退 <code>STATE_CHANGE</code></td>
+<td><code>rebuild</code> 对未知 <code>type</code> 跳过而非报错；<code>from_dict</code> 对未知类型返回 <code>None</code>（跳过这一行，不回退成别的类型）</td>
 </tr>
 <tr>
 <td>与上游 <code>minisweagent</code> 的 Event 概念冲突</td>

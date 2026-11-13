@@ -3992,7 +3992,7 @@ You write the documentation of a module. Read the code, then write the docs.
 <tr>
 <td><code>name</code></td>
 <td>子 agent 的名字</td>
-<td>文件名</td>
+<td>文件名（不带扩展名）</td>
 </tr>
 <tr>
 <td><code>description</code></td>
@@ -4047,6 +4047,8 @@ You write the documentation of a module. Read the code, then write the docs.
 <span class="w">  </span><span class="nt">"findings"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"src/parser.py:42 parses the arguments"</span><span class="p">],</span>
 <span class="w">  </span><span class="nt">"files_touched"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">  </span><span class="nt">"cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.031</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tokens_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">12043</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tokens_out"</span><span class="p">:</span><span class="w"> </span><span class="mi">987</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"turns"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cheap"</span>
 <span class="p">}</span>
@@ -4078,6 +4080,14 @@ You write the documentation of a module. Read the code, then write the docs.
 <tr>
 <td><code>cost</code></td>
 <td>它花的钱</td>
+</tr>
+<tr>
+<td><code>tokens_in</code></td>
+<td>它发出去的 token</td>
+</tr>
+<tr>
+<td><code>tokens_out</code></td>
+<td>它收到的 token</td>
 </tr>
 <tr>
 <td><code>turns</code></td>

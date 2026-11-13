@@ -3992,6 +3992,10 @@ Everything else: $ARGUMENTS
   session are back when the command is done.</li>
 <li><code>model</code> picks another model for this command.</li>
 </ul>
+<p>Only the <strong>name</strong> of the tool is read. The part in parentheses is thrown away,
+so <code>bash(git diff:*)</code> allows the <code>bash</code> tool for <strong>every</strong> command it runs —
+there is no way to restrict a tool to a pattern. Write <code>bash</code> and remember
+that the command may run anything.</p>
 <p>The command above is used like this:</p>
 <div class="highlight"><pre><span></span><code>/commit<span class="w"> </span>src/coderagent/core/loop.py
 </code></pre></div>

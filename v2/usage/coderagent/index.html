@@ -4437,7 +4437,7 @@ The name of the model is <code>model.model_name</code> in the configuration, or
 <tbody>
 <tr>
 <td><code>--task</code>, <code>-t</code></td>
-<td>The task. Without it, the interface opens.</td>
+<td>The task. Without it, the interface opens when the terminal is interactive.</td>
 </tr>
 <tr>
 <td><code>--model</code>, <code>-m</code></td>
@@ -4531,8 +4531,10 @@ coder<span class="w"> </span><span class="nb">export</span><span class="w"> </sp
 </tbody>
 </table>
 <p>When the agent wants to run a tool that needs approval, the interface asks.
-<code>y</code> allows it once, <code>n</code> refuses it, <code>a</code> allows it for the rest of the
-session. The refusal goes back to the model, which then does something else.</p>
+<code>y</code> allows it once, <code>n</code> refuses it, <code>a</code> always allows it: that answer writes a
+rule into <code>~/.coderagent/rules.yaml</code>, so the same call — the same file, or the
+same command — is allowed from then on, in every session. The refusal goes back
+to the model, which then does something else.</p>
 <p>The answers are listed one per line, each in a numbered box:</p>
 <div class="highlight"><pre><span></span><code>1 [*] y allow
 2 [-] n deny
@@ -4845,8 +4847,8 @@ takes some of them away. The tools of the MCP servers are always there.</p>
 </tbody>
 </table>
 <p>The mode can be changed while the session runs, with <code>/mode</code> or <code>/plan</code>.</p>
-<p><code>plan</code> and <code>readonly</code> take the writing tools away from the model, so the model
-is told about it: a <code>&lt;permission_mode mode="..."&gt;</code> block goes into the
+<p><code>plan</code> and <code>readonly</code> make the permission layer deny the writing tools, so the
+model is told about it: a <code>&lt;permission_mode mode="..."&gt;</code> block goes into the
 conversation, saying what it may do and what it should answer instead. The
 block follows the mode, so it changes as soon as the mode changes.</p>
 <p>The rules are more precise than a mode. A rule has a tool, a pattern and a
@@ -4864,7 +4866,9 @@ decision:</p>
 <p>The pattern is a glob for the tools that touch a path (<code>read</code>, <code>write</code>,
 <code>edit</code>, <code>multi_edit</code>, <code>glob</code>, <code>grep</code>, <code>ls</code>) and a regular expression for
 <code>bash</code>, where it is matched against the beginning of each part of the command.
-The decision is <code>allow</code>, <code>ask</code> or <code>deny</code>. The last rule that matches wins.</p>
+The decision is <code>allow</code>, <code>ask</code> or <code>deny</code>. For the path tools the last rule that
+matches wins. A command is judged part by part and the strictest part wins, so
+an allowed <code>pytest</code> does not carry a <code>rm</code> along with it.</p>
 <p>The rules of the project live in <code>.coderagent/rules.yaml</code>, the rules of the
 user in <code>~/.coderagent/rules.yaml</code>. Both are read, in that order, so a rule of
 the user beats a rule of the project with the same tool and pattern:</p>
@@ -4884,7 +4888,7 @@ destroy something or send it out (<code>rm</code>, <code>curl</code>, <code>git 
 outside the working directory is refused in every mode.</p>
 <p><code>/permissions</code> shows the mode and the rules that are in effect.</p>
 <p>Without a terminal nobody can be asked, so a call that needs approval is
-refused and the model is told why. In a script, use
+refused and the model is told that the user refused it. In a script, use
 <code>--permission-mode bypass</code> for the calls that need it.</p>
 <h3 id="the-context">The context</h3>
 <p>The context of the model has a window (<code>context.context_window</code>, by default
@@ -4958,11 +4962,12 @@ the user:</p>
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
 </code></pre></div>
 <p><code>swerex_docker</code>, <code>swerex_modal</code>, <code>bubblewrap</code> and <code>contree</code> are the other
-ones. The options of the sandbox go to the environment as they are:</p>
+ones. The options of the sandbox go to the environment as they are; the ones
+the environment does not know are ignored:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">sandbox</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swerex_docker</span>
 <span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python:3.11</span>
-<span class="w">  </span><span class="nt">run_args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"--rm"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"--network"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"none"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">cwd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/workspace</span>
 </code></pre></div>
 <p>The sandbox has no policy of its own: the network policy belongs to the
 environment, the paths belong to the permission layer. See
@@ -4972,6 +4977,8 @@ environment, the paths belong to the permission layer. See
 <code>AGENTS.md</code> and <code>CLAUDE.md</code>, in this order:</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--task<span class="w"> </span><span class="s2">"/init"</span><span class="w">   </span><span class="c1"># write an AGENTS.md for this project</span>
 </code></pre></div>
+<p><code>/init</code> writes a template with the layout of the directory; the model is not
+asked. It does nothing when the file already exists.</p>
 <p>The user file <code>~/.coderagent/CLAUDE.md</code> comes first, then the project. An
 <code>AGENTS.md</code> in a subdirectory is read when the agent touches something in it.</p>
 <h2 id="what-the-agent-can-delegate">What the agent can delegate</h2>
@@ -5072,7 +5079,8 @@ under the name <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>. The MCP SDK is op
 <p>See <a href="../coderagent_mcp/">MCP servers</a>.</p>
 <h2 id="the-sessions-and-the-money">The sessions and the money</h2>
 <p>A session is an append-only log of events, and that log is the source of
-truth. The sessions live in <code>~/.coderagent/sessions</code>, one file per session.</p>
+truth. The sessions live in <code>~/.coderagent/sessions</code>: one <code>.jsonl</code> file with the
+events of a session and one <code>.meta.json</code> file with its metadata.</p>
 <div class="highlight"><pre><span></span><code>coder<span class="w"> </span>--list<span class="w">              </span><span class="c1"># the sessions of this directory</span>
 coder<span class="w"> </span>--resume<span class="w"> </span>&lt;id&gt;<span class="w">       </span><span class="c1"># continue one of them</span>
 coder<span class="w"> </span>--fork<span class="w"> </span>&lt;id&gt;<span class="w">         </span><span class="c1"># continue a copy of one of them</span>
@@ -5083,11 +5091,20 @@ the same as on the command line.</p>
 <div class="highlight"><pre><span></span><code>model: deepseek/deepseek-flash
 calls: 9
 tokens in the context: 120433
+tokens spent: 45678
 cost so far: $0.4200
 cost: $0.4200
+tokens: 120433 in, 4567 out
+model calls: 9
+tool calls: 14
+duration: 42.1s
 by purpose:
   main        $0.3800
   cheap       $0.0400
+by model:
+  deepseek/deepseek-flash  $0.4200
+by tool:
+  read        8
 </code></pre></div>
 <p>The bill belongs to the session: a new session starts at zero, whatever the
 session before it spent. The same number is in the trace, in <code>/status</code> and in

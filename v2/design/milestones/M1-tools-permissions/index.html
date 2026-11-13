@@ -4764,7 +4764,7 @@
               <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">},</span> <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]}}}</span>
 </code></pre></div>
 <p><strong>优先级（用于预算裁剪，从先丢弃到最后丢弃）</strong></p>
-<div class="highlight"><pre><span></span><code>web_search → web_fetch → todo_write → multi_edit → write → edit → ls → glob → grep → read → bash
+<div class="highlight"><pre><span></span><code>web_search → web_fetch → todo_write → bash_output → bash_kill → multi_edit → write → edit → ls → glob → grep → read → bash
 </code></pre></div>
 <blockquote>
 <p><code>bash</code> 与 <code>read</code> 永不丢弃：前者是兜底，后者是主力。</p>
@@ -4799,9 +4799,11 @@
 - 其余（<code>read</code> <code>glob</code> <code>grep</code> <code>ls</code> <code>todo_write</code>）→ 并行</p>
 <p>用 <code>concurrent.futures.ThreadPoolExecutor</code>，结果按<strong>原始 tool_call 顺序</strong>重排（API 要求顺序对应）。</p>
 <p><strong>错误消息原则</strong>：工具失败要以「模型可自我修正」的方式反馈。例如 <code>edit</code> 失败时返回：
-</p><div class="highlight"><pre><span></span><code>Error: old_string not found in src/a.py.
-The file contains 3 occurrences of "foo"; old_string must be unique.
-Use `read` to view the exact content, then retry with more surrounding context.
+</p><div class="highlight"><pre><span></span><code>Error: old_string is not unique in src/a.py: it appears 3 times (lines 12, 40, 77).
+Include more surrounding context to make it unique, or set replace_all=true.
+</code></pre></div>
+找不到时是：
+<div class="highlight"><pre><span></span><code>Error: old_string not found in src/a.py. Use `read` to see the exact content, then retry with more context.
 </code></pre></div><p></p>
 <h3 id="24">2.4 权限策略</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/permissions.py</span>
@@ -4835,10 +4837,15 @@ Use `read` to view the exact content, then retry with more surrounding context.
 <ol>
 <li><code>mode</code> 决定默认值（见 2.4 表）</li>
 <li>遍历规则，<strong>最后命中者生效</strong>（后写规则覆盖先写）</li>
-<li>但 <code>deny</code> 一票否决：只要有规则命中 <code>deny</code> 且未被后续 <code>allow</code> 覆盖…</li>
+<li>路径类工具在规则之后还要过一次<strong>越界检查</strong>，越界一律 <code>deny</code></li>
 </ol>
 <blockquote>
 <p><strong>简化决策</strong>：采用「最后命中者生效」，规则顺序即优先级。文档中明确「把 deny 规则放在文件末尾可覆盖前面的 allow」。这比「deny 优先」更可预测，也更符合 Claude Code 的 <code>.claude/settings.json</code> 语义（后写覆盖）。</p>
+<p><strong>一个例外</strong>：<code>bash</code> 命令按<strong>段</strong>判断，每段各取一条规则，然后<strong>取最严的那一段</strong>
+（<code>allow &lt; ask &lt; deny</code>）。所以 <code>git push</code> 被 <code>allow</code> 放行，不等于同一条命令里的 <code>rm</code> 也放行。
+路径类工具没有这个「取最严」：<strong>最后一条匹配的规则赢</strong>。</p>
+<p><strong>越界检查不是规则</strong>：不管哪条规则写了 <code>allow</code>，落在工作目录之外的路径一律 <code>deny</code>
+（<code>permissions.py</code> 的 <code>within_bounds</code>）。要放开某些目录，用 <code>permissions.include_dirs</code>。</p>
 </blockquote>
 <p><strong>默认规则表</strong></p>
 <table>
@@ -4889,13 +4896,23 @@ Use `read` to view the exact content, then retry with more surrounding context.
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><code>todo_write</code> / <code>bash_output</code> / <code>bash_kill</code> 属于 <code>INFO_TOOLS</code>，<strong>任何模式都 allow</strong>。
+<strong>BYPASS 也不是全放行</strong>：越界的路径在所有模式下都 <code>deny</code>（见「路径越界」）。</p>
+</blockquote>
 <p><strong>匹配目标</strong></p>
 <ul>
 <li>路径类工具（<code>write</code> <code>edit</code> <code>multi_edit</code>）：匹配 <code>path</code> 参数，相对 <code>cwd</code> 解析后用 <code>fnmatch</code> + <code>**</code> 语义</li>
 <li><code>bash</code>：匹配 <code>command</code> 字符串，用<strong>正则</strong>（默认 <code>re.search</code>）</li>
 <li>其他工具：匹配工具名本身</li>
 </ul>
-<p><strong>路径越界</strong>：任何解析后落在 <code>cwd</code> 之外的路径（<code>../</code> 逃逸或绝对路径）→ <code>deny</code>，除非该路径命中显式 allow 规则（如 <code>include_dirs</code>）。</p>
+<p><strong>路径越界</strong>：任何解析后落在 <code>cwd</code> 之外的路径（<code>../</code> 逃逸或绝对路径）→ <code>deny</code>。
+<strong>规则放不宽它</strong>——一条 <code>allow</code> 规则也不能让 agent 读到工作目录之外（<code>permissions.py</code> 的
+<code>within_bounds</code> 在规则之后生效）。要放开某些目录，用配置里的 <code>permissions.include_dirs</code>。</p>
+<blockquote>
+<p>注意 <code>bash</code> 的匹配是<strong>前缀匹配</strong>，不是子串匹配：<code>git push</code> 能对上 <code>git push origin main</code>，
+对不上 <code>echo "git push"</code>。</p>
+</blockquote>
 <h3 id="25-approver-ui">2.5 Approver 抽象（UI 无关）</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># src/coderagent/tools/permissions.py</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ApprovalDecision</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
@@ -4969,7 +4986,8 @@ Use `read` to view the exact content, then retry with more surrounding context.
 <h3 id="38-bash">3.8 <code>bash</code></h3>
 <p>参数：<code>command</code>（必填）、<code>timeout</code>（可选，覆盖默认）、<code>run_in_background</code>（bool，默认 False）</p>
 <ul>
-<li>复用 <code>minisweagent.environments.local.LocalEnvironment.execute</code>（<code>subprocess.run</code> + 进程组超时 kill）</li>
+<li>复用 <code>minisweagent.environments.local.LocalEnvironment.execute</code>（<code>subprocess.Popen</code> + 进程组超时 kill）
+  —— 实现上包了一层 <code>CodingEnvironment</code>，去掉了 mini 的 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> 哨兵</li>
 <li><code>run_in_background=True</code> → 立即返回 <code>task_id</code>，用 <code>bash_output(task_id)</code> / <code>bash_kill(task_id)</code> 后续取（长跑测试用）</li>
 <li>输出按 <code>max_output_tokens</code> 裁剪（头尾保留，中间标注省略行数）</li>
 <li><strong>保留 mini 的 <code>COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</code> 语义</strong>？→ 不保留。coding agent 的终止由模型自身的 stop_reason 决定，不依赖 shell 魔数。</li>
@@ -5005,8 +5023,13 @@ Use `read` to view the exact content, then retry with more surrounding context.
 <span class="w">    </span><span class="nt">decision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allow</span>
 </code></pre></div>
 <p><strong>合并顺序</strong>（后者覆盖前者，按 <code>tool</code>+<code>pattern</code> 视为同一条）
-</p><div class="highlight"><pre><span></span><code>内置默认 → 项目规则 → 用户规则 → 「总是允许」写入
+</p><div class="highlight"><pre><span></span><code>配置文件里的 permissions.rules → 项目规则 → 用户规则 → permissions.deny_paths
 </code></pre></div><p></p>
+<blockquote>
+<p><strong>没有内置的默认规则集</strong>：<code>config/defaults.yaml</code> 里的 <code>rules</code> 是空的，各模式的行为由
+<code>PermissionPolicy</code> 的默认决策表决定（见 §2.4），不是靠一组内置规则实现的。
+「总是允许」写进的是<strong>用户级</strong> <code>rules.yaml</code>，它排在项目规则之后，所以同名时<strong>用户级赢</strong>。</p>
+</blockquote>
 <hr>
 <h2 id="5">5. 任务分解</h2>
 <h3 id="t11">T1.1 工具抽象与上下文</h3>

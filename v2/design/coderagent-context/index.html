@@ -4597,7 +4597,7 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
                           <span class="s2">"llama"</span><span class="p">:</span> <span class="mi">8192</span><span class="p">,</span> <span class="s2">"gemini"</span><span class="p">:</span> <span class="mi">1000000</span><span class="p">,</span> <span class="s2">"mistral"</span><span class="p">:</span> <span class="mi">32768</span><span class="p">,</span> <span class="s2">"kimi"</span><span class="p">:</span> <span class="mi">262144</span><span class="p">,</span>
                           <span class="s2">"minimax"</span><span class="p">:</span> <span class="mi">204800</span><span class="p">}</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">context_window_for</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">200000</span><span class="p">):</span> <span class="o">...</span>   <span class="c1"># 按模型名后缀的前缀查表</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">context_window_for</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">200000</span><span class="p">):</span> <span class="o">...</span>   <span class="c1"># 按模型名（去掉厂商前缀后）的前缀查表</span>
 
 <span class="n">limit</span>          <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">context_window</span> <span class="o">-</span> <span class="n">reserved_output</span><span class="p">)</span>
 <span class="n">should_compact</span> <span class="o">=</span> <span class="n">estimated</span> <span class="o">&gt;</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">context_window</span> <span class="o">*</span> <span class="n">compact_threshold</span><span class="p">),</span> <span class="n">limit</span><span class="p">())</span>
@@ -4622,7 +4622,7 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <p><code>tiktoken</code> 是懒加载且容错的：装不上、或者首次下载词表失败，都安静地退回启发式（<code>tokens.py:20-28</code>）。
 估算只用来决定「要不要压」，不用来计费——<strong>API 才是最后裁判</strong>。</p>
 <h3 id="32">3.2 配置项</h3>
-<p><code>ContextConfig</code>（<code>config/schema.py:83-92</code>）：</p>
+<p><code>ContextConfig</code>（<code>config/schema.py:83-94</code>）：</p>
 <table>
 <thead>
 <tr>
@@ -4672,6 +4672,11 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
 <td>""</td>
 <td>用单独的模型做摘要；空 = 走路由的 <code>summarize</code> 用途</td>
 </tr>
+<tr>
+<td><code>context.summary_chunk_tokens</code></td>
+<td>0</td>
+<td>一次摘要提示词能占多少 token；0 = 按摘要模型的窗口算</td>
+</tr>
 </tbody>
 </table>
 <p>摘要模型可以是<strong>另一个模型</strong>（<code>run.py:161-164</code>）：配了就用它，没配就用路由里的 <code>summarize</code> 用途。
@@ -4688,6 +4693,9 @@ todo 渲染成 <code>&lt;current_todos&gt;</code> 复选框块：</p>
    （文本里带 "nothing left to compact"）。</li>
 </ol>
 <p>第 3 条是兜底：前两条是<strong>预判</strong>，第 3 条是<strong>事后救</strong>。</p>
+<p><strong>注意</strong>：<code>auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>（<code>context.py:202</code>），
+所以第 2 条<strong>永远不会单独成立</strong>——「只按轮数压」是做不到的，<code>auto_compact</code> 是总开关
+（只有第 3 条的 <code>force_compact()</code> 不受它管）。</p>
 <h3 id="42">4.2 切点：永远在轮边界</h3>
 <p><code>History.turn_starts()</code>（<code>core/history.py:27-29</code>）= 所有 <code>role == "user"</code> 的消息下标——<strong>轮的唯一定义</strong>。
 一轮 = 一条 user 消息 + 模型为它做的一切（assistant 消息 + 后续工具结果）。</p>
@@ -4770,7 +4778,7 @@ while estimate_tokens(messages[cut:]) &gt; limit:
 <h3 id="52">5.2 切点必在轮边界</h3>
 <p>见 §4.2。工具结果与它的请求不分家。</p>
 <h3 id="53">5.3 摘要失败不许通过</h3>
-<p><code>_summarize()</code>（<code>context.py:284-306</code>）的判定链：</p>
+<p><code>_summarize()</code>（<code>context.py:284-306</code>）的判定链（重试的循环在 <code>_ask()</code>，<code>context.py:308-318</code>）：</p>
 <div class="highlight"><pre><span></span><code>for _ in range(2):                      # 最多两次
     text = summary_model.complete(...)   # 抛异常就 continue
     summary = parse_summary(text)
@@ -4856,7 +4864,7 @@ if summary is None:
 <p>模型偶尔会调一个不存在的工具（<code>Error: unknown tool 'xxx'. Available tools: ...</code>），
 或者调一个被权限挡下的工具（<code>Error: permission denied for 'xxx'. ...</code>）。
 这些文本都在历史里，所以复盘时能直接看出模型「在乱试什么」。</p>
-<p>评测报告里的 <code>tool_errors</code> 数的就是它们（<code>core/telemetry.py</code>）。
+<p>评测报告里的 <code>tool_errors</code> 数的就是它们（<code>eval/runner.py:353</code>）。
 再往上一层，<code>require_tools</code> 要求某些任务<strong>必须</strong>用某个工具改某个文件——
 用 shell 绕过去不算完成；<code>no-op</code> 任务反过来测「不该改的时候别改」。</p>
 <h3 id="64">6.4 两条要留意的边界</h3>

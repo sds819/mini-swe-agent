@@ -1261,6 +1261,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知差距
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#faq" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4180,6 +4191,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        已知差距
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#faq" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4227,10 +4249,13 @@
 <li><a href="#cli">命令行选项</a></li>
 <li><a href="#chat">聊天页</a></li>
 <li><a href="#settings">设置页</a></li>
+<li><a href="#permissions">权限</a></li>
 <li><a href="#approvals">审批</a></li>
 <li><a href="#api">当 API 用</a></li>
+<li><a href="#language">页面的语言</a></li>
 <li><a href="#security">安全模型</a></li>
 <li><a href="#differences">和终端的差别</a></li>
+<li><a href="#gaps">已知差距</a></li>
 <li><a href="#faq">常见问题</a></li>
 </ul>
 <h2 id="install">安装与启动</h2>
@@ -4253,7 +4278,7 @@ coder<span class="w"> </span>web
 <tbody>
 <tr>
 <td><code>--cwd</code></td>
-<td>agent 工作的目录。浏览器里看到的一切都在它里面（默认当前目录）</td>
+<td>agent 工作的目录。浏览器里看到的一切都在它里面（默认当前目录），除了 <code>permissions.include_dirs</code> 里另外开的那些</td>
 </tr>
 <tr>
 <td><code>--host</code></td>
@@ -4286,7 +4311,7 @@ coder<span class="w"> </span>web
   点列表里的会话切换过去。</li>
 <li><strong>中栏</strong>：对话。消息是气泡，工具调用是卡片（带输出和这次改动的 diff），审批是带三个
   按钮的卡片。下面的输入框既能发消息也能发 slash 命令（<code>/help</code>、<code>/clear</code>、<code>/cost</code>……，
-  和终端里是同一套命令，列表在输入框右边的下拉框里）。<code>Interrupt</code> 停掉正在跑的那一轮。</li>
+  和终端里是同一套命令，列表在输入框下面的下拉框里）。<code>Interrupt</code> 停掉正在跑的那一轮。</li>
 </ul>
 <p>页面本身不滚动，每一栏各滚各的。对话区会跟着新的输出滚到底，除非你往上翻去看别的东西。
 当前这一轮之前的历史折叠在顶部一个块里，点开就能看。
@@ -4329,7 +4354,7 @@ coder<span class="w"> </span>web
 </tr>
 <tr>
 <td>Cache control</td>
-<td><code>model.set_cache_control</code>（<code>ephemeral</code> 或空）</td>
+<td><code>model.set_cache_control</code>（<code>default_end</code> 或空）</td>
 </tr>
 <tr>
 <td>Routing</td>
@@ -4346,8 +4371,39 @@ coder<span class="w"> </span>web
 </tbody>
 </table>
 <p>每个字段下面写着它来自哪一层：<code>defaults</code>、<code>project</code>、<code>user</code> 或 <code>env</code>。页面底部的表格列出
-所有层，含密钥的项都被抹成 <code>***</code>。</p>
-<p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。</p>
+所有层，含密钥的项都被抹成 <code>***</code>。页面读的是<strong>配置文件</strong>；命令行上的 <code>-m</code> 和 <code>-c</code> 是给
+会话用的，所以 <code>coder web -m deepseek/deepseek-flash</code> 时页面显示的还是文件里的那个模型。</p>
+<p><code>Test the connection</code> 用表单里的设置发一次最便宜的调用，测通了再 <code>Save</code>。它报五件事：</p>
+<table>
+<thead>
+<tr>
+<th>报什么</th>
+<th>说什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型</td>
+<td>这次调用打到哪个模型，是哪个别名</td>
+</tr>
+<tr>
+<td>接口地址</td>
+<td>这次调用打到哪个地址</td>
+</tr>
+<tr>
+<td>API key</td>
+<td>有没有配 key，以及末四位</td>
+</tr>
+<tr>
+<td>别名文件</td>
+<td>文件在不在、能不能解析、里面有哪些别名</td>
+</tr>
+<tr>
+<td>工具</td>
+<td>模型会不会调工具——不会的话 agent 干不了活</td>
+</tr>
+</tbody>
+</table>
 <h3 id="test-a-model">测一个模型</h3>
 <p>还有一块独立的面板，不写任何文件，只管试：Endpoint、API Key、Model Name，
 右边一个 <code>Test connection</code> 按钮——就是厂商后台给你表单的那个样子。</p>
@@ -4385,7 +4441,9 @@ coder<span class="w"> </span>web
   看哪个变量由模型名决定：<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>，<code>deepseek/…</code> 找 <code>DEEPSEEK_API_KEY</code>。</li>
 <li><strong>key 那一栏</strong>。平时只显示 <code>set (********1234)</code>，明文不露。点一下输入框，服务器
   才把 key 发过来显示；再点一下收起来。别名文件里的 key 也算数：key 在 litellm
-  配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。</li>
+  配置里，显示的就是它。输入框留空表示保留原来的 key——只有框里有东西才会写进去。
+  但<strong>走 API 的话规则不同</strong>：<code>api_key: ""</code> 是<strong>删掉</strong>存着的 key，不写这个字段（或写 <code>null</code>）
+  才是保留。</li>
 </ul>
 <h2 id="permissions">权限</h2>
 <p>权限有两个地方管，管的不是同一件事：</p>
@@ -4462,15 +4520,17 @@ coder<span class="w"> </span>web
 <p>agent 要跑命令、写文件时会问。卡片上有三个按钮：</p>
 <ul>
 <li><strong>Allow</strong>——这次执行。</li>
-<li><strong>Deny</strong>——不执行，理由回给模型，模型会换个做法，而不是硬来。</li>
+<li><strong>Deny</strong>——不执行，模型会看到「用户拒绝了」这句话，模型会换个做法，而不是硬来。</li>
 <li><strong>Always allow</strong>——这次执行，<strong>并且往 <code>~/.coderagent/rules.yaml</code> 写一条规则</strong>，
-  以后这个工具都放行。按钮上写明了这一点。</li>
+  以后<strong>同一个调用</strong>（同一个文件、同一条命令）都放行。按钮上写明了这一点。</li>
 </ul>
 <p>没人回答就是拒绝（<code>ui.approval_timeout</code> 秒，默认 5 分钟）。被拒的工具不会执行。</p>
 <h2 id="api">当 API 用</h2>
 <p>页面做的每个动作都是普通 HTTP 调用，可以拿脚本驱动。交互式文档在 <code>/api/docs</code>。</p>
-<p>写接口（发消息、审批、中断、写配置）要带一个头 <code>X-Coder-Client: 1</code>。浏览器从别的网站
-发这个头要先过预检，而服务端不给预检许可，所以别的网站没法驱动你的 agent。<code>curl</code> 不受影响。</p>
+<p>驱动 agent 或者把 key 交出来的接口要带一个头 <code>X-Coder-Client: 1</code>：发消息、中断、改模式、
+回审批、写配置、读 api key。浏览器从别的网站发这个头要先过预检，而服务端不给预检许可，
+所以别的网站没法驱动你的 agent。<code>curl</code> 不受影响。建会话、续接会话、fork 会话<strong>不要</strong>这个头
+——它们只是开会话，不动手。</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># 建一个会话</span>
 curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:8765/api/sessions<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Coder-Client: 1"</span>
 <span class="c1"># =&gt; {"id":"20261108-382ff4","cwd":"/path/to/project"}</span>
@@ -4624,8 +4684,9 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 </tr>
 </tbody>
 </table>
-<p>状态码：正忙着在跑一轮时再发消息 → <code>409</code>；审批 id 不认识 → <code>404</code>；路径越界 → <code>403</code>；
-空消息 → <code>400</code>；权限模式不认识 → <code>400</code>。</p>
+<p>状态码：正忙着在跑一轮时再发消息 → <code>409</code>；审批 id 不认识 → <code>404</code>；会话 id 不认识 → <code>404</code>；
+路径越界 → <code>403</code>；空消息 → <code>400</code>；权限模式不认识 → <code>400</code>；审批的回答不是
+<code>allow</code>/<code>deny</code>/<code>always</code> → <code>400</code>；建会话 → <code>201</code>；消息收下了 → <code>202</code>。</p>
 <h2 id="language">页面的语言</h2>
 <p>页面给中文地区（大陆、香港、澳门、台湾）的人看是中文，其它地方是英文。
 决定的是访客所在的地方。</p>
@@ -4682,7 +4743,7 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
   这是给「一个人、一台机器」用的工具，信任模型跟信任 <code>coder</code> 命令行一样。</li>
 <li><strong>默认只听 <code>127.0.0.1</code></strong>。<code>--host 0.0.0.0</code> 会打一条警告，然后服务给所有能连到这台
   机器的人用。</li>
-<li><strong>浏览器骗不到它</strong>。写接口要一个跨站请求发不出来的头。</li>
+<li><strong>浏览器骗不到它</strong>。驱动 agent 的接口要一个跨站请求发不出来的头。</li>
 <li><strong>浏览器看不到工作目录外面</strong>。每个路径都先 <code>resolve()</code>，再跟工作目录和
   <code>permissions.include_dirs</code> 比对；用户写的规则放宽不了这个边界。</li>
 <li><strong>key 只在你要的时候才露面</strong>。设置页平时只拿到 <code>api_key_set</code> 和末四位；分层预览里所有密钥
@@ -4735,13 +4796,20 @@ curl<span class="w"> </span>-N<span class="w"> </span><span class="s2">"http://1
 <p>核心是同一套：同一批会话、同一份事件日志、同一批工具、同一套权限。浏览器里开的会话可以用
 <code>coder --resume &lt;id&gt;</code> 在终端里接着聊，反过来也一样。</p>
 <p>浏览器目前还没有的：终端能用方向键选审批答案，也能把长输出折叠起来；浏览器这边是全展开的。</p>
+<h2 id="gaps">已知差距</h2>
+<ul>
+<li>事件流一轮结束就关。中间长时间不说话的时候流是开着的，但每轮之后浏览器都要重连。</li>
+<li>改过的文件是从会话的检查点来的。没有检查点的改动不会出现在那个列表里。</li>
+<li>每个会话自己一套 MCP server 的线程。server 在会话跑第一轮的时候才起来，会话一多线程就多。</li>
+</ul>
+<p>端口被占了的话，服务会说一声然后停下；换一个端口：<code>--port</code>。</p>
 <h2 id="faq">常见问题</h2>
 <p><strong>「设置页里 <code>api_key_set</code> 是 false」</strong>
 key 确实不在：配置文件里没有，环境里也没有对应厂商的变量（<code>DEEPSEEK_API_KEY</code> 之类）。
 模型名前面那个厂商决定看哪个变量——<code>openai/…</code> 找 <code>OPENAI_API_KEY</code>。</p>
 <p><strong>「改了设置没生效」</strong>
 对<strong>新会话</strong>生效。当前这个会话还在用启动时的配置，想立刻换就 <code>/model &lt;名字&gt;</code>。</p>
-<p><strong>「写接口返回 403」</strong>
+<p><strong>「接口返回 403」</strong>
 少了 <code>X-Coder-Client: 1</code> 头。浏览器里不用管，页面自己会带。</p>
 <p><strong>「发消息返回 409」</strong>
 这个会话正忙着在跑一轮。等它跑完，或者先 <code>Interrupt</code>。</p>
@@ -4749,8 +4817,9 @@ key 确实不在：配置文件里没有，环境里也没有对应厂商的变�
 路径在工作目录外面。要么改路径，要么在配置里加 <code>permissions.include_dirs</code>。</p>
 <p><strong>「页面打开是空的 / 连不上」</strong>
 服务没起，或者端口不是 8765。终端里那行 <code>coder web: http://…</code> 就是地址。</p>
-<p><strong>「启动时报 address already in use」</strong>
-端口被别的程序占了（常见是上一个没关掉的 <code>coder web</code>）。换一个：<code>--port 8766</code>。</p>
+<p><strong>「启动时报 cannot listen on 127.0.0.1:8765」</strong>
+端口被别的程序占了（常见是上一个没关掉的 <code>coder web</code>）。服务会说一声然后停下，
+换一个端口：<code>--port 8766</code>。</p>
 <p><strong>「回答怎么显示了两遍」</strong>
 这是老版本的前端问题，已经修了：流式气泡会被后面那条完整消息替换掉。</p>
 <p><strong>「一轮结束后流断了」</strong>

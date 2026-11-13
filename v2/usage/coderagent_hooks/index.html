@@ -3965,6 +3965,11 @@ context of the model.</p>
 </thead>
 <tbody>
 <tr>
+<td><code>type</code></td>
+<td>The kind of the hook. Only <code>command</code> is implemented</td>
+<td><code>command</code></td>
+</tr>
+<tr>
 <td><code>matcher</code></td>
 <td>A regular expression of the tool names. Empty means every tool</td>
 <td></td>
@@ -3987,10 +3992,15 @@ context of the model.</p>
 </tbody>
 </table>
 <p>The hooks of the project live in <code>.coderagent/config.yaml</code>, the hooks of the
-user in <code>~/.coderagent/config.yaml</code>. A plugin may bring hooks too.</p>
+user in <code>~/.coderagent/config.yaml</code>. A plugin may bring hooks too. The two
+files are merged like the rest of the configuration: the events are merged,
+but the list of the hooks of one event is replaced by the list of the user.</p>
 <p>The matcher is matched against the name of the tool, so it only means
 something for <code>PreToolUse</code> and <code>PostToolUse</code>. Leave it empty for the other
-events.</p>
+events. It is a <strong>regular expression that is searched, not anchored</strong>: the
+name <code>multi_edit</code> matches <code>edit|write</code>, and the letters are case sensitive, so
+<code>Bash</code> matches nothing. A matcher that is not a valid regular expression is
+logged and matches nothing.</p>
 <h2 id="the-moments">The moments</h2>
 <table>
 <thead>
@@ -4014,7 +4024,7 @@ events.</p>
 <tr>
 <td><code>PreToolUse</code></td>
 <td>Before the tool runs</td>
-<td>Allow, deny, or rewrite the arguments</td>
+<td>Deny it, or rewrite the arguments</td>
 </tr>
 <tr>
 <td><code>PostToolUse</code></td>
@@ -4028,11 +4038,13 @@ events.</p>
 </tr>
 <tr>
 <td><code>SessionEnd</code></td>
-<td>The session ends</td>
+<td>The turn ends</td>
 <td>Nothing. It is a notification</td>
 </tr>
 </tbody>
 </table>
+<p><code>SessionEnd</code> runs at the end of every turn, not only when the whole session
+is over.</p>
 <p>Each event has its own payload:</p>
 <table>
 <thead>
@@ -4081,12 +4093,15 @@ on its standard output:</p>
 </code></pre></div>
 <p>The keys are:</p>
 <ul>
-<li><code>decision</code>: <code>allow</code>, <code>deny</code> or <code>block</code>.</li>
+<li><code>decision</code>: <code>allow</code>, <code>deny</code> or <code>block</code>. Only <code>deny</code> and <code>block</code> are looked at —
+  <code>allow</code> has <strong>no effect</strong>, it neither approves the call nor skips the
+  permission check.</li>
 <li><code>reason</code>: why. It goes back to the model as the error of the tool.</li>
 <li><code>additionalContext</code>: something for the model to read.</li>
-<li><code>updatedInput</code>: the new input of the moment. For <code>PreToolUse</code> and
-  <code>PostToolUse</code> it is a mapping and it replaces the arguments of the tool. For
-  <code>UserPromptSubmit</code> it is a string and it replaces the prompt.</li>
+<li><code>updatedInput</code>: the new input of the moment. For <code>PreToolUse</code> it is a
+  mapping and it replaces the arguments of the tool. For <code>UserPromptSubmit</code> it
+  is a string and it replaces the prompt. At <code>PostToolUse</code> the tool has already
+  run, so a mapping there replaces nothing.</li>
 </ul>
 <p>Nothing on the standard output means the hook has no opinion. The output of
 several hooks is put together: a <code>deny</code> wins over everything, the contexts are
@@ -4109,8 +4124,12 @@ concatenated and the last <code>updatedInput</code> wins.</p>
 <td>The tool runs with the new arguments</td>
 </tr>
 <tr>
+<td><code>PreToolUse</code> allows</td>
+<td>Nothing. The permission check still runs</td>
+</tr>
+<tr>
 <td><code>PostToolUse</code> denies</td>
-<td>The result of the tool becomes an error</td>
+<td>The message that goes back to the model becomes an error. The log keeps the result of the tool</td>
 </tr>
 <tr>
 <td><code>PostToolUse</code> adds context</td>
@@ -4130,7 +4149,7 @@ concatenated and the last <code>updatedInput</code> wins.</p>
 </tr>
 <tr>
 <td><code>Stop</code> denies</td>
-<td>The agent goes on, the reason is a new message for it</td>
+<td>The agent goes on, the reason is a new message for it. At most three times per turn</td>
 </tr>
 </tbody>
 </table>

@@ -1462,6 +1462,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4166,6 +4177,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4218,7 +4240,7 @@ coder<span class="w"> </span>web
 <tbody>
 <tr>
 <td><code>--cwd</code></td>
-<td>The directory the agent works in. Everything the browser shows is inside it.</td>
+<td>The directory the agent works in. Everything the browser shows is inside it, except the directories in <code>permissions.include_dirs</code>.</td>
 </tr>
 <tr>
 <td><code>--host</code></td>
@@ -4320,14 +4342,17 @@ what it cost.</p>
 </tbody>
 </table>
 <p>Under every field is the layer it comes from: <code>defaults</code>, <code>project</code>, <code>user</code> or
-<code>env</code>. The table at the bottom shows every layer, with the secrets taken out.</p>
+<code>env</code>. The table at the bottom shows every layer, with the secrets taken out.
+The page reads the <strong>configuration files</strong>; the <code>-m</code> and <code>-c</code> of the command
+line are for the sessions, so with <code>coder web -m deepseek/deepseek-flash</code> the
+page still shows the model of the files.</p>
 <p>The <strong>Example</strong> block under the fields shows how a third party endpoint is
 written: the model name is then an alias of the model list of a litellm config
 file, and the key of the endpoint stays in that file instead of the settings of
 the agent.</p>
 <p><code>Test connection</code> sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
-reports four things:</p>
+reports five things:</p>
 <table>
 <thead>
 <tr>
@@ -4341,8 +4366,12 @@ reports four things:</p>
 <td>The model the call goes to, and the alias it comes from</td>
 </tr>
 <tr>
-<td>The API base and the key</td>
-<td>The address and whether a key is set (only its tail)</td>
+<td>The API base</td>
+<td>The address the call goes to</td>
+</tr>
+<tr>
+<td>The API key</td>
+<td>Whether a key is set, and its last four characters</td>
 </tr>
 <tr>
 <td>The aliases file</td>
@@ -4397,7 +4426,8 @@ the key itself stays hidden. A click on the field asks the server for the key
 and shows it; a second click hides it again. The key of the aliases file counts
 too: if the key lives in the litellm config file, that is the one that is shown.
 An empty field keeps the key that is set — the key is only sent when there is
-something in the field.</p>
+something in the field. The <strong>API</strong> is stricter about it: <code>api_key: ""</code> removes
+the stored key, and a missing <code>api_key</code> (or <code>null</code>) keeps it.</p>
 <p><strong>When it takes effect</strong>: the server keeps the configuration it started with.
 A <strong>new</strong> session reads the files again, so the new settings apply from the
 next session on. The session you are in keeps the model it has; use <code>/model
@@ -4547,10 +4577,13 @@ themselves is in the templates.</p>
 <h2 id="the-api">The API</h2>
 <p>Everything the pages do is a plain HTTP call, so you can drive the agent from
 a script. The interactive documentation is at <code>/api/docs</code>.</p>
-<p>The write endpoints (messages, approvals, interrupt, configuration) ask for the
-header <code>X-Coder-Client: 1</code>. A browser on another site cannot send that header
-without asking the server first, and the server does not grant it, so a page
-somewhere else cannot drive your agent. <code>curl</code> is not affected.</p>
+<p>The endpoints that drive the agent or hand out the key ask for the header
+<code>X-Coder-Client: 1</code>: sending a message, interrupting, changing the mode,
+answering an approval, writing the configuration, and reading the api key. A
+browser on another site cannot send that header without asking the server
+first, and the server does not grant it, so a page somewhere else cannot drive
+your agent. <code>curl</code> is not affected. Creating, resuming and forking a session
+do not ask for the header — they start nothing.</p>
 <table>
 <thead>
 <tr>
@@ -4693,8 +4726,11 @@ somewhere else cannot drive your agent. <code>curl</code> is not affected.</p>
 </tbody>
 </table>
 <p>A turn that is already running makes the next message fail with <code>409</code>. An
-approval that nobody is waiting for is a <code>404</code>. A path outside the working
-directory is a <code>403</code>. A permission mode that does not exist is a <code>400</code>.</p>
+approval that nobody is waiting for is a <code>404</code>, and so is a session that does
+not exist. A path outside the working directory is a <code>403</code>. A permission mode
+that does not exist is a <code>400</code>, and so is an approval answer that is not
+<code>allow</code>, <code>deny</code> or <code>always</code>. A new session answers <code>201</code>, a message that was
+taken answers <code>202</code>.</p>
 <h2 id="approvals">Approvals</h2>
 <p>A tool that needs permission waits for you. The card in the conversation has
 three buttons:</p>
@@ -4703,8 +4739,8 @@ three buttons:</p>
 <li><strong>Deny</strong> — the call does not run and the model is told that you said no, so
   it can do something else.</li>
 <li><strong>Always allow</strong> — this call runs <strong>and a rule is written to
-  <code>~/.coderagent/rules.yaml</code></strong>, so the same tool is allowed from now on. The
-  button says so.</li>
+  <code>~/.coderagent/rules.yaml</code></strong>, so the same call — the same file, or the same
+  command — is allowed from now on. The button says so.</li>
 </ul>
 <p>If nobody answers, the call is denied (<code>ui.approval_timeout</code> seconds, five
 minutes by default). A tool that is denied never runs.</p>
@@ -4717,9 +4753,9 @@ minutes by default). A tool that is denied never runs.</p>
   <code>coder</code> command line.</li>
 <li><strong>It listens on <code>127.0.0.1</code> by default.</strong> <code>--host 0.0.0.0</code> prints a warning
   and serves to everybody who can reach the machine.</li>
-<li><strong>The browser cannot be tricked into it.</strong> The write endpoints need a header
-  that a cross-site request cannot send without a permission the server does
-  not give.</li>
+<li><strong>The browser cannot be tricked into it.</strong> The endpoints that drive the agent
+  need a header that a cross-site request cannot send without a permission the
+  server does not give.</li>
 <li><strong>The browser cannot look outside the working directory.</strong> Every path is
   resolved and checked against the working directory and the directories in
   <code>permissions.include_dirs</code>. The rules of the user cannot widen that.</li>
@@ -4792,6 +4828,36 @@ browser shows everything.</p>
 </ul>
 <p>If the port is taken, the server says so and stops; start it on another one
 with <code>--port</code>.</p>
+<h2 id="faq">FAQ</h2>
+<p><strong>"<code>api_key_set</code> is false on the settings page"</strong>
+The key really is not there: not in the configuration file, and not in the
+environment under the name of the provider (<code>DEEPSEEK_API_KEY</code> and the like).
+The provider in front of the model name decides which variable is looked at —
+<code>openai/…</code> looks at <code>OPENAI_API_KEY</code>.</p>
+<p><strong>"I changed the settings and nothing happened"</strong>
+They apply to a <strong>new</strong> session. The session you are in still runs with the
+configuration the server started with; use <code>/model &lt;name&gt;</code> to switch right
+away.</p>
+<p><strong>"An endpoint answers 403"</strong>
+The header <code>X-Coder-Client: 1</code> is missing. The browser sends it by itself.</p>
+<p><strong>"Sending a message answers 409"</strong>
+The session is busy running a turn. Wait for it, or press <code>Interrupt</code> first.</p>
+<p><strong>"Reading a file answers 403"</strong>
+The path is outside the working directory. Change the path, or add the
+directory to <code>permissions.include_dirs</code>.</p>
+<p><strong>"The page is empty / cannot be reached"</strong>
+The server is not running, or the port is not 8765. The line
+<code>coder web: http://…</code> in the terminal is the address.</p>
+<p><strong>"Starting it says cannot listen on 127.0.0.1:8765"</strong>
+Another program has the port — usually a <code>coder web</code> that was not closed. The
+server says so and stops; use another one: <code>--port 8766</code>.</p>
+<p><strong>"The answer is shown twice"</strong>
+That was the front end of the older versions; it is fixed: the streaming
+bubble is replaced by the whole message that follows it.</p>
+<p><strong>"The stream broke after a turn"</strong>
+The stream of the events ends with the turn, and the browser reopens it with
+the new <code>since</code>; nothing is lost in between. A turn that says nothing for a
+long time keeps the stream open.</p>
 
 
 

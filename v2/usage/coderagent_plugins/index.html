@@ -3947,8 +3947,8 @@ point of an installed package.</p>
 trust is by name, so it holds for the plugin of the project and for the plugin
 of the user that have the same name.</p>
 <h2 id="the-api-of-a-plugin">The API of a plugin</h2>
-<p>The plugin file has a <code>register</code> function, or an object with a <code>register</code>
-method. The function gets the extension registry:</p>
+<p>The plugin file has a <code>register</code> function. The function gets the extension
+registry:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># .coderagent/plugins/hello/plugin.py</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">coderagent.tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">coderagent.ui.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">Command</span>
@@ -4012,8 +4012,12 @@ line.</p>
 <span class="p">[</span><span class="n">project</span><span class="o">.</span><span class="n">entry</span><span class="o">-</span><span class="n">points</span><span class="o">.</span><span class="s2">"coderagent.plugins"</span><span class="p">]</span>
 <span class="n">hello</span> <span class="o">=</span> <span class="s2">"hello_plugin:plugin"</span>
 </code></pre></div>
-<p>The object the entry point points at is loaded the same way as a <code>plugin.py</code>:
-it is either a <code>register</code> function or an object with a <code>register</code> method.</p>
+<p>The object the entry point points at is loaded a little more loosely: it is
+either a <code>register</code> function or an object with a <code>register</code> method. A
+<code>plugin.py</code> has to use the function — a class with a <code>register</code> method is
+found by the search, but it is not loaded afterwards and the plugin stays
+empty. The one exception is a class whose name is exactly <code>plugin</code>: it is
+loaded like the function would be.</p>
 
 
 

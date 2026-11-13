@@ -3885,7 +3885,8 @@ server. The MCP SDK is optional:</p>
 <span class="w">        </span><span class="nt">LOG_LEVEL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
 </code></pre></div>
 <p>The servers are read from the project file <code>.coderagent/config.yaml</code> and from
-the user file <code>~/.coderagent/config.yaml</code>.</p>
+the user file <code>~/.coderagent/config.yaml</code>. The two lists are not added
+together: the list of the user replaces the list of the project.</p>
 <table>
 <thead>
 <tr>
@@ -3911,21 +3912,30 @@ the user file <code>~/.coderagent/config.yaml</code>.</p>
 <td><code>false</code> skips the server</td>
 </tr>
 <tr>
-<td><code>timeout</code></td>
-<td>How long the agent waits for the server, in seconds</td>
+<td><code>url</code></td>
+<td>The address of the server, for the http transport. Ignored today</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>The headers of the http transport. Ignored today</td>
 </tr>
 </tbody>
 </table>
+<p>The <code>timeout</code> is not a key of a server: it belongs to <code>mcp</code>, next to
+<code>servers</code>, and it is how long the agent waits for a server.</p>
 <p>Only the standard input and output transport works today. A server with a
-<code>url</code> and no <code>command</code> is skipped: the http transport is not implemented yet.</p>
-<p>The <code>env</code> of a server <strong>replaces</strong> its environment, it does not add to it. A
-server that needs <code>PATH</code> has to be given one:</p>
+<code>url</code> and no <code>command</code> is skipped: the http transport is not implemented yet.
+<code>url</code> and <code>headers</code> are accepted by the configuration but have no effect —
+nothing reads them.</p>
+<p>The <code>env</code> of a server is <strong>added</strong> to the environment it inherits, it does not
+replace it: the server keeps <code>PATH</code>, <code>HOME</code> and the rest of the variables the
+MCP SDK passes on, and the ones of the configuration win over them.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">mcp</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">servers</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filesystem</span>
 <span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx -y @modelcontextprotocol/server-filesystem .</span>
 <span class="w">      </span><span class="nt">env</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">PATH</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/usr/local/bin:/usr/bin:/bin</span>
+<span class="w">        </span><span class="nt">LOG_LEVEL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
 </code></pre></div>
 <h2 id="what-the-tools-look-like">What the tools look like</h2>
 <p>The tools of a server are named <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>, so they never clash

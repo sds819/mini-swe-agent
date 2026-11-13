@@ -4601,12 +4601,19 @@
 <li><code>estimated_tokens &gt; context_window - reserved_output</code>（硬上限，默认预留 8k）</li>
 <li>距上次压缩超过 <code>compact_every_turns</code>（默认 40 轮，可关闭）</li>
 </ol>
+<blockquote>
+<p><strong>注意</strong>：<code>context.auto_compact</code> 关掉时，<code>maybe_compact()</code> 第一行就返回 <code>False</code>，
+所以条件 3 <strong>永远不会单独成立</strong>——<code>auto_compact</code> 是总开关。provider 真的报超限时
+走的 <code>force_compact()</code> 不受这个开关管。</p>
+</blockquote>
 <p><strong>保留窗口</strong></p>
-<div class="highlight"><pre><span></span><code>keep_recent_turns = 20     # 保留最近 20 轮完整消息（含 tool results）
-keep_recent_tokens = 40%    # 或直到占窗口 40% 为止，取二者较大者
+<div class="highlight"><pre><span></span><code>keep_recent_turns      = 20    # 至少保留最近 20 轮完整消息（含 tool results）
+keep_recent_token_ratio = 0.4  # 切完之后剩下的尾巴至少要占窗口的 40%
 </code></pre></div>
 <blockquote>
-<p>取「轮数」与「token 占比」的<strong>较大者</strong>保留：轮数少但每轮很大时靠 token 兜底，轮数多但很小时靠轮数兜底。</p>
+<p>取「轮数」与「token 占比」里<strong>保留得更多</strong>的那个：轮数少但每轮很大时靠 token 兜底，
+轮数多但很小时靠轮数兜底。注意 <code>keep_recent_token_ratio</code> 是<strong>下限</strong>——切完之后剩下的
+尾巴若不足这个比例，就把切点再往前挪（甚至不切）。</p>
 </blockquote>
 <p><strong>压缩后必须保留</strong>（不可被摘要吞掉）</p>
 <ul>
@@ -4676,13 +4683,15 @@ else: 保留头 40% + 尾 40%，中间插入：
 </code></pre></div>
 <p>裁剪结果<strong>同时</strong>写入 <code>Session.metadata["truncated_outputs"]</code>（路径 + 行号范围），便于模型用 <code>read(offset=)</code> 精确回看。</p>
 <h3 id="26">2.6 上下文超限兜底</h3>
-<div class="highlight"><pre><span></span><code>ModelGateway.query()
-  └─ 捕获 litellm ContextWindowExceededError
+<div class="highlight"><pre><span></span><code>AgentLoop._query()
+  └─ 捕获上下文溢出异常（models/gateway.py 的 is_context_overflow）
       → ContextEngine.force_compact()
       → 重发一次（最多 1 次）
-      → 仍失败 → 抛出，stop_reason="error"
+      → 仍失败 → 返回错误，stop_reason="error"
 </code></pre></div>
-<p>这是真实使用中最高频的失败模式，<strong>必须</strong>有兜底。</p>
+<p>这是真实使用中最高频的失败模式，<strong>必须</strong>有兜底。
+注意判溢出不只看异常类型：provider 把「context window」「context_length_exceeded」
+写进消息里时也算（<code>is_context_overflow</code>）。压不动时错误消息里会带 "nothing left to compact"。</p>
 <h3 id="27">2.7 项目指令文件</h3>
 <p><strong>加载顺序</strong></p>
 <div class="highlight"><pre><span></span><code>1. ~/.coderagent/CLAUDE.md            （用户级）
@@ -4751,10 +4760,11 @@ else: 保留头 40% + 尾 40%，中间插入：
 </ul>
 <p><strong>回滚 <code>/rewind</code></strong></p>
 <ul>
-<li>选择 checkpoint → 恢复被改文件的旧内容 → 删除新建的文件 → 追加一条 <code>STATE_CHANGE</code> 事件</li>
-<li>上下文历史也需回滚：把 checkpoint 之后的消息从 <code>SessionStore</code> 标记为「已撤销」（不物理删除，写 <code>reverted_to</code> 事件）</li>
+<li>选择 checkpoint → 恢复被改文件的旧内容 → 删除新建的文件</li>
+<li>上下文历史也需回滚：写一条 <code>REVERTED</code>（<code>reverted_to</code>）事件，重放时按它截断历史
+  （不物理删除日志里的消息）</li>
 </ul>
-<p><strong>保留策略</strong>：最近 50 个 checkpoint，或最近 20 轮内的 checkpoint。</p>
+<p><strong>保留策略</strong>：最近 <code>keep</code> 个 checkpoint（默认 50，<code>context.checkpoint.keep</code>）。</p>
 <h3 id="210">2.10 会话恢复与分叉</h3>
 <table>
 <thead>
@@ -4800,9 +4810,9 @@ else: 保留头 40% + 尾 40%，中间插入：
 <h3 id="t23">T2.3 历史抽象</h3>
 <ul>
 <li>[x] <code>core/history.py</code>：<code>History</code> 持有消息列表，提供 <code>recent_turns(n)</code>、<code>split_at(index)</code>、<code>token_count()</code></li>
-<li>[x] 「一轮」的界定：一个 assistant 消息 + 其后所有 tool 结果消息</li>
+<li>[x] 「一轮」的界定：<strong>一条 <code>user</code> 消息</strong> + 模型为它做的一切（assistant 消息 + 后续工具结果）</li>
 </ul>
-<p><strong>验收</strong>：<code>test_history.py</code> — 按轮切分正确；<code>split_at</code> 后拼接等于原列表。</p>
+<p><strong>验收</strong>：<code>test_budget_history.py</code> — 按轮切分正确；<code>split_at</code> 后拼接等于原列表。</p>
 <h3 id="t24">T2.4 上下文组装</h3>
 <ul>
 <li>[x] <code>ContextEngine.build_messages</code> 按 2.0 的固定顺序组装</li>
@@ -4862,7 +4872,7 @@ else: 保留头 40% + 尾 40%，中间插入：
 </ul>
 <h3 id="t213">T2.13 配置扩展</h3>
 <ul>
-<li>[x] <code>ContextConfig</code>：<code>context_window</code>、<code>compact_threshold</code>、<code>reserved_output</code>、<code>keep_recent_turns</code>、<code>auto_compact</code></li>
+<li>[x] <code>ContextConfig</code>：<code>context_window</code>、<code>compact_threshold</code>、<code>reserved_output</code>、<code>keep_recent_turns</code>、<code>keep_recent_token_ratio</code>、<code>compact_every_turns</code>、<code>auto_compact</code>、<code>summarize_model</code>、<code>summary_chunk_tokens</code></li>
 <li>[x] <code>MemoryConfig</code>：项目/用户记忆路径</li>
 <li>[x] <code>CheckpointConfig</code>：<code>enabled</code>、<code>keep</code></li>
 </ul>
@@ -4881,7 +4891,7 @@ else: 保留头 40% + 尾 40%，中间插入：
 <td>估算器在固定样本上的标定；有/无 tiktoken 两条路径</td>
 </tr>
 <tr>
-<td><code>core/test_history.py</code></td>
+<td><code>core/test_budget_history.py</code></td>
 <td>按轮切分、split 往返、token 计数</td>
 </tr>
 <tr>
@@ -5012,7 +5022,7 @@ else: 保留头 40% + 尾 40%，中间插入：
 <td>摘要模型</td>
 <td><code>ModelGateway.complete(purpose="summarize")</code></td>
 <td><code>ContextEngine(summary_model=...)</code>，摘要调用不带工具</td>
-<td>摘要不需要工具；<code>summarize_model</code> 留空时用主模型</td>
+<td>摘要不需要工具；<code>summarize_model</code> 留空时走<strong>路由里的 <code>summarize</code> 用途</strong>（那个用途没配就回落主模型）</td>
 </tr>
 <tr>
 <td><code>recent_errors</code></td>

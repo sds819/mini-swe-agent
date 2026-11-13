@@ -4683,7 +4683,7 @@
 它们怎么分层、接口长什么样、每个里程碑做了什么」。那是 <strong>what / how</strong>。
 这份文档回答的是 <strong>why</strong>：面对什么问题时，做了哪个选择，放弃了哪些备选，付了什么代价，
 以及为什么这个选择会长成现在这个样子。</p>
-<p>代码位置：<code>src/coderagent/</code>（77 个文件，9124 行）。文中每条结论都能在源码里找到出处，
+<p>代码位置：<code>src/coderagent/</code>（84 个 Python 文件，11101 行）。文中每条结论都能在源码里找到出处，
 引用格式是 <code>文件:行号</code>。</p>
 </blockquote>
 <hr>
@@ -5057,7 +5057,7 @@ MCP 断了 → 重连一次；模型返回格式不对 → 归一化后继续。
 <h3 id="l1">L1 环境层</h3>
 <p><strong>问题</strong>：命令要在哪跑？要不要容器？</p>
 <p><strong>决策</strong>：环境是可插拔的（<code>build_environment()</code>，<code>src/coderagent/core/sandbox.py:26</code>，
-在 <code>src/coderagent/run.py:129</code> 被调用），
+在 <code>src/coderagent/run.py:143</code> 被调用），
 复用 mini 的 <code>minisweagent.environments.get_environment</code>，支持 local / docker /
 singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。</p>
 <p><strong>代价</strong>：本地模式下没有隔离，安全性完全依赖权限层。所以权限层才必须是<strong>唯一</strong>
@@ -5072,7 +5072,8 @@ singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。</p>
 三种模式的选择语义在 <code>_default_decision()</code>：read 类工具在所有模式下都 allow，
 plan/readonly 模式下写工具 deny，acceptEdits 模式下写工具 allow 而 bash 仍 ask。</p>
 <p><strong>匹配方式不一样</strong>：路径类工具用 <strong>glob</strong>（<code>glob_to_regex</code>，<code>*</code> 不跨 <code>/</code>，<code>**</code> 跨，
-<code>src/coderagent/tools/permissions.py:90</code>），bash 用 <strong>正则</strong>（子串匹配）。
+<code>src/coderagent/tools/permissions.py:90</code>），bash 用 <strong>正则</strong>（且必须对上每一段的<strong>开头</strong>——
+<code>git push</code> 能对上 <code>git push origin main</code>，对不上 <code>echo "git push"</code>）。
 因为「允许 <code>src/**/*.py</code>」和「允许 <code>npm test</code>」是两种形状。</p>
 <p><strong>代价</strong>：模式本身就是一个小语言，需要文档，也会有边界情况
 （正则写错会被静默当作不匹配，<code>src/coderagent/tools/permissions.py:265-266</code> 的
@@ -5118,7 +5119,7 @@ plan/readonly 模式下写工具 deny，acceptEdits 模式下写工具 allow 而
 <p><strong>决策</strong>：slash 命令的核心<strong>零 textual 依赖</strong>——处理器只通过 <code>context.say(...)</code> 说话
 （<code>src/coderagent/ui/commands/builtin.py</code>）。所以 TUI、CLI、web 都能直接复用。
 每个界面往 <code>CommandContext</code> 里注入自己的钩子，比如 <code>quit</code>
-（<code>src/coderagent/ui/commands/__init__.py</code>）：TUI 传 <code>action_quit</code>，headless 传
+（<code>src/coderagent/ui/commands/__init__.py</code>）：TUI 传 <code>quit=self.action_quit</code>，headless 传
 空操作，web <strong>不传</strong> → 浏览器里 <code>/exit</code> 会说「服务还在跑，去启动它的终端按 ctrl+c」。</p>
 <p><strong>审批</strong>：TUI 里 <code>y/n/a</code> 是带编号的方框，能用方向键选（<code>src/coderagent/ui/widgets/approval_prompt.py</code>）。
 web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → <code>HeadlessApprover</code> 直接拒。</p>
@@ -5154,7 +5155,7 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → <code>Head
        │    └─ _publish(TOOL_RESULT) 写日志（带 diff）
        │
        ├─ 没 tool_calls？
-       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:360
+       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:208
        │
        └─ 循环条件：取消 / max_turns / cost_limit
 </code></pre></div>
@@ -5350,7 +5351,7 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → <code>Head
 <p><strong>把「发生了什么」和「怎么做的」分开——前者记在事件日志里，后者由一个同步核心 +
 三个订阅者共享；而所有会碰到用户世界的东西，必须从同一个闸门过去。</strong></p>
 </blockquote>
-<p>其余的（13 个工具、25 个命令、4 类扩展机制、3 套界面）都是这条主线的展开。</p>
+<p>其余的（13 个工具、25 个命令、5 类扩展机制、3 套界面）都是这条主线的展开。</p>
 <hr>
 <h2 id="_3">相关文档</h2>
 <table>
