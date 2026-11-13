@@ -280,3 +280,13 @@ def test_the_model_has_to_call_the_tools():
     assert check_tools(ScriptedModel([{"role": "assistant", "content": "no tool"}]))["error"] == (
         "the model did not call the tool"
     )
+
+
+def test_the_settings_page_offers_a_cache_control_mode_that_mini_accepts(make_client):
+    """mini only knows `default_end` and nothing, so the page may not offer anything else."""
+    from minisweagent.models.utils.cache_control import set_cache_control
+
+    page = make_client().get("/settings").text
+    assert 'value="default_end"' in page
+    assert 'value="ephemeral"' not in page
+    assert set_cache_control([], mode="default_end") == []
