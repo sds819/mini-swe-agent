@@ -29,12 +29,16 @@ together: the list of the user replaces the list of the project.
 | `command` | The command that starts the server, over the standard input and output |
 | `env` | The environment of the server |
 | `enabled` | `false` skips the server |
+| `url` | The address of the server, for the http transport. Ignored today |
+| `headers` | The headers of the http transport. Ignored today |
 
 The `timeout` is not a key of a server: it belongs to `mcp`, next to
 `servers`, and it is how long the agent waits for a server.
 
 Only the standard input and output transport works today. A server with a
 `url` and no `command` is skipped: the http transport is not implemented yet.
+`url` and `headers` are accepted by the configuration but have no effect —
+nothing reads them.
 
 The `env` of a server is **added** to the environment it inherits, it does not
 replace it: the server keeps `PATH`, `HOME` and the rest of the variables the

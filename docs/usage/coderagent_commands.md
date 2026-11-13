@@ -69,6 +69,11 @@ Everything else: $ARGUMENTS
   session are back when the command is done.
 - `model` picks another model for this command.
 
+Only the **name** of the tool is read. The part in parentheses is thrown away,
+so `bash(git diff:*)` allows the `bash` tool for **every** command it runs —
+there is no way to restrict a tool to a pattern. Write `bash` and remember
+that the command may run anything.
+
 The command above is used like this:
 
 ```bash

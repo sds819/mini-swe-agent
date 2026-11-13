@@ -114,4 +114,5 @@ The object the entry point points at is loaded a little more loosely: it is
 either a `register` function or an object with a `register` method. A
 `plugin.py` has to use the function — a class with a `register` method is
 found by the search, but it is not loaded afterwards and the plugin stays
-empty.
+empty. The one exception is a class whose name is exactly `plugin`: it is
+loaded like the function would be.

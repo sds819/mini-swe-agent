@@ -88,9 +88,9 @@ project memory and on the pending file, not on the file of the user.
 
 - A fact that is already there is not written twice. The comparison ignores
   the case and the punctuation.
-- The project memory does not grow past 200 lines. When it would, nothing is
-  written and the agent says so in the log: the file has to be tidied up
-  first.
+- The project memory does not grow past 200 lines. The pending file has the same
+  limit. When it would, nothing is written and the agent says so in the log:
+  the file has to be tidied up first.
 - The preferences of the user are never written without the confirmation.
 - The project facts are written without a confirmation: they are about the
   project, and the user can change them like any other file.

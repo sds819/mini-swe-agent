@@ -87,6 +87,8 @@ of the session:
 | `calls` | The model calls of the session |
 | `cost` | What the session has cost so far |
 | `budget` | The cost limit of the session |
+| `tokens_used` | The tokens the session has used |
+| `token_budget` | The token limit of the session |
 
 The rules are **parsed, not evaluated**. A condition that is not of that form
 never holds, and it never runs code: a configuration file cannot make the

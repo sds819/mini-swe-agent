@@ -24,6 +24,7 @@ hooks:
 
 | Key | What it is | Default |
 |---|---|---|
+| `type` | The kind of the hook. Only `command` is implemented | `command` |
 | `matcher` | A regular expression of the tool names. Empty means every tool | |
 | `command` | The command to run, with the shell, in the directory of the session | |
 | `timeout` | How long it may take, in seconds | 10 |
@@ -36,7 +37,10 @@ but the list of the hooks of one event is replaced by the list of the user.
 
 The matcher is matched against the name of the tool, so it only means
 something for `PreToolUse` and `PostToolUse`. Leave it empty for the other
-events.
+events. It is a **regular expression that is searched, not anchored**: the
+name `multi_edit` matches `edit|write`, and the letters are case sensitive, so
+`Bash` matches nothing. A matcher that is not a valid regular expression is
+logged and matches nothing.
 
 ## The moments
 
@@ -44,7 +48,7 @@ events.
 |---|---|---|
 | `SessionStart` | The session starts | Nothing. It is a notification |
 | `UserPromptSubmit` | After the prompt, before the model | Add context, rewrite the prompt, or block it |
-| `PreToolUse` | Before the tool runs | Allow, deny, or rewrite the arguments |
+| `PreToolUse` | Before the tool runs | Deny it, or rewrite the arguments |
 | `PostToolUse` | After the tool ran | Add context, or block the result |
 | `Stop` | The agent wants to stop | Send it back to work |
 | `SessionEnd` | The turn ends | Nothing. It is a notification |
@@ -80,7 +84,9 @@ if payload.get("tool") == "bash" and "rm -rf" in payload["params"].get("command"
 
 The keys are:
 
-- `decision`: `allow`, `deny` or `block`.
+- `decision`: `allow`, `deny` or `block`. Only `deny` and `block` are looked at —
+  `allow` has **no effect**, it neither approves the call nor skips the
+  permission check.
 - `reason`: why. It goes back to the model as the error of the tool.
 - `additionalContext`: something for the model to read.
 - `updatedInput`: the new input of the moment. For `PreToolUse` it is a
@@ -98,6 +104,7 @@ concatenated and the last `updatedInput` wins.
 |---|---|
 | `PreToolUse` denies | The tool call fails, the reason goes back to the model |
 | `PreToolUse` rewrites the arguments | The tool runs with the new arguments |
+| `PreToolUse` allows | Nothing. The permission check still runs |
 | `PostToolUse` denies | The message that goes back to the model becomes an error. The log keeps the result of the tool |
 | `PostToolUse` adds context | The context is appended to the result of the tool |
 | `UserPromptSubmit` denies | The turn ends with an error, the model is not called |

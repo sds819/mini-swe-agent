@@ -24,6 +24,7 @@ hooks:
 
 | 键 | 是什么 | 默认值 |
 |---|---|---|
+| `type` | hook 的种类。只实现了 `command` | `command` |
 | `matcher` | 工具名的正则。空表示所有工具 | |
 | `command` | 要跑的命令，用 shell 跑，在会话的目录里 | |
 | `timeout` | 最多跑多久，单位是秒 | 10 |
@@ -33,6 +34,8 @@ hooks:
 两个文件像其它配置一样合并：事件是合并的，但同一个事件下 hook 的那份列表会被用户那份整个换掉。
 
 `matcher` 是拿工具名去匹配的，所以它只对 `PreToolUse` 和 `PostToolUse` 有意义。其它事件留空就行。
+它是**搜出来的正则，不是从头对上的**：工具名 `multi_edit` 会被 `edit|write` 匹配上；大小写敏感，
+所以 `Bash` 什么也匹配不到。正则本身写坏了会记一条日志，然后什么也不匹配。
 
 ## 六个时刻
 
@@ -40,7 +43,7 @@ hooks:
 |---|---|---|
 | `SessionStart` | 会话开始 | 什么也不做，是个通知 |
 | `UserPromptSubmit` | 拿到提问之后、问模型之前 | 补上下文、改写提问，或者拦住提问 |
-| `PreToolUse` | 工具跑之前 | 允许、拒绝，或者改写参数 |
+| `PreToolUse` | 工具跑之前 | 拒绝，或者改写参数 |
 | `PostToolUse` | 工具跑完之后 | 补上下文，或者把结果拦下来 |
 | `Stop` | agent 想停下来 | 让它回去接着干 |
 | `SessionEnd` | 这一轮结束 | 什么也不做，是个通知 |
@@ -74,7 +77,8 @@ if payload.get("tool") == "bash" and "rm -rf" in payload["params"].get("command"
 
 可以写的键：
 
-- `decision`：`allow`、`deny` 或 `block`。
+- `decision`：`allow`、`deny` 或 `block`。**只有 `deny` 和 `block` 会被看**——
+  `allow` 什么也不做：它既不会批准这次调用，也不会跳过权限检查。
 - `reason`：为什么。它会作为工具的错误回到模型那里。
 - `additionalContext`：给模型看的一句话。
 - `updatedInput`：这一刻的新输入。`PreToolUse` 里它是一个映射，替换掉工具的参数；
@@ -90,6 +94,7 @@ if payload.get("tool") == "bash" and "rm -rf" in payload["params"].get("command"
 |---|---|
 | `PreToolUse` 拒绝 | 这次工具调用失败，理由回到模型那里 |
 | `PreToolUse` 改写参数 | 工具用新的参数跑 |
+| `PreToolUse` 允许 | 什么也不发生。权限检查照旧 |
 | `PostToolUse` 拒绝 | 回给模型的那条消息变成一个错误，日志里工具的结果照旧 |
 | `PostToolUse` 补上下文 | 上下文追加到工具的结果后面 |
 | `UserPromptSubmit` 拒绝 | 这一轮以错误结束，模型根本不被调用 |

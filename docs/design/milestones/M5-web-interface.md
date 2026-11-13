@@ -234,7 +234,7 @@ executor._prepare()
 | `api_base` | `model.model_kwargs.api_base` | **显式字段**，因为它直通 litellm |
 | `api_key` | `model.model_kwargs.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
 | `max_retries` | `model.max_retries` | 死配置，接线见 §8.4 |
-| `set_cache_control` | `model.set_cache_control` | `ephemeral` / 空 |
+| `set_cache_control` | `model.set_cache_control` | `default_end` / 空（mini 只认这两个） |
 | `litellm_config` | `model.litellm_config` | 别名文件；里面的别名可以当模型名用 |
 | `routing` | `model.routing` | `{purpose: model}` |
 | `routing_rules` | `model.routing_rules` | `{when, purpose}` 行 |

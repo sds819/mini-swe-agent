@@ -24,7 +24,7 @@ Open that address in a browser.
 
 | Option | What it does |
 |---|---|
-| `--cwd` | The directory the agent works in. Everything the browser shows is inside it. |
+| `--cwd` | The directory the agent works in. Everything the browser shows is inside it, except the directories in `permissions.include_dirs`. |
 | `--host` | The address to listen on. `127.0.0.1` by default. |
 | `--port` | The port. `8765` by default. |
 | `--model`, `-m` | The model of this run |
@@ -84,6 +84,9 @@ The model configuration, in a form:
 
 Under every field is the layer it comes from: `defaults`, `project`, `user` or
 `env`. The table at the bottom shows every layer, with the secrets taken out.
+The page reads the **configuration files**; the `-m` and `-c` of the command
+line are for the sessions, so with `coder web -m deepseek/deepseek-flash` the
+page still shows the model of the files.
 
 The **Example** block under the fields shows how a third party endpoint is
 written: the model name is then an alias of the model list of a litellm config
@@ -92,12 +95,13 @@ the agent.
 
 `Test connection` sends one cheap call to the model with the settings of the
 form, so you can see whether the key and the address work before you save. It
-reports four things:
+reports five things:
 
 | What | What it tells you |
 |---|---|
 | The model | The model the call goes to, and the alias it comes from |
-| The API base and the key | The address and whether a key is set (only its tail) |
+| The API base | The address the call goes to |
+| The API key | Whether a key is set, and its last four characters |
 | The aliases file | Whether the file exists, whether it parses, and which aliases it has |
 | The tools | Whether the model calls the tools — without that the agent cannot work |
 
@@ -132,7 +136,8 @@ the key itself stays hidden. A click on the field asks the server for the key
 and shows it; a second click hides it again. The key of the aliases file counts
 too: if the key lives in the litellm config file, that is the one that is shown.
 An empty field keeps the key that is set — the key is only sent when there is
-something in the field.
+something in the field. The **API** is stricter about it: `api_key: ""` removes
+the stored key, and a missing `api_key` (or `null`) keeps it.
 
 **When it takes effect**: the server keeps the configuration it started with.
 A **new** session reads the files again, so the new settings apply from the
@@ -251,10 +256,13 @@ themselves is in the templates.
 Everything the pages do is a plain HTTP call, so you can drive the agent from
 a script. The interactive documentation is at `/api/docs`.
 
-The write endpoints (messages, approvals, interrupt, configuration) ask for the
-header `X-Coder-Client: 1`. A browser on another site cannot send that header
-without asking the server first, and the server does not grant it, so a page
-somewhere else cannot drive your agent. `curl` is not affected.
+The endpoints that drive the agent or hand out the key ask for the header
+`X-Coder-Client: 1`: sending a message, interrupting, changing the mode,
+answering an approval, writing the configuration, and reading the api key. A
+browser on another site cannot send that header without asking the server
+first, and the server does not grant it, so a page somewhere else cannot drive
+your agent. `curl` is not affected. Creating, resuming and forking a session
+do not ask for the header — they start nothing.
 
 | Method | Path | What it does |
 |---|---|---|
@@ -286,8 +294,11 @@ somewhere else cannot drive your agent. `curl` is not affected.
 | GET | `/api/diff?path=` | The changes of the working tree |
 
 A turn that is already running makes the next message fail with `409`. An
-approval that nobody is waiting for is a `404`. A path outside the working
-directory is a `403`. A permission mode that does not exist is a `400`.
+approval that nobody is waiting for is a `404`, and so is a session that does
+not exist. A path outside the working directory is a `403`. A permission mode
+that does not exist is a `400`, and so is an approval answer that is not
+`allow`, `deny` or `always`. A new session answers `201`, a message that was
+taken answers `202`.
 
 ## Approvals
 
@@ -314,9 +325,9 @@ Read this before you put it on a network.
   `coder` command line.
 - **It listens on `127.0.0.1` by default.** `--host 0.0.0.0` prints a warning
   and serves to everybody who can reach the machine.
-- **The browser cannot be tricked into it.** The write endpoints need a header
-  that a cross-site request cannot send without a permission the server does
-  not give.
+- **The browser cannot be tricked into it.** The endpoints that drive the agent
+  need a header that a cross-site request cannot send without a permission the
+  server does not give.
 - **The browser cannot look outside the working directory.** Every path is
   resolved and checked against the working directory and the directories in
   `permissions.include_dirs`. The rules of the user cannot widen that.
@@ -360,3 +371,43 @@ browser shows everything.
 
 If the port is taken, the server says so and stops; start it on another one
 with `--port`.
+
+## FAQ
+
+**"`api_key_set` is false on the settings page"**
+The key really is not there: not in the configuration file, and not in the
+environment under the name of the provider (`DEEPSEEK_API_KEY` and the like).
+The provider in front of the model name decides which variable is looked at —
+`openai/…` looks at `OPENAI_API_KEY`.
+
+**"I changed the settings and nothing happened"**
+They apply to a **new** session. The session you are in still runs with the
+configuration the server started with; use `/model <name>` to switch right
+away.
+
+**"An endpoint answers 403"**
+The header `X-Coder-Client: 1` is missing. The browser sends it by itself.
+
+**"Sending a message answers 409"**
+The session is busy running a turn. Wait for it, or press `Interrupt` first.
+
+**"Reading a file answers 403"**
+The path is outside the working directory. Change the path, or add the
+directory to `permissions.include_dirs`.
+
+**"The page is empty / cannot be reached"**
+The server is not running, or the port is not 8765. The line
+`coder web: http://…` in the terminal is the address.
+
+**"Starting it says cannot listen on 127.0.0.1:8765"**
+Another program has the port — usually a `coder web` that was not closed. The
+server says so and stops; use another one: `--port 8766`.
+
+**"The answer is shown twice"**
+That was the front end of the older versions; it is fixed: the streaming
+bubble is replaced by the whole message that follows it.
+
+**"The stream broke after a turn"**
+The stream of the events ends with the turn, and the browser reopens it with
+the new `since`; nothing is lost in between. A turn that says nothing for a
+long time keeps the stream open.
