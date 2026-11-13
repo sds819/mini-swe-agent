@@ -7,7 +7,7 @@
 > 这份文档回答的是 **why**：面对什么问题时，做了哪个选择，放弃了哪些备选，付了什么代价，
 > 以及为什么这个选择会长成现在这个样子。
 >
-> 代码位置：`src/coderagent/`（77 个文件，9124 行）。文中每条结论都能在源码里找到出处，
+> 代码位置：`src/coderagent/`（84 个 Python 文件，11101 行）。文中每条结论都能在源码里找到出处，
 > 引用格式是 `文件:行号`。
 
 ---
@@ -378,7 +378,7 @@ web 的环形缓冲只保留非瞬时条目（`src/coderagent/web/sessions.py:99
 **问题**：命令要在哪跑？要不要容器？
 
 **决策**：环境是可插拔的（`build_environment()`，`src/coderagent/core/sandbox.py:26`，
-在 `src/coderagent/run.py:129` 被调用），
+在 `src/coderagent/run.py:143` 被调用），
 复用 mini 的 `minisweagent.environments.get_environment`，支持 local / docker /
 singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。
 
@@ -399,7 +399,8 @@ singularity / swerex_docker / swerex_modal / bubblewrap / contree 七种。
 plan/readonly 模式下写工具 deny，acceptEdits 模式下写工具 allow 而 bash 仍 ask。
 
 **匹配方式不一样**：路径类工具用 **glob**（`glob_to_regex`，`*` 不跨 `/`，`**` 跨，
-`src/coderagent/tools/permissions.py:90`），bash 用 **正则**（子串匹配）。
+`src/coderagent/tools/permissions.py:90`），bash 用 **正则**（且必须对上每一段的**开头**——
+`git push` 能对上 `git push origin main`，对不上 `echo "git push"`）。
 因为「允许 `src/**/*.py`」和「允许 `npm test`」是两种形状。
 
 **代价**：模式本身就是一个小语言，需要文档，也会有边界情况
@@ -513,7 +514,7 @@ web 里是 HTTP 请求 + SSE 推送。headless 里没有审批人 → `HeadlessA
        │    └─ _publish(TOOL_RESULT) 写日志（带 diff）
        │
        ├─ 没 tool_calls？
-       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:360
+       │    └─ Stop hook 可以拦一次（最多 3 次）       core/loop.py:208
        │
        └─ 循环条件：取消 / max_turns / cost_limit
 ```
@@ -623,7 +624,7 @@ coderagent 的设计逻辑可以压成一句：
 > **把「发生了什么」和「怎么做的」分开——前者记在事件日志里，后者由一个同步核心 +
 > 三个订阅者共享；而所有会碰到用户世界的东西，必须从同一个闸门过去。**
 
-其余的（13 个工具、25 个命令、4 类扩展机制、3 套界面）都是这条主线的展开。
+其余的（13 个工具、25 个命令、5 类扩展机制、3 套界面）都是这条主线的展开。
 
 ---
 

@@ -73,7 +73,7 @@ MODEL_CONTEXT_WINDOWS = {"gpt-": 128000, "claude": 200000, "deepseek": 64000, "q
                           "llama": 8192, "gemini": 1000000, "mistral": 32768, "kimi": 262144,
                           "minimax": 204800}
 
-def context_window_for(model_name, default=200000): ...   # 按模型名后缀的前缀查表
+def context_window_for(model_name, default=200000): ...   # 按模型名（去掉厂商前缀后）的前缀查表
 
 limit          = max(0, context_window - reserved_output)
 should_compact = estimated > min(int(context_window * compact_threshold), limit())
@@ -103,7 +103,7 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 
 ### 3.2 配置项
 
-`ContextConfig`（`config/schema.py:83-92`）：
+`ContextConfig`（`config/schema.py:83-94`）：
 
 | 键 | 默认 | 含义 |
 |---|---|---|
@@ -115,6 +115,7 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
 | `context.compact_every_turns` | 40 | 最多隔多少轮强制压一次 |
 | `context.auto_compact` | true | 关掉就完全不自动压缩 |
 | `context.summarize_model` | "" | 用单独的模型做摘要；空 = 走路由的 `summarize` 用途 |
+| `context.summary_chunk_tokens` | 0 | 一次摘要提示词能占多少 token；0 = 按摘要模型的窗口算 |
 
 摘要模型可以是**另一个模型**（`run.py:161-164`）：配了就用它，没配就用路由里的 `summarize` 用途。
 摘要跑在别的模型上时，它的成本会**记到主模型账上**（`context.py:225-228`），所以总账不错。
@@ -134,6 +135,10 @@ should_compact = estimated > min(int(context_window * compact_threshold), limit(
    （文本里带 "nothing left to compact"）。
 
 第 3 条是兜底：前两条是**预判**，第 3 条是**事后救**。
+
+**注意**：`auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`（`context.py:202`），
+所以第 2 条**永远不会单独成立**——「只按轮数压」是做不到的，`auto_compact` 是总开关
+（只有第 3 条的 `force_compact()` 不受它管）。
 
 ### 4.2 切点：永远在轮边界
 
@@ -255,7 +260,7 @@ while estimate_tokens(messages[cut:]) > limit:
 
 ### 5.3 摘要失败不许通过
 
-`_summarize()`（`context.py:284-306`）的判定链：
+`_summarize()`（`context.py:284-306`）的判定链（重试的循环在 `_ask()`，`context.py:308-318`）：
 
 ```
 for _ in range(2):                      # 最多两次
@@ -376,7 +381,7 @@ observation 有两种，内容不同但形状一样（都带 `tool_call_id`，�
 或者调一个被权限挡下的工具（`Error: permission denied for 'xxx'. ...`）。
 这些文本都在历史里，所以复盘时能直接看出模型「在乱试什么」。
 
-评测报告里的 `tool_errors` 数的就是它们（`core/telemetry.py`）。
+评测报告里的 `tool_errors` 数的就是它们（`eval/runner.py:353`）。
 再往上一层，`require_tools` 要求某些任务**必须**用某个工具改某个文件——
 用 shell 绕过去不算完成；`no-op` 任务反过来测「不该改的时候别改」。
 
