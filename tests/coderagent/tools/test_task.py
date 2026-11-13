@@ -191,6 +191,20 @@ def test_without_a_ceiling_the_sub_agent_keeps_its_own_limit(tmp_path):
     assert result["turns"] == 2
 
 
+def test_a_sub_agent_without_a_limit_keeps_going(tmp_path):
+    """`max_turns: 0` means no limit, like it does everywhere else."""
+    model = ScriptedModel(
+        [
+            {"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]},
+            {"role": "assistant", "content": "", "tool_calls": [_call("read", {"path": "a.py"})]},
+            {"role": "assistant", "content": "Found it."},
+        ]
+    )
+    result = _runner(model, tmp_path).run(_spec(max_turns=0), "Find", "Look")
+    assert result["status"] == "completed"
+    assert result["turns"] == 3
+
+
 def _peak_parallelism(tmp_path, **kwargs) -> int:
     """How many sub agents ran at the same time at the most."""
     running = 0
