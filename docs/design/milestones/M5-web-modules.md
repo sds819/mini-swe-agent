@@ -20,9 +20,10 @@ M5 那篇讲的是「为什么这么做」。本文讲的是「具体是哪个�
 | HTTP API | `web/api.py` | 全部 REST + SSE 端点 | `router`、`require_client` | FastAPI、`web.*`、`core.telemetry`、`ui.commands` |
 | 应用装配 | `web/app.py` | 组装 app、挂静态资源与模板 | `create_app(...)` | `web.api`、`web.sessions` |
 | 服务入口 | `web/server.py` | uvicorn 启动 | `serve(...)` | `web.app`、litellm |
+| 页面语言 | `web/i18n.py` | 页面文案与语言选择 | `STRINGS`、`LANGUAGES`、`locale_of` | `paths` |
 | 配置 API | `web/config_api.py` | 配置分层、脱敏、写回、连通性测试 | `model_view`、`sources`、`layers_preview`、`write_user_model`、`effective_model`、`test_connection` | `config.loader`、`paths` |
 | 文件浏览 | `web/files.py` | 越界检查、列目录、读文件、diff | `policy_for`、`resolve`、`directory`、`read`、`diff`、`OutsideBounds` | `tools.*` |
-| 前端 | `web/static/app.js` + `templates/*.html` | 三个页面的渲染与交互 | `render(item)` 等 | 纯 REST/SSE |
+| 前端 | `web/static/app.js` + `templates/{en,zh}/*.html` | 三个页面的渲染与交互 | `render(item)` 等 | 纯 REST/SSE |
 
 **依赖方向是单向的**：`api → sessions → {approver, events}`，`app → api`，`server → app`。
 `events.py` 不依赖 `sessions.py`，`sessions.py` 不依赖 `api.py` —— 这样每个模块都能单独测。
@@ -54,7 +55,7 @@ from coderagent.web.server import serve   # 写在函数体里，不在模块顶
 
 | `EventType` | 条目 `kind` | 额外字段 |
 |---|---|---|
-| `USER_MESSAGE` | `user_message` | `content` |
+| `USER_MESSAGE` | `user_message` | `content`、`original`（hook 改写前的用户原话） |
 | `ASSISTANT_MESSAGE` | `assistant_message` | `content`、`reasoning`（取自 `message["extra"]["reasoning"]`） |
 | `TEXT_DELTA` | `text_delta` | `content`（**瞬时**：不进缓冲） |
 | `REASONING` | `reasoning_delta` | `content`（**瞬时**：不进缓冲） |
@@ -64,6 +65,7 @@ from coderagent.web.server import serve   # 写在函数体里，不在模块顶
 | `APPROVAL_RESPONSE` | `approval_response` | `id`、`decision`、`timed_out` |
 | `STATE_CHANGE` | `state` | payload 里所有非 `None` 的键 |
 | `COMPACTION` | `compaction` | `tokens`、`cost` |
+| `VERIFY` | `verify` | `commands`、`failed` |
 | `REFLECTION` | `reflection` | `cost`、`purpose`、`model`、`project_facts`、`user_preferences` |
 | `REVERTED` | `reverted` | `messages` |
 | `ERROR` | `error` | `error` |
@@ -166,6 +168,8 @@ class SessionRuntime:
 | `interrupt()` | 置 `cancel` → 发 `interrupted` 条目 |
 | `resume() -> Session` | 从日志重建会话 |
 | `loop() -> AgentLoop` | 懒建并缓存；建好后 `loop.cancel = self.cancel.is_set` |
+| `mode() -> str` | 会话的权限模式：loop 已建用它的策略，否则用自己记下的，再回落配置 |
+| `set_mode(mode)` | 原地改策略与 `session.permission_mode`，并发一条 `mode_changed` 条目 |
 | `status() -> dict` | 状态栏字段 |
 
 **`_run_turn` 的收尾**
@@ -285,8 +289,10 @@ data: {"seq": 12, "kind": "assistant_message", "content": "..."}\n\n
 
 | 方法 | 路径 | 出参 |
 |---|---|---|
-| GET | `/api/config` | `{"model": model_view, "sources": {...}, "layers": [...], "user_config_path": str}` |
+| GET | `/api/config` | `{"model": model_view, "permissions": permissions_view, "sources": {...}, "layers": [...], "user_config_path": str}` |
 | PUT | `/api/config/model` | `{"ok", "path", "model"}` |
+| GET | `/api/config/model/key` | `{"api_key": ...}` —— 设置页要回填密码框 |
+| PUT | `/api/config/permissions` | `{"ok", "path", "permissions"}`；非法模式 → **400** |
 | POST | `/api/config/model/test` | `{"ok": true, "content", "cost", "latency_ms"}` 或 `{"ok": false, "error"}` |
 
 ### 6.6 文件
@@ -346,7 +352,7 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | 名字 | 含义 |
 |---|---|
 | `SECRET_MARKERS = ("key", "token", "secret", "password")` | 名字里含这些词的一律当密钥 |
-| `DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules")` | 直接在 `model:` 下的字段 |
+| `DIRECT_FIELDS = ("model_name", "max_retries", "set_cache_control", "routing", "routing_rules", "litellm_config")` | 直接在 `model:` 下的字段 |
 | `MODEL_FIELDS = (*DIRECT_FIELDS, "api_base", "api_key")` | 配置页要展示的字段 |
 | `ENV_KEYS = {"openai": "OPENAI_API_KEY", …}` | 厂商 → 环境变量名；模型名斜杠前面那段就是厂商 |
 
@@ -362,16 +368,16 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 | `layers_preview(cwd) -> list[dict]` | `[{layer, model}]` | 每一层都过 `redact` |
 | `user_config_path() -> Path` | | `config_home()/"config.yaml"`（`MSWEA_CODER_HOME` 生效） |
 | `write_user_model(payload) -> Path` | 写后的路径 | 见 §9.3 |
-| `effective_model(cwd, overrides) -> (name, kwargs)` | | 当前配置 + 表单里的覆盖 |
+| `effective_model(cwd, overrides) -> dict` | `{model_name, requested, alias, litellm_config, model_kwargs}` | 当前配置 + 表单里的覆盖；别名在这里解析 |
 | `provider_of(model_name) -> str` | | 厂商：名字里有 `/` 就取斜杠前面那段，否则问 litellm |
 | `env_api_key(model_name) -> str` | | 厂商在环境里的 key（`ENV_KEYS` 表） |
 | `effective_api_key(cwd) -> str` | | agent 真正会用的 key：**配置 > 别名文件 > 环境变量** |
-| `test_connection(name, kwargs) -> dict` | | 一次 `max_tokens=1` 的调用 |
+| `test_connection(effective: dict) -> dict` | | 一次 `max_tokens=1` 的调用；`effective` 是 `effective_model()` 的结果 |
 
 **`model_view` 的字段**
 
 ```python
-{"model_name", "api_base", "api_key_set": bool, "api_key_hint": str,
+{"model_name", "litellm_config", "api_base", "api_key_set": bool, "api_key_hint": str,
  "max_retries", "set_cache_control", "routing", "routing_rules",
  "model_kwargs": {...不含密钥...}}
 ```
@@ -392,7 +398,7 @@ def serve(cwd, host="127.0.0.1", port=8765, config_spec=None, model=None,
 未知顶层段（`agent:`/`tools:`/`mcp:`…）与未知的 `model:` 子键原样保留。
 **已知代价：注释会丢**（`yaml.safe_dump`，不引 ruamel）。
 
-### 9.4 `test_connection(name, kwargs)`
+### 9.4 `test_connection(effective)`
 
 - 临时把 `MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT` 设成 `1`（**错的 key 要立刻失败，不是重试十次**），
   结束后恢复原值。
@@ -409,7 +415,7 @@ class OutsideBounds(ValueError): ...
 
 | 函数 | 出参 | 契约 |
 |---|---|---|
-| `policy_for(config, cwd) -> PermissionPolicy` | | 权限策略**但不含规则** —— 规则能让 `allow` 越过边界检查 |
+| `policy_for(config, cwd) -> PermissionPolicy` | | 权限策略**但不含规则** —— 规则**不能**放宽边界检查 |
 | `resolve(cwd, path, policy) -> Path` | 绝对路径 | `resolve()` 后必须 `policy.within_bounds()`；越界 → `OutsideBounds` |
 | `directory(cwd, path, depth, policy) -> list[dict]` | `[{path, name, is_dir, size}]` | 用 `tools/builtin/search.py` 的 `list_entries`；不是目录 → `NotADirectoryError` |
 | `read(cwd, path, policy, config) -> dict` | `{path, content, is_error}` | 用 `ReadTool`（自带行号与截断） |
@@ -421,8 +427,10 @@ class OutsideBounds(ValueError): ...
 Path.resolve()  →  policy.within_bounds(path)  →  工具自己的 resolve_path
 ```
 
-> **不能用 `policy.evaluate("read", ...)` 当边界检查**：`tools/permissions.py` 允许 `allow` 规则覆盖边界，
-> 那等于把整块磁盘暴露给浏览器。必须用 `within_bounds`。
+> **不能用 `policy.evaluate("read", ...)` 当边界检查**：`evaluate` 判的是「这条调用允不允许」，
+> 不是「这个路径在不在范围内」。规则**不能**放宽边界
+> （`tools/permissions.py` 的 `within_bounds`：「The rules of the user cannot widen this」），
+> 但混用两套语义仍然不对。必须用 `within_bounds`。
 
 ---
 
@@ -499,13 +507,17 @@ state = { sessionId, seq, stream, cards, assistant, current, stick }
 
 ## 12. 模板 `web/templates/`
 
+模板**按语言各一套**：`templates/en/` 与 `templates/zh/`，每套四个文件。
+
 | 文件 | 内容 | 关键 id |
 |---|---|---|
 | `base.html` | 外壳：顶栏 + 导航 + `{% block content %}` | `#status` |
 | `chat.html` | 三栏：会话+文件 / 对话 / 状态+变更+文件 | `#sessions`、`#files`、`#messages`、`#composer`、`#input`、`#command-list`、`#run-command`、`#interrupt`、`#status-fields`、`#changes`、`#file-view` |
 | `settings.html` | 模型表单 | `#model-name`、`#api-base`、`#api-key`、`#max-retries`、`#set-cache-control`、`#routing`、`#routing-rules`、`#model-kwargs`、`#layers`、`#config-path`、`#config-message`、`#test-connection`、`source-<field>` |
+| `macros.html` | 两套页面共用的宏 | — |
 
-模板只渲染外壳，**逻辑全在 `app.js`**。
+模板只渲染外壳，**逻辑全在 `app.js`**。语言的选择在 `web/i18n.py`：先看 cookie，
+再看访客地区（代理头或 geoip），页面上的语言框会写 cookie（`/lang/{language}`）。
 
 ---
 

@@ -32,7 +32,7 @@ web 版需要的四件事，核心里**已经有了**，所以本里程碑一行
 |---|---|
 | 模型参数可结构化读写 | pydantic `ModelConfig`（`config/schema.py:38`），`model_kwargs` 直传 `litellm.completion` |
 | 配置分层 | `config/loader.py` 的四层合并（defaults < 项目 < 用户 < CLI） |
-| 事件可订阅 | `core/events.py:61` 的 `EventBus`，同步发布/订阅，TUI 已是它的一个订阅者 |
+| 事件可订阅 | `core/events.py:65` 的 `EventBus`，同步发布/订阅，TUI 已是它的一个订阅者 |
 | 回合可放到别的线程 | 核心全程同步，`ui/tui.py:267` 已经在工作线程里跑 turn |
 
 所以 web 版 = **一个 FastAPI 应用 + 每会话一个工作线程 + SSE 把事件推给浏览器**，
@@ -50,13 +50,14 @@ src/coderagent/web/
 ├── approver.py      # WebApprover：阻塞式审批，答案由 HTTP 送回
 ├── config_api.py    # 读写 ~/.coderagent/config.yaml、分层预览、脱敏、连通性测试
 ├── files.py         # 文件浏览：越界检查、列目录、读文件、diff
+├── i18n.py          # 页面语言：STRINGS、LANGUAGES、地区判断与 cookie
 ├── server.py        # serve(cwd, host, port)：uvicorn 入口
-├── templates/       # base.html / chat.html / settings.html（Jinja2）
+├── templates/       # en/ 与 zh/ 两套模板（每套 base/chat/settings/macros.html）
 └── static/          # app.css / app.js（原生 JS，无构建步骤）
 ```
 
 `web/__init__.py` 只放 docstring：`from coderagent.web.server import serve` 在
-`ui/cli.py` 的 `web` 子命令里**惰性导入**（照抄 `coder export` 的写法，`ui/cli.py:141`）。
+`ui/cli.py` 的 `web` 子命令里**惰性导入**（照抄 `coder export` 的写法，`ui/cli.py:160`）。
 这样 fastapi 永远不是硬依赖——没装 `web` extra 的人 import `coderagent` 不受影响。
 
 ---
@@ -83,9 +84,9 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 - **每会话一个 worker 线程**，`queue.Queue` 收活；turn 期间持 `busy` 标志。
 - **FastAPI 事件循环里绝不跑 agent 代码**：碰文件系统/模型/loop 的端点都写成普通 `def`
   （Starlette 丢线程池），或直接交给会话 worker。
-- `build_loop`（`run.py:90`）**每会话建一次并缓存**：它会起 MCP server 线程（`run.py:111`）
-  且会往全局命令表追加（`run.py:117`），不能每请求建。
-- 事件订阅要**逐个 EventType 注册**（`EventBus` 没有通配订阅，`core/events.py:67`）：
+- `build_loop`（`run.py:105`）**每会话建一次并缓存**：它会起 MCP server 线程（`run.py:125`）
+  且会往全局命令表追加（`run.py:132`），不能每请求建。
+- 事件订阅要**逐个 EventType 注册**（`EventBus` 没有通配订阅，`core/events.py:71`）：
   `for t in EventType: bus.subscribe(t, handler)`。
 - `loop.cancel = runtime.cancel.is_set`，每轮前赋值（照 `ui/tui.py:273`）。
 
@@ -101,12 +102,12 @@ loop.run_turn()                   SSE 生成器 await queue.get()
 
 ### 3.3 一个会话一次只有一个 turn
 
-`SessionStore.append` 本身没有锁（`core/session.py:75`），所以并发写会串。
+`SessionStore.append` 本身没有锁（`core/session.py:81`），所以并发写会串。
 `SessionRuntime.submit()` 在 `busy` 已置位时抛 `SessionBusy` → `/messages` 返回 **409**。
 
 ### 3.4 会话换 id 的问题
 
-`/clear`、`/resume` 会换 session id（`ui/commands/builtin.py:89`、`:99` 调 `loop.switch_to`）。
+`/clear`、`/resume` 会换 session id（`ui/commands/builtin.py:98`、`:111` 调 `loop.switch_to`）。
 浏览器还在往旧 id 推流，所以 `SessionRegistry` 必须 **re-key**：
 
 ```python
@@ -128,7 +129,7 @@ def rekey(self, runtime, old_id, new_id):
 |---|---|---|
 | `USER_MESSAGE` | `user_message` | |
 | `ASSISTANT_MESSAGE` | `assistant_message` | `reasoning` 可折叠，受 `config.ui.show_reasoning` 控制 |
-| `TEXT_DELTA` | `text_delta` | **不入日志**，只在事件总线上（`core/events.py:16`）；也**不进环形缓冲**（瞬时，见 §17.1） |
+| `TEXT_DELTA` | `text_delta` | **不入日志**，只在事件总线上（`core/events.py:15`）；也**不进环形缓冲**（瞬时，见 §17.1） |
 | `REASONING` | `reasoning_delta` | 同上 |
 | `TOOL_CALL` | `tool_call` | 一条动作一个条目；标题用 `ui/widgets/tool_card.py:11` 的 `summarize(args)` |
 | `TOOL_RESULT` | `tool_result` | **两种 payload，见下** |
@@ -136,14 +137,15 @@ def rekey(self, runtime, old_id, new_id):
 | `APPROVAL_RESPONSE` | `approval_response` | 带 `timed_out` |
 | `STATE_CHANGE` | `state` | |
 | `COMPACTION` / `REFLECTION` / `REVERTED` | `compaction` / `reflection` / `reverted` | 分隔线 |
+| `VERIFY` | `verify` | 验证命令的结果 |
 | `ERROR` | `error` | 红条 |
 
 ### 4.1 `TOOL_RESULT` 的两种形状
 
 | 来源 | payload | 含义 |
 |---|---|---|
-| 执行器（`tools/executor.py:167`） | `{"tool": ..., "tool_call_id": ..., "content": ..., "diff": ...}` | 知道是哪个工具、还带 diff |
-| 上下文（`core/context.py:110`） | `{"messages": [ ... ]}` | 记录模型**实际看到**的观察值 |
+| 执行器（`tools/executor.py:181`） | `{"tool": ..., "tool_call_id": ..., "content": ..., "diff": ...}` | 知道是哪个工具、还带 diff |
+| 上下文（`core/context.py:136`） | `{"messages": [ ... ]}` | 记录模型**实际看到**的观察值 |
 
 `normalize()` 必须区分：`"tool" in payload` 才是执行器那一版。前端按 `tool_call_id`
 更新同一张卡，不重复渲染。
@@ -161,7 +163,7 @@ if self.store is not None:
 ```
 
 副作用：事件日志里 `TOOL_RESULT` 出现两次（执行器一次、上下文一次）。
-`core/context.py:76` 的 `restore()` 不受影响（它读 `payload["messages"]`，执行器变体没这个键）。
+`core/context.py:87` 的 `restore()` 不受影响（它读 `payload["messages"]`，执行器变体没这个键）。
 `tests/coderagent/test_loop.py` 的事件序列断言要跟着改。
 
 ---
@@ -200,14 +202,14 @@ executor._prepare()
   `approval_response{timed_out:true}` 让前端解释原因。
 - 未知/过期 id → **404**。
 - **Always allow** 会往用户规则文件 `~/.coderagent/rules.yaml` 写一条规则
-  （`tools/executor.py:126` → `tools/rules.py:103` `add_rule`）。UI 必须明确提示这一点。
-- Deny → 模型收到「用户拒绝」（`tools/executor.py:122`），模型会改口而不是硬改。
+  （`tools/executor.py:143` → `tools/rules.py:118` `add_rule`）。UI 必须明确提示这一点。
+- Deny → 模型收到「用户拒绝」（`tools/executor.py:126`），模型会改口而不是硬改。
 
 ---
 
 ## 7. Slash 命令
 
-原样复用 `ui/commands/__init__.py:80` 的 `run(context, line)`——25 个内置命令和自定义命令
+原样复用 `ui/commands/__init__.py:82` 的 `run(context, line)`——25 个内置命令和自定义命令
 都只通过 `context.say(...)` 说话，零 textual 依赖。
 
 - `CommandContext.output` 接到 `runtime.emit({"kind": "command_output", "text": ...})`。
@@ -216,7 +218,7 @@ executor._prepare()
 
 ### 7.1 `register()` 必须去重
 
-`ui/commands/__init__.py:54` 的 `register()` 原本无条件 append。web 是**每会话一个 loop**，
+`ui/commands/__init__.py:56` 的 `register()` 原本无条件 append。web 是**每会话一个 loop**，
 每建一次 loop 就注册一遍项目自定义命令 → 全局命令表无限膨胀、`/help` 出现重复。
 改成按名字去重（同名替换）。
 
@@ -233,6 +235,7 @@ executor._prepare()
 | `api_key` | `model.model_kwargs.api_key` | 密码框；服务端只回 `api_key_set` + 掩码 hint |
 | `max_retries` | `model.max_retries` | 死配置，接线见 §8.4 |
 | `set_cache_control` | `model.set_cache_control` | `ephemeral` / 空 |
+| `litellm_config` | `model.litellm_config` | 别名文件；里面的别名可以当模型名用 |
 | `routing` | `model.routing` | `{purpose: model}` |
 | `routing_rules` | `model.routing_rules` | `{when, purpose}` 行 |
 | 附加 kwargs | `model.model_kwargs` 其余 | 自由 YAML/JSON 编辑框 |
@@ -240,7 +243,9 @@ executor._prepare()
 ### 8.2 分层预览
 
 `GET /api/config` 返回 `sources: {"model_name": "user", "api_base": "project", ...}`，
-按优先级 defaults < project < user < env 逐层找第一个定义该 key 的层。
+按优先级 defaults < project < user 逐层看，**最后一个定义了该 key 的层**说了算；
+环境变量只在**没有任何层定义**时兜底（目前只有 `model_name` 与 `api_key` 走这条路，
+层名报 `env`）。
 
 ### 8.3 写入
 
@@ -286,11 +291,11 @@ include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判�
 提示会自动跟着变，不用重建上下文。loop 还没建时只记下模式，`build_loop()` 用它。
 
 **`--permission-mode` 盖过文件**：`build_policy()` 是 `permission_mode or config.permissions.mode`
-（`run.py:68`）。服务器带模式启动时，配置文件里的 `permissions.mode` 是死的——页面要**如实说**，
+（`run.py:60`）。服务器带模式启动时，配置文件里的 `permissions.mode` 是死的——页面要**如实说**，
 不能让用户以为改了生效了（`server_mode` 非空时 `source["mode"]` 报 `server`）。
 
-**一个坑**：`status()` 在 loop 还没建时返回的是 `config.permissions.mode`，不是会话自己的模式。
-不改这一行，新建会话切换后状态栏显示旧值。
+**一个坑**：`status()` 在 loop 还没建时返回的是会话自己记下的模式（`mode()` 读
+`self._permission_mode`，再回落 `config.permissions.mode`），不是启动时的配置值。
 
 **不做的**：浏览器里编辑 `rules.yaml`；把权限写进项目级 `.coderagent/config.yaml`（会进 git）。
 
@@ -305,7 +310,7 @@ include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判�
 | 搜索 | `GlobTool`/`GrepTool`（纯 Python，不依赖 rg） |
 | 写操作预览 diff | `ui/widgets/diff_view.py:31` `prospective_diff(tool, params, cwd)` |
 | 统一 diff 渲染 | `ui/widgets/diff_view.py:9` `make_diff` |
-| 工作区 diff | `git diff -- <path>`（同 `ui/commands/builtin.py:139`） |
+| 工作区 diff | `git diff -- <path>`（`web/files.py:79`）；`/diff` 命令用的是 `git diff --stat`（`ui/commands/builtin.py:142`） |
 
 ### 9.1 路径安全三层
 
@@ -313,13 +318,15 @@ include_dirs / source / server_mode。`source` 按 `config_layers()` 逐层判�
 Path.resolve()  →  边界检查（必须在 cwd 或 permissions.include_dirs 里）  →  工具自身的 resolve_path
 ```
 
-越界 → **403**，文案沿用 `tools/permissions.py:117` 的写法。
+越界 → **403**，文案沿用 `tools/permissions.py:235` 的写法。
 
-> **不能用 `policy.evaluate("read", ...)` 当边界检查**——`tools/permissions.py:114-116`
-> 允许 `allow` 规则覆盖边界检查，那会让规则文件把整块磁盘暴露给浏览器。
-> **必须直接用边界检查**。
+> **不能用 `policy.evaluate("read", ...)` 当边界检查**——`evaluate` 走的是规则，
+> 而规则**不能**放宽边界（`tools/permissions.py:223-233` 的 `within_bounds` 写着
+> 「The rules of the user cannot widen this」）。但 `evaluate` 的语义是「这条调用
+> 允不允许」，不是「这个路径在不在范围内」，用它当边界检查会把
+> 「规则放行」和「路径越界」两件事混在一起。**必须直接用边界检查**。
 
-所以 `tools/permissions.py` 的 `_within_bounds` 提成公开的 `within_bounds(path) -> bool`，
+所以 `tools/permissions.py` 的边界检查是公开的 `within_bounds(path) -> bool`，
 web 直接复用，不重写路径安全逻辑。
 
 ---
@@ -357,7 +364,7 @@ web 直接复用，不重写路径安全逻辑。
 | 浏览器 CSRF | 所有写接口要求 `X-Coder-Client: 1` 头 → 触发预检，而 CORS 未开 → 浏览器跨站发不了；curl 不受影响 |
 | 路径穿越 | `resolve()` + 边界检查，越界 403 |
 | 密钥 | api_key 只写用户级文件；API 只回 `api_key_set` + 掩码；分层预览里所有含 `key`/`token`/`secret` 的项都被抹掉 |
-| 日志污染 | `web/server.py` 里设 `litellm.suppress_debug_info = True`（同 `ui/cli.py:16`），否则 litellm 的 banner 会打乱 SSE |
+| 日志污染 | `web/server.py` 里设 `litellm.suppress_debug_info = True`（同 `ui/cli.py:20`），否则 litellm 的 banner 会打乱 SSE |
 
 ---
 
@@ -416,7 +423,7 @@ web 直接复用，不重写路径安全逻辑。
 - [x] `test_interrupt.py`
 
 ### T5.8 文档
-- [x] `docs/usage/coderagent_web.md`
+- [x] `docs/usage/coderagent_web.md`（与中文版 `coderagent_web_zh.md`）
 - [x] `docs/usage/coderagent.md` 与 `coderagent_quickstart.md` 加链接
 - [x] `mkdocs.yml` nav 加条目
 

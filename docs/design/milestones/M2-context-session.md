@@ -65,14 +65,20 @@ class ContextEngine:
 2. `estimated_tokens > context_window - reserved_output`（硬上限，默认预留 8k）
 3. 距上次压缩超过 `compact_every_turns`（默认 40 轮，可关闭）
 
+> **注意**：`context.auto_compact` 关掉时，`maybe_compact()` 第一行就返回 `False`，
+> 所以条件 3 **永远不会单独成立**——`auto_compact` 是总开关。provider 真的报超限时
+> 走的 `force_compact()` 不受这个开关管。
+
 **保留窗口**
 
 ```
-keep_recent_turns = 20     # 保留最近 20 轮完整消息（含 tool results）
-keep_recent_tokens = 40%    # 或直到占窗口 40% 为止，取二者较大者
+keep_recent_turns      = 20    # 至少保留最近 20 轮完整消息（含 tool results）
+keep_recent_token_ratio = 0.4  # 切完之后剩下的尾巴至少要占窗口的 40%
 ```
 
-> 取「轮数」与「token 占比」的**较大者**保留：轮数少但每轮很大时靠 token 兜底，轮数多但很小时靠轮数兜底。
+> 取「轮数」与「token 占比」里**保留得更多**的那个：轮数少但每轮很大时靠 token 兜底，
+> 轮数多但很小时靠轮数兜底。注意 `keep_recent_token_ratio` 是**下限**——切完之后剩下的
+> 尾巴若不足这个比例，就把切点再往前挪（甚至不切）。
 
 **压缩后必须保留**（不可被摘要吞掉）
 
@@ -162,14 +168,16 @@ else: 保留头 40% + 尾 40%，中间插入：
 ### 2.6 上下文超限兜底
 
 ```
-ModelGateway.query()
-  └─ 捕获 litellm ContextWindowExceededError
+AgentLoop._query()
+  └─ 捕获上下文溢出异常（models/gateway.py 的 is_context_overflow）
       → ContextEngine.force_compact()
       → 重发一次（最多 1 次）
-      → 仍失败 → 抛出，stop_reason="error"
+      → 仍失败 → 返回错误，stop_reason="error"
 ```
 
 这是真实使用中最高频的失败模式，**必须**有兜底。
+注意判溢出不只看异常类型：provider 把「context window」「context_length_exceeded」
+写进消息里时也算（`is_context_overflow`）。压不动时错误消息里会带 "nothing left to compact"。
 
 ### 2.7 项目指令文件
 
@@ -224,10 +232,11 @@ class Checkpoint:
 
 **回滚 `/rewind`**
 
-- 选择 checkpoint → 恢复被改文件的旧内容 → 删除新建的文件 → 追加一条 `STATE_CHANGE` 事件
-- 上下文历史也需回滚：把 checkpoint 之后的消息从 `SessionStore` 标记为「已撤销」（不物理删除，写 `reverted_to` 事件）
+- 选择 checkpoint → 恢复被改文件的旧内容 → 删除新建的文件
+- 上下文历史也需回滚：写一条 `REVERTED`（`reverted_to`）事件，重放时按它截断历史
+  （不物理删除日志里的消息）
 
-**保留策略**：最近 50 个 checkpoint，或最近 20 轮内的 checkpoint。
+**保留策略**：最近 `keep` 个 checkpoint（默认 50，`context.checkpoint.keep`）。
 
 ### 2.10 会话恢复与分叉
 
@@ -257,9 +266,9 @@ class Checkpoint:
 
 ### T2.3 历史抽象
 - [x] `core/history.py`：`History` 持有消息列表，提供 `recent_turns(n)`、`split_at(index)`、`token_count()`
-- [x] 「一轮」的界定：一个 assistant 消息 + 其后所有 tool 结果消息
+- [x] 「一轮」的界定：**一条 `user` 消息** + 模型为它做的一切（assistant 消息 + 后续工具结果）
 
-**验收**：`test_history.py` — 按轮切分正确；`split_at` 后拼接等于原列表。
+**验收**：`test_budget_history.py` — 按轮切分正确；`split_at` 后拼接等于原列表。
 
 ### T2.4 上下文组装
 - [x] `ContextEngine.build_messages` 按 2.0 的固定顺序组装
@@ -311,7 +320,7 @@ class Checkpoint:
 - [x] 命令以「纯函数 + 事件」形式实现，M3 由 TUI 调用
 
 ### T2.13 配置扩展
-- [x] `ContextConfig`：`context_window`、`compact_threshold`、`reserved_output`、`keep_recent_turns`、`auto_compact`
+- [x] `ContextConfig`：`context_window`、`compact_threshold`、`reserved_output`、`keep_recent_turns`、`keep_recent_token_ratio`、`compact_every_turns`、`auto_compact`、`summarize_model`、`summary_chunk_tokens`
 - [x] `MemoryConfig`：项目/用户记忆路径
 - [x] `CheckpointConfig`：`enabled`、`keep`
 
@@ -322,7 +331,7 @@ class Checkpoint:
 | 文件 | 覆盖点 |
 |---|---|
 | `core/test_tokens.py` | 估算器在固定样本上的标定；有/无 tiktoken 两条路径 |
-| `core/test_history.py` | 按轮切分、split 往返、token 计数 |
+| `core/test_budget_history.py` | 按轮切分、split 往返、token 计数 |
 | `core/test_context.py` | 消息组装顺序、保留窗口、summary 位置 |
 | `core/test_summarize.py` | schema 解析、重试、两种回退路径、files_touched 校验 |
 | `core/test_compaction.py` | 三种触发条件、压缩后 token 下降、事件落盘 |
@@ -367,7 +376,7 @@ class Checkpoint:
 | 多次压缩 | 每次生成一份新摘要 | 新摘要的输入里带上上一份摘要，输出始终只有一份 | 否则摘要会越堆越多，把预算吃光（200 轮测试里出现过） |
 | 压缩触发条件 2 | 硬上限单独一条 | 并入 `BudgetGuard.should_compact`（取 `min(阈值, 硬上限)`） | 两者都是「超过某个上限」，合并后行为等价、逻辑更少 |
 | 上下文窗口大小 | 按模型名查表 | 同左，但**只在配置未显式设置**时生效 | 显式配置永远优先；默认 200k，未知模型也走 200k |
-| 摘要模型 | `ModelGateway.complete(purpose="summarize")` | `ContextEngine(summary_model=...)`，摘要调用不带工具 | 摘要不需要工具；`summarize_model` 留空时用主模型 |
+| 摘要模型 | `ModelGateway.complete(purpose="summarize")` | `ContextEngine(summary_model=...)`，摘要调用不带工具 | 摘要不需要工具；`summarize_model` 留空时走**路由里的 `summarize` 用途**（那个用途没配就回落主模型） |
 | `recent_errors` | schema 里没有 | `Summary` 多一个派生字段，渲染在 `errors_seen` 之后 | 「最近 3 条报错」要保留，但不该由模型自己填 |
 | 检查点存储 | 单个 `checkpoints.json` | 每个会话一个 JSON 文件，`CheckpointStore.all()` 读取 | 便于按会话只留最近 `keep` 个 |
 | 回滚 | 恢复文件 + 标记历史「已撤销」 | 同左，历史用 `EventType.REVERTED` 截断而非物理删除 | 重启后仍能重放出同样的历史 |

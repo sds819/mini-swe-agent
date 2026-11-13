@@ -85,9 +85,13 @@ class SubagentSpec:
   "findings": ["..."],
   "files_touched": ["..."],
   "cost": 0.03,
-  "turns": 7
+  "turns": 7,
+  "purpose": "cheap"
 }
 ```
+
+> `purpose` 是子 agent 用的那个模型档位（`cheap` / `main`），成本记在它名下——
+> 不是记在一个叫 `subagent` 的 purpose 下。
 
 ### 2.4 子 Agent 定义文件
 
@@ -111,7 +115,7 @@ max_turns: 15
 不要修改任何文件。
 ```
 
-**加载**：项目级 `.coderagent/agents/` + 用户级 `~/.coderagent/agents/`（用户级可覆盖同名）。
+**加载**：项目级 `.coderagent/agents/` + 用户级 `~/.coderagent/agents/`（**同名时项目覆盖用户**）。
 
 **内置子 agent**
 
@@ -265,6 +269,7 @@ class ExtensionRegistry:
 |---|---|
 | `swerex_docker` | SWE-ReX 管理的远程 Docker 容器 |
 | `swerex_modal` | Modal 上的远程执行 |
+| `bubblewrap` | 无 root 的受限容器 |
 | `contree` | 无 root 的受限容器 |
 
 **接入方式**：`coderagent` 的 `Environment` 用 `minisweagent.environments.get_environment(config, default_type=...)`，配置里 `sandbox.type` 决定用哪个。
@@ -292,10 +297,15 @@ class ExtensionRegistry:
     "total_cost": 0.42,
     "total_tokens_in": 120433,
     "total_tokens_out": 8421,
+    "model_calls": 12,
+    "tool_calls": 60,
     "per_tool": {"read": 42, "bash": 13, "edit": 5},
     "per_purpose_cost": {"main": 0.38, "summarize": 0.04},
+    "per_model_cost": {"nengpa/minimax-m2.7": 0.42},
     "duration_seconds": 412.3,
-    "compactions": 3
+    "compactions": 3,
+    "summary_ratios": [0.0656],
+    "errors": 1
   }
 }
 ```
@@ -367,10 +377,10 @@ coder export --session <id> --format otel --out trace.otlp
 |---|---|
 | `tools/test_task.py` | 子 agent 上下文隔离、工具白名单限制、成本计入主会话、max_turns 截断 |
 | `models/test_router.py` | 路由规则求值、预算降档、上下文升级 |
-| `extensions/test_memory.py` | 沉淀写入、去重、用户记忆需确认 |
+| `extensions/test_reflect.py` | 沉淀写入、去重、用户记忆需确认 |
 | `extensions/test_skills.py` | skill 解析、索引注入 |
 | `extensions/test_plugins.py` | 发现、信任确认、注册 |
-| `test_export.py` | trace 格式、指标正确性 |
+| `core/test_telemetry.py` | trace 格式、指标正确性 |
 
 ---
 
@@ -462,7 +472,7 @@ coder export --session <id> --format otel --out trace.otlp
 
 ### 13.7 可观测性
 
-- `coder` 变成了一个命令组：主命令还是 `coder --task ...`，`coder export ...` 是它的
+- `coder` 变成了一个命令组：主命令还是 `coder -t/--task ...`，`coder export ...` 是它的
   子命令。`coder` 不带参数时仍然是终端界面。
 - trace 从事件日志算出来，而不是另外记一份。日志是唯一的事实来源。
 - 成本归因的维度是 purpose（`main`、子 agent 的档位）、model 和 tool。子 agent 的成本

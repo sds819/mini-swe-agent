@@ -52,16 +52,16 @@ class ToolCallAccumulator:
     def feed(self, delta: dict) -> None:
         idx = delta.get("index", 0)
         call = self._calls.setdefault(idx, {"id": "", "name": "", "arguments": ""})
-        call["id"] = delta.get("id", call["id"])
-        fn = delta.get("function", {})
-        call["name"] += fn.get("name", "") or ""
+        call["id"] = delta["id"] if delta.get("id") else call["id"]
+        fn = delta.get("function") or {}
+        call["name"] = self._merge_name(call["name"], fn.get("name") or "")
         call["arguments"] += fn.get("arguments", "") or ""
 
     def finish(self) -> list[dict]:
         """返回解析好的 tool_calls；JSON 非法时抛 FormatError（沿用 minisweagent.exceptions）。"""
 ```
 
-**注意**：`name` 字段在部分供应商的流式里只在首片出现，部分逐片重复 → 必须**只追加不重复**（用「若新片以已有 name 开头则跳过」或判断 `delta.get("index")` 首片）。测试需覆盖两种供应商行为。
+**注意**：`name` 字段在部分供应商的流式里只在首片出现，部分逐片重复 → 必须**只追加不重复**。实现上不是无脑 `+=`，而是 `_merge_name()`：新片段等于已有名字就跳过，已有名字以新片段开头也跳过。测试需覆盖两种供应商行为。
 
 ### 2.3 网关流式接口
 
@@ -101,7 +101,7 @@ class ModelGateway:
 │    ▸ DiffView: +2 -1                                         │
 │                                                            │
 │  ▌ Todo                                                     │
-│    ◉ 定位超时逻辑        (in_progress)                      │
+│    ◐ 定位超时逻辑        (in_progress)                      │
 │    ○ 修复并补测                                            │
 │                                                            │
 ├────────────────────────────────────────────────────────────┤
@@ -119,6 +119,8 @@ class ModelGateway:
 | `DiffView` | unified diff 渲染 | 编辑类工具执行后自动展开，可折叠 |
 | `ApprovalPrompt` | 审批弹窗 | 显示命令/路径、命中规则与原因、y/n/a 选项 |
 | `TodoPanel` | 任务清单 | 订阅 `TOOL_RESULT` 中的 todo 变更 |
+
+> todo 的三个符号是 `◉` = 完成、`◐` = 进行中、`○` = 待办（`ui/widgets/todo_panel.py` 的 `MARKS`）。
 
 ### 3.3 事件订阅
 
@@ -164,6 +166,9 @@ EventBus.subscribe(STATE_CHANGE, ...)       → StatusBar 更新
 | `/mcp` | MCP server 管理（列表/连接状态/启停） |
 | `/permissions` | 查看当前生效的权限规则与命中记录 |
 | `/hooks` | 查看已加载的 hooks |
+
+> 这 16 个是 M3 当时设计的命令。**今天一共 25 个**：后面 M4 加了 `/agents` `/skills`
+> `/plugins` `/memory`，M5 加了 `/status` `/sandbox` `/export` `/context` `/exit`。
 
 **命令注册**
 
@@ -253,8 +258,10 @@ class MCPClient:
 
 ### 4.3 MCP resources / prompts
 
-- server 暴露的 **resources** → 只读上下文，注入为 `<mcp_resources>` 块
-- server 暴露的 **prompts** → 可通过 `/<server>:<prompt>` 调用
+**没有实现。** MCP server 暴露的 **resources** 与 **prompts** 都不支持：客户端只拉工具列表
+（`list_tools`），不拉资源，也不提供 `/<server>:<prompt>` 这样的调用。
+
+> 这是 M3 的设计稿里列过、但最终没做的两项。
 
 ---
 
@@ -273,20 +280,28 @@ class MCPClient:
 
 ### 5.2 配置
 
-```json
-{
-  "PreToolUse": [
-    {"matcher": "Bash",
-     "hooks": [{"type": "command", "command": "./scripts/guard.sh", "timeout": 10}]}
-  ],
-  "PostToolUse": [
-    {"matcher": "Edit|Write",
-     "hooks": [{"type": "command", "command": "ruff format {file}"}]}
-  ]
-}
+hooks 配在**用户级或项目级的 YAML 配置**里（`config.yaml` 的 `hooks.events` 段），
+**没有** `.coderagent/hooks.json` 这种单独的 JSON 文件：
+
+```yaml
+hooks:
+  events:
+    PreToolUse:
+      - matcher: bash
+        hooks:
+          - type: command
+            command: ./scripts/guard.sh
+            timeout: 10
+    PostToolUse:
+      - matcher: edit|write
+        hooks:
+          - type: command
+            command: ruff format {file}
 ```
 
-- `matcher` 是工具名的正则（空 = 全部）
+- `matcher` 是工具名的正则（空 = 全部），用 `re.search` 匹配
+- **匹配的是模型写下的那个工具名**：工具叫 `bash`、`edit`、`write`，所以写 `"Bash"`
+  或 `"Edit"` 匹配不上（大小写敏感）
 - `command` 通过 `subprocess.run` 执行（shell=True，cwd = session cwd）
 - **stdin 传 JSON**，stdout 读 JSON
 - 超时默认 10s，超时视为「无输出」（放行）而不是失败
@@ -398,7 +413,7 @@ class HookRunner:
 |---|---|
 | `models/test_streaming.py` | 增量拼接、name 重复片、非法 JSON |
 | `ui/test_tui.py` | textual `run_test()` 驱动：消息渲染、命令分发 |
-| `ui/test_commands.py` | 18 个内置命令的注册与基本行为 |
+| `ui/test_commands.py` | 内置命令的注册与基本行为（当时 18 个，今天 25 个） |
 | `ui/test_custom_commands.py` | front-matter 解析、参数替换、工具限制 |
 | `tools/test_mcp.py` | 用一个本地 echo MCP server 做 stdio 集成测试 |
 | `extensions/test_hooks.py` | allow/deny/block、改写参数、超时、异常隔离 |
@@ -422,7 +437,7 @@ class HookRunner:
 ## 9. Definition of Done
 
 - [x] TUI 中能看到流式输出、工具卡片、diff、审批弹窗、状态栏
-- [x] 至少 18 个内置 slash 命令可用
+- [x] 至少 18 个内置 slash 命令可用（M3 交付时 19 个，今天 25 个）
 - [x] 自定义命令（`.md`）能运行并限制工具集
 - [x] 至少一个真实 MCP server 的工具可在会话中调用
 - [x] `PreToolUse` hook 能拦截工具调用并改写参数
@@ -444,13 +459,14 @@ class HookRunner:
 | 审批 | 弹窗阻塞等待 | `TUIAprover` 发 `APPROVAL_REQUEST` 事件并等 `threading.Event`，界面按 y/n/a 回答 | 审批发生在 worker 线程里，不能阻塞界面线程 |
 | 审批「always」 | 写用户级规则文件 | 同左（`ToolExecutor._remember`） | M1 已有 |
 | MCP 传输 | stdio 优先，SSE/HTTP 预留 | 只实现 stdio；`url`/`headers` 在配置里但未使用 | mcp SDK 2.x 的 http 传输 API 与设计稿写的不一致 |
+| MCP 生命周期 | Session 创建时连接、销毁时断开 | 连接在 `build_loop` 里建立，**不随会话结束断开** | 断开要处理一堆在途请求；MCP server 的线程会一直在（见 M5 的风险表） |
 | MCP 并发 | 异步客户端 | 每个 server 一个线程 + 自己的 event loop，调用走 `run_coroutine_threadsafe` | MCP SDK 是异步的，agent 是同步的 |
 | MCP 工具命名 | `mcp__<server>__<tool>` | 同左；工具另外记住 server 里的原名 | server 只认自己的名字，改了名就调不通 |
 | MCP 断线重连 | 重连一次 | 同左：调用抛错时重启连接再试一次 | 失败两次就返回错误，不无限重试 |
 | Hooks 顺序 | PreToolUse 在权限检查之前 | 同左：先跑 hook（可改参数），再判权限 | 被审批的必须是改写后的命令 |
 | Stop hook | 要求 agent 继续 | 同左，但一轮最多拦 3 次 | 拦不住就停，避免死循环烧钱 |
 | Hook 失败 | 记日志不阻断（可选 strict） | 同左；超时按「放行」处理 | 同上 |
-| 内置命令 | 17 个 | 19 个（多了 `/status` `/export` `/context`） | M0/M1/M2 已有的能力顺手接进来 |
+| 内置命令 | 17 个 | M3 交付时 19 个（多了 `/status` `/export` `/context`），今天 25 个 | M0/M1/M2 已有的能力顺手接进来，后面的里程碑继续加 |
 | 自定义命令 | front matter + `$ARGUMENTS`/`$1` | 同左；`argument-hint` 也接受 YAML 列表 | `argument-hint: [file]` 在 YAML 里是列表 |
 | 工具限制 | 临时构造受限 Registry | 同左；命令结束后原样换回 | 命令跑在自己的上下文里 |
 | 配置 | `MCPConfig` / `HookConfig` / `UIConfig` | 同左；`ui.theme` 暂未使用 | 主题跟随终端，没有单独的开关 |

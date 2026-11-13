@@ -43,13 +43,18 @@ from typing import Any, Callable
 class EventType(str, Enum):
     USER_MESSAGE = "user_message"
     ASSISTANT_MESSAGE = "assistant_message"
+    TEXT_DELTA = "text_delta"        # 不写进事件日志，只在总线上
     REASONING = "reasoning"
     TOOL_CALL = "tool_call"
     TOOL_RESULT = "tool_result"
     APPROVAL_REQUEST = "approval_request"
     APPROVAL_RESPONSE = "approval_response"
     STATE_CHANGE = "state_change"
+    TURN_END = "turn_end"
+    VERIFY = "verify"
     COMPACTION = "compaction"
+    REFLECTION = "reflection"
+    REVERTED = "reverted_to"
     ERROR = "error"
 
 
@@ -107,6 +112,7 @@ class Session:
     permission_mode: str = "default"
     turn_count: int = 0
     total_cost: float = 0.0
+    total_tokens: int = 0      # 没有价格的模型，靠 token 记账
     metadata: dict = field(default_factory=dict)
 
 
@@ -164,8 +170,10 @@ class TurnResult:
     session_id: str
     turn_count: int
     cost: float
-    stop_reason: str      # "end_turn" | "max_turns" | "error" | "interrupted"
+    stop_reason: str      # "end_turn" | "max_turns" | "cost_exceeded" | "token_limit" | "error"
     messages: list[dict]  # 本轮新增的消息
+    error: str = ""
+    session_cost: float = 0.0   # 整个会话的花费（含前面的轮次与结尾那次沉淀）
 ```
 
 **本轮时序**
@@ -187,6 +195,7 @@ run_turn(user_input)
 
 > **M0 的 `executor` 暂用 `minisweagent` 的 bash 单工具实现**，M1 替换为真正的 ToolRegistry。
 > 为此 M0 需要一个薄适配器 `core/bash_adapter.py`，把 `LitellmModel` 的 bash tool_call 转成 `LocalEnvironment.execute`。
+> （这个适配器只是临时的：M1 落地后它就被删掉了，今天仓库里已经没有这个文件。）
 
 ### 2.4 配置
 
@@ -197,7 +206,7 @@ from pydantic import BaseModel
 
 
 class ModelConfig(BaseModel):
-    model_name: str = "anthropic/claude-sonnet-4-5"
+    model_name: str = ""
     model_kwargs: dict = {}
     max_retries: int = 3
     routing: dict[str, str] = {}      # purpose -> model_name，M4 启用
@@ -206,12 +215,10 @@ class ModelConfig(BaseModel):
 class AgentConfig(BaseModel):
     max_turns: int = 50
     cost_limit: float = 0.0            # 0 = 不限
-    auto_compact: bool = True
-    compact_threshold: float = 0.8
 
 
 class ToolConfig(BaseModel):
-    enabled: list[str] = ["bash"]
+    enabled: list[str] = [13 个内置工具名]
     bash_timeout: int = 120
     max_output_tokens: int = 8000
 
@@ -222,9 +229,7 @@ class PermissionConfig(BaseModel):
 
 
 class SandboxConfig(BaseModel):
-    type: str = "local"                # local|docker|bubblewrap
-    network: str = "restricted"
-    writable_roots: list[str] = ["."]
+    type: str = "local"                # local|docker|singularity|swerex_*|bubblewrap|contree
 
 
 class Config(BaseModel):
@@ -234,6 +239,13 @@ class Config(BaseModel):
     permissions: PermissionConfig = PermissionConfig()
     sandbox: SandboxConfig = SandboxConfig()
 ```
+
+> 这段是 M0 的**草图**，实现上后来又改了三处：
+> 压缩相关的选项（`auto_compact`、`compact_threshold` 等）搬到了 `ContextConfig`（M2）；
+> `ToolConfig.enabled` 的默认值是**全部 13 个内置工具**而不是 `["bash"]`，而且它是一份
+> **白名单**——配了就替换默认列表，`tools.disabled` 才是只拿走点名的；
+> `SandboxConfig` 里**没有** `network` / `writable_roots` 这类统一开关（见 M4 §13.6），
+> 其余选项原样传给底层环境，环境不认识的被忽略。
 
 **四层合并顺序**（后者覆盖前者）
 
@@ -313,7 +325,7 @@ config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.codera
 
 ### T0.9 CLI 与 headless 输出
 - [x] `ui/cli.py` typer app，参数见 M3 表格，M0 只实现 `-m/--model -c/--config -t/--task --print --output-format`
-- [x] `ui/render.py`：`text`（逐行人类可读）、`json`（单行 JSON，字段 `session_id/messages/cost/stop_reason`）
+- [x] `ui/render.py`：`text`（逐行人类可读）、`json`（单行 JSON，字段 `session_id/messages/cost/session_cost/stop_reason/error`）
 - [x] `run.py` 装配：config → model → env → session → loop → renderer
 
 **验收**：`coder --print --output-format json -t "hi" -m <fake>` 输出合法 JSON，含 `session_id` 与 `messages`。
@@ -345,7 +357,7 @@ config/defaults.yaml  →  项目 .coderagent/config.yaml  →  用户 ~/.codera
 | 风险 | 对策 |
 |---|---|
 | `SessionStore` 并发写损坏 JSONL | 单进程单写者保证；`append` 用 `"a"` 模式 + 行缓冲 + `flush` |
-| 事件类型后续增补导致旧轨迹无法重放 | `rebuild` 对未知 `type` 跳过而非报错；`from_dict` 对未知类型回退 `STATE_CHANGE` |
+| 事件类型后续增补导致旧轨迹无法重放 | `rebuild` 对未知 `type` 跳过而非报错；`from_dict` 对未知类型返回 `None`（跳过这一行，不回退成别的类型） |
 | 与上游 `minisweagent` 的 Event 概念冲突 | 独立包 `coderagent`，不向 `minisweagent` 引入依赖 |
 
 ---

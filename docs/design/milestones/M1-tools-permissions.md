@@ -88,7 +88,7 @@ class ToolRegistry:
 **优先级（用于预算裁剪，从先丢弃到最后丢弃）**
 
 ```
-web_search → web_fetch → todo_write → multi_edit → write → edit → ls → glob → grep → read → bash
+web_search → web_fetch → todo_write → bash_output → bash_kill → multi_edit → write → edit → ls → glob → grep → read → bash
 ```
 
 > `bash` 与 `read` 永不丢弃：前者是兜底，后者是主力。
@@ -134,9 +134,12 @@ for tool_call in tool_calls:
 
 **错误消息原则**：工具失败要以「模型可自我修正」的方式反馈。例如 `edit` 失败时返回：
 ```
-Error: old_string not found in src/a.py.
-The file contains 3 occurrences of "foo"; old_string must be unique.
-Use `read` to view the exact content, then retry with more surrounding context.
+Error: old_string is not unique in src/a.py: it appears 3 times (lines 12, 40, 77).
+Include more surrounding context to make it unique, or set replace_all=true.
+```
+找不到时是：
+```
+Error: old_string not found in src/a.py. Use `read` to see the exact content, then retry with more context.
 ```
 
 ### 2.4 权限策略
@@ -174,9 +177,16 @@ class PermissionPolicy:
 
 1. `mode` 决定默认值（见 2.4 表）
 2. 遍历规则，**最后命中者生效**（后写规则覆盖先写）
-3. 但 `deny` 一票否决：只要有规则命中 `deny` 且未被后续 `allow` 覆盖…
+3. 路径类工具在规则之后还要过一次**越界检查**，越界一律 `deny`
 
 > **简化决策**：采用「最后命中者生效」，规则顺序即优先级。文档中明确「把 deny 规则放在文件末尾可覆盖前面的 allow」。这比「deny 优先」更可预测，也更符合 Claude Code 的 `.claude/settings.json` 语义（后写覆盖）。
+>
+> **一个例外**：`bash` 命令按**段**判断，每段各取一条规则，然后**取最严的那一段**
+> （`allow < ask < deny`）。所以 `git push` 被 `allow` 放行，不等于同一条命令里的 `rm` 也放行。
+> 路径类工具没有这个「取最严」：**最后一条匹配的规则赢**。
+>
+> **越界检查不是规则**：不管哪条规则写了 `allow`，落在工作目录之外的路径一律 `deny`
+> （`permissions.py` 的 `within_bounds`）。要放开某些目录，用 `permissions.include_dirs`。
 
 **默认规则表**
 
@@ -188,13 +198,21 @@ class PermissionPolicy:
 | READONLY | allow | deny | deny | deny |
 | BYPASS | allow | allow | allow | allow |
 
+> `todo_write` / `bash_output` / `bash_kill` 属于 `INFO_TOOLS`，**任何模式都 allow**。
+> **BYPASS 也不是全放行**：越界的路径在所有模式下都 `deny`（见「路径越界」）。
+
 **匹配目标**
 
 - 路径类工具（`write` `edit` `multi_edit`）：匹配 `path` 参数，相对 `cwd` 解析后用 `fnmatch` + `**` 语义
 - `bash`：匹配 `command` 字符串，用**正则**（默认 `re.search`）
 - 其他工具：匹配工具名本身
 
-**路径越界**：任何解析后落在 `cwd` 之外的路径（`../` 逃逸或绝对路径）→ `deny`，除非该路径命中显式 allow 规则（如 `include_dirs`）。
+**路径越界**：任何解析后落在 `cwd` 之外的路径（`../` 逃逸或绝对路径）→ `deny`。
+**规则放不宽它**——一条 `allow` 规则也不能让 agent 读到工作目录之外（`permissions.py` 的
+`within_bounds` 在规则之后生效）。要放开某些目录，用配置里的 `permissions.include_dirs`。
+
+> 注意 `bash` 的匹配是**前缀匹配**，不是子串匹配：`git push` 能对上 `git push origin main`，
+> 对不上 `echo "git push"`。
 
 ### 2.5 Approver 抽象（UI 无关）
 
@@ -286,7 +304,8 @@ class Approver(Protocol):
 
 参数：`command`（必填）、`timeout`（可选，覆盖默认）、`run_in_background`（bool，默认 False）
 
-- 复用 `minisweagent.environments.local.LocalEnvironment.execute`（`subprocess.run` + 进程组超时 kill）
+- 复用 `minisweagent.environments.local.LocalEnvironment.execute`（`subprocess.Popen` + 进程组超时 kill）
+  —— 实现上包了一层 `CodingEnvironment`，去掉了 mini 的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 哨兵
 - `run_in_background=True` → 立即返回 `task_id`，用 `bash_output(task_id)` / `bash_kill(task_id)` 后续取（长跑测试用）
 - 输出按 `max_output_tokens` 裁剪（头尾保留，中间标注省略行数）
 - **保留 mini 的 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT` 语义**？→ 不保留。coding agent 的终止由模型自身的 stop_reason 决定，不依赖 shell 魔数。
@@ -330,8 +349,12 @@ rules:
 
 **合并顺序**（后者覆盖前者，按 `tool`+`pattern` 视为同一条）
 ```
-内置默认 → 项目规则 → 用户规则 → 「总是允许」写入
+配置文件里的 permissions.rules → 项目规则 → 用户规则 → permissions.deny_paths
 ```
+
+> **没有内置的默认规则集**：`config/defaults.yaml` 里的 `rules` 是空的，各模式的行为由
+> `PermissionPolicy` 的默认决策表决定（见 §2.4），不是靠一组内置规则实现的。
+> 「总是允许」写进的是**用户级** `rules.yaml`，它排在项目规则之后，所以同名时**用户级赢**。
 
 ---
 
