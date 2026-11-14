@@ -4023,6 +4023,15 @@ project memory and on the pending file, not on the file of the user.</p>
 <ul>
 <li>A fact that is already there is not written twice. The comparison ignores
   the case and the punctuation.</li>
+<li>A fact that is already there in other words is not written twice either. The
+  fact is taken for the same one only when it is long enough (a short sentence
+  collides by accident: <code>the model is gpt-4</code> and <code>the model is gpt-5</code> are
+  alike, not the same), when it names nothing that the old line does not name
+  (a path, a version, a flag), and when it holds the same words (<code>build</code> and
+  <code>built</code> are the same word). Two facts that differ in a word — <code>pytest -q</code>
+  and <code>pytest -x</code>, <code>html</code> and <code>json</code> — are two facts.</li>
+<li>The model is shown what is already remembered before it is asked what is
+  worth remembering, so that it does not repeat itself.</li>
 <li>The project memory does not grow past 200 lines. The pending file has the same
   limit. When it would, nothing is written and the agent says so in the log:
   the file has to be tidied up first.</li>
