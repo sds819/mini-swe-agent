@@ -13,6 +13,7 @@ from coderagent.extensions.reflect import (
     append_user_preferences,
     clear_pending,
     forget,
+    known_memory,
     parse_reflection,
     pending_path,
     project_memory_path,
@@ -75,6 +76,95 @@ def test_a_fact_that_is_already_there_is_not_written_again(tmp_path):
     write = append_facts(path, ["The build is make build!"], "# Project memory")
     assert write.written == []
     assert path.read_text(encoding="utf-8").count("make build") == 1
+
+
+def test_a_fact_that_is_already_there_in_other_words_is_not_written_again(tmp_path):
+    """The model says the same thing with other words: the file keeps one line."""
+    path = project_memory_path(tmp_path, _memory(tmp_path))
+    append_facts(
+        path, ["The build of the project is `make build` and the tests are run with `pytest -q`."], "# Project memory"
+    )
+    write = append_facts(
+        path, ["The project is built with `make build` and the tests are run with `pytest -q`."], "# Project memory"
+    )
+    assert write.written == []
+    assert path.read_text(encoding="utf-8").count("make build") == 1
+
+
+def test_a_fact_that_names_something_else_is_written(tmp_path):
+    """Two facts that read alike but name different things are two facts."""
+    path = project_memory_path(tmp_path, _memory(tmp_path))
+    append_facts(
+        path, ["The build of the project is `make build` and the tests are run with `pytest -q`."], "# Project memory"
+    )
+    write = append_facts(
+        path, ["The build of the project is `make build` and the tests are run with `pytest -x`."], "# Project memory"
+    )
+    assert len(write.written) == 1
+    assert "pytest -x" in path.read_text(encoding="utf-8")
+
+
+def test_a_fact_that_differs_in_a_word_is_written(tmp_path):
+    """Two facts that read alike but differ in one word are two facts."""
+    path = project_memory_path(tmp_path, _memory(tmp_path))
+    append_facts(
+        path, ["The tests are run with pytest and the coverage report lands in the html folder."], "# Project memory"
+    )
+    write = append_facts(
+        path, ["The tests are run with pytest and the coverage report lands in the json folder."], "# Project memory"
+    )
+    assert len(write.written) == 1
+    assert "json folder" in path.read_text(encoding="utf-8")
+
+
+def test_a_short_fact_that_differs_in_one_word_is_written(tmp_path):
+    """Short sentences collide by accident, so they are only compared exactly."""
+    path = project_memory_path(tmp_path, _memory(tmp_path))
+    append_facts(path, ["the model is gpt-4"], "# Project memory")
+    assert append_facts(path, ["the model is gpt-5"], "# Project memory").written == ["the model is gpt-5"]
+
+
+def test_the_preferences_are_not_written_twice_in_other_words(tmp_path):
+    path = user_memory_path(_memory(tmp_path), _user_home(tmp_path))
+    append_user_preferences(path, ["The comments of this project are written in Chinese, always."])
+    assert append_user_preferences(path, ["The comments of this project are always written in Chinese."]).written == []
+
+
+def test_the_prompt_holds_what_is_already_known():
+    prompt = reflect_prompt([{"role": "user", "content": "fix the bug"}], known="- the build is make build")
+    assert "the build is make build" in prompt
+    assert "fix the bug" in prompt
+
+
+def test_the_known_memory_is_the_project_memory_and_the_pending_preferences(tmp_path):
+    config = _memory(tmp_path)
+    append_facts(project_memory_path(tmp_path, config), ["the build is make build"], "# Project memory")
+    append_facts(pending_path(tmp_path), ["no tabs"], "# Preferences waiting for a confirmation")
+    known = known_memory(tmp_path, config)
+    assert "the build is make build" in known
+    assert "no tabs" in known
+
+
+def test_the_known_memory_is_empty_when_there_is_none(tmp_path):
+    assert known_memory(tmp_path, _memory(tmp_path)) == ""
+
+
+def test_the_reflection_is_asked_with_what_is_already_known(tmp_path):
+    """The model is shown the memory, so that it does not say it again."""
+    from coderagent.core.loop import AgentLoop
+    from coderagent.testing.factory import build_executor
+
+    config = Config()
+    config.memory = _memory(tmp_path)
+    append_facts(project_memory_path(tmp_path, config.memory), ["the build is make build"], "# Project memory")
+    store = SessionStore(tmp_path / "sessions")
+    session = store.create(tmp_path)
+    executor = build_executor(tmp_path)
+    model = ScriptedModel([{"role": "assistant", "content": _answer(project_facts=[])}])
+    loop = AgentLoop(ModelGateway(model), executor, session, store, EventBus(), tools=executor.registry.schemas())
+    loop.context.append({"role": "user", "content": "fix the bug"})
+    settle_session(loop, config, tmp_path, user_home=_user_home(tmp_path))
+    assert "the build is make build" in model.calls[0][0]["content"]
 
 
 def test_the_memory_does_not_grow_past_the_limit(tmp_path):

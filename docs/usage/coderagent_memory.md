@@ -88,6 +88,15 @@ project memory and on the pending file, not on the file of the user.
 
 - A fact that is already there is not written twice. The comparison ignores
   the case and the punctuation.
+- A fact that is already there in other words is not written twice either. The
+  fact is taken for the same one only when it is long enough (a short sentence
+  collides by accident: `the model is gpt-4` and `the model is gpt-5` are
+  alike, not the same), when it names nothing that the old line does not name
+  (a path, a version, a flag), and when it holds the same words (`build` and
+  `built` are the same word). Two facts that differ in a word — `pytest -q`
+  and `pytest -x`, `html` and `json` — are two facts.
+- The model is shown what is already remembered before it is asked what is
+  worth remembering, so that it does not repeat itself.
 - The project memory does not grow past 200 lines. The pending file has the same
   limit. When it would, nothing is written and the agent says so in the log:
   the file has to be tidied up first.

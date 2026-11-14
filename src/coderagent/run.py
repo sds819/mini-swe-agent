@@ -23,6 +23,7 @@ from coderagent.extensions.reflect import (
     Reflection,
     append_facts,
     append_user_preferences,
+    known_memory,
     parse_reflection,
     pending_path,
     project_memory_path,
@@ -249,7 +250,9 @@ def settle_session(
     before = gateway.total_cost
     message: dict = {}
     try:
-        message = gateway.query([{"role": "user", "content": reflect_prompt(messages)}])
+        message = gateway.query(
+            [{"role": "user", "content": reflect_prompt(messages, known=known_memory(cwd, config.memory))}]
+        )
     except Exception:
         logger.warning("The reflection of the session failed", exc_info=True)
     cost = gateway.total_cost - before
