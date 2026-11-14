@@ -413,7 +413,7 @@
 | 工作记忆 | `session.metadata["todos"]` | `context.py` | `todo_write` 工具 |
 | 会话记忆 | `<session_summary>` 块 | `context.py` | 压缩时生成 |
 | 项目记忆 | `<cwd>/.coderagent/memory/*.md` | `core/memory.py` | `extensions/reflect.py` |
-| 用户记忆 | `<config_home>/CLAUDE.md` | `core/memory.py` | `extensions/reflect.py`（**要确认**） |
+| 用户记忆 | `<config_home>/CLAUDE.md` 的 `## Preferences` 段 | `core/memory.py` | `extensions/reflect.py`（`confirm` 说 yes 才写） |
 
 - `core/memory.py` 本身是**只读**的（它只负责把项目记忆和用户记忆读成 `InstructionBlock` 塞进上下文）。
 - 写发生在 `extensions/reflect.py`，由 `run.settle_session()` 在**会话结束时**触发：
